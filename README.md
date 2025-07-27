@@ -38,3 +38,17 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+
+## Cấu hình gửi mail với Nodemailer
+
+Tạo file `.env.local` ở thư mục gốc dự án với nội dung:
+
+```
+GMAIL_USER=your_gmail@gmail.com
+GMAIL_PASS=your_gmail_app_password
+```
+
+- `GMAIL_USER`: Địa chỉ Gmail dùng để gửi mail.
+- `GMAIL_PASS`: App password của Gmail (không phải mật khẩu đăng nhập thông thường, xem hướng dẫn tạo app password trên Google).
+
+Sau đó khởi động lại server Next.js để các biến môi trường có hiệu lực.
