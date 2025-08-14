@@ -2,6 +2,7 @@ import React from 'react';
 
 interface Page1Props {
   onNext: (drink: string) => void;
+  onFeedback: () => void;
 }
 
 const coffeeList = [
@@ -10,7 +11,7 @@ const coffeeList = [
   { name: 'Nâu Đá', img: '/image/nauda.png' },
 ];
 
-const Page1: React.FC<Page1Props> = ({ onNext }) => {
+const Page1: React.FC<Page1Props> = ({ onNext, onFeedback }) => {
   return (
     <main
       style={{
@@ -22,6 +23,43 @@ const Page1: React.FC<Page1Props> = ({ onNext }) => {
         alignItems: 'center',
       }}
     >
+      {/* Nút Feedback góc trái */}
+      <button
+        type="button"
+        onClick={onFeedback}
+        style={{
+          position: 'fixed',
+          top: 20,
+          left: 20,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          padding: '10px 14px',
+          borderRadius: 14,
+          background: '#fff7ec',
+          border: '2px solid #b6894c',
+          color: '#b6894c',
+          fontWeight: 700,
+          boxShadow: '0 4px 16px rgba(182,137,76,0.12)',
+          cursor: 'pointer',
+          transition: 'background 0.2s, color 0.2s, border 0.2s',
+          zIndex: 10,
+        }}
+        onMouseOver={e => {
+          e.currentTarget.style.background = '#f5e9da';
+          e.currentTarget.style.color = '#a06d2c';
+          e.currentTarget.style.border = '2px solid #a06d2c';
+        }}
+        onMouseOut={e => {
+          e.currentTarget.style.background = '#fff7ec';
+          e.currentTarget.style.color = '#b6894c';
+          e.currentTarget.style.border = '2px solid #b6894c';
+        }}
+        aria-label="Gửi góp ý"
+      >
+        Feedback
+      </button>
+
       <img
         src="/image/logo.png"
         alt="logo"

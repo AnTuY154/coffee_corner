@@ -3,9 +3,10 @@ import styles from "@/styles/Home.module.css";
 import React, { useState } from "react";
 import Page1 from "./components/Page1";
 import Page2 from "./components/Page2";
+import Page3 from "./components/Page3";
 
 export default function Home() {
-  const [stage, setStage] = useState<1 | 2>(1);
+  const [stage, setStage] = useState<1 | 2 | 3>(1);
   const [selectedDrink, setSelectedDrink] = useState<string | null>(null);
 
   const handleSelectDrink = (drink: string) => {
@@ -23,9 +24,11 @@ export default function Home() {
       </Head>
       <div className={styles.page} style={{ minHeight: "100vh", background: "#f8f5f2", display: "flex", flexDirection: "column", alignItems: "center" }}>
         {stage === 1 ? (
-          <Page1 onNext={handleSelectDrink} />
-        ) : (
+          <Page1 onNext={handleSelectDrink} onFeedback={() => setStage(3)} />
+        ) : stage === 2 ? (
           <Page2 onBack={() => setStage(1)} selectedDrink={selectedDrink} />
+        ) : (
+          <Page3 onBack={() => setStage(1)} />
         )}
       </div>
     </>
