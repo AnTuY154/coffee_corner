@@ -32,8 +32,17 @@ export async function appendDataToSheetByDate(date: string, data: Record<string,
 
   // Tìm hoặc tạo sheet theo ngày
   let sheetTitle = date;
-  let headers = [...Object.keys(data), 'status'];
+  let headers = [...Object.keys(data), 'status', 'payment'];
+  const statusColumnIndex = headers.length - 2;
+  const paymentColumnIndex = headers.length - 1;
   let sheetId: number | undefined = undefined;
+
+  // Nếu sheet đã tồn tại, lấy sheetId của nó
+  if (sheetTitles.includes(sheetTitle)) {
+    const existedSheet = sheetInfo.data.sheets?.find((s: any) => s.properties?.title === sheetTitle);
+    const rawExistingId = existedSheet?.properties?.sheetId;
+    sheetId = typeof rawExistingId === 'number' ? rawExistingId : undefined;
+  }
 
   if (!sheetTitles.includes(sheetTitle)) {
     // Tạo sheet mới
@@ -61,7 +70,7 @@ export async function appendDataToSheetByDate(date: string, data: Record<string,
       requestBody: { values: [headers] },
     });
 
-    // Thêm data validation cho cột status (cuối cùng)
+    // Thêm data validation cho cột status và payment
     if (sheetId !== undefined) {
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId: SPREADSHEET_ID,
@@ -73,8 +82,8 @@ export async function appendDataToSheetByDate(date: string, data: Record<string,
                   sheetId: sheetId,
                   startRowIndex: 1, // Bắt đầu từ dòng 2 (dòng 1 là header)
                   endRowIndex: 1000, // Số dòng tối đa, có thể tăng nếu cần
-                  startColumnIndex: headers.length - 1, // Cột status
-                  endColumnIndex: headers.length,
+                  startColumnIndex: statusColumnIndex, // Cột status
+                  endColumnIndex: statusColumnIndex + 1,
                 },
                 rule: {
                   condition: {
@@ -90,14 +99,112 @@ export async function appendDataToSheetByDate(date: string, data: Record<string,
                 },
               },
             },
+            {
+              setDataValidation: {
+                range: {
+                  sheetId: sheetId,
+                  startRowIndex: 1,
+                  endRowIndex: 1000,
+                  startColumnIndex: paymentColumnIndex, // Cột payment
+                  endColumnIndex: paymentColumnIndex + 1,
+                },
+                rule: {
+                  condition: {
+                    type: 'ONE_OF_LIST',
+                    values: [
+                      { userEnteredValue: 'yes' },
+                      { userEnteredValue: 'no' },
+                    ],
+                  },
+                  showCustomUi: true,
+                  strict: true,
+                  inputMessage: 'Chỉ chọn yes hoặc no',
+                },
+              },
+            },
           ],
         },
       });
     }
   }
 
+  // Đảm bảo header và data validation tồn tại ngay cả khi sheet đã tồn tại trước đó
+  const headerCheck = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${sheetTitle}!A1:${String.fromCharCode(65 + headers.length - 1)}1`,
+  });
+  const headerRow = headerCheck.data.values?.[0] || [];
+  const isHeaderMismatched =
+    headerRow.length !== headers.length || headers.some((h, i) => headerRow[i] !== h);
+
+  if (isHeaderMismatched) {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${sheetTitle}!A1:${String.fromCharCode(65 + headers.length - 1)}1`,
+      valueInputOption: 'RAW',
+      requestBody: { values: [headers] },
+    });
+  }
+
+  // Đặt/đặt lại data validation cho status và payment
+  if (sheetId !== undefined) {
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId: SPREADSHEET_ID,
+      requestBody: {
+        requests: [
+          {
+            setDataValidation: {
+              range: {
+                sheetId: sheetId,
+                startRowIndex: 1,
+                endRowIndex: 1000,
+                startColumnIndex: statusColumnIndex,
+                endColumnIndex: statusColumnIndex + 1,
+              },
+              rule: {
+                condition: {
+                  type: 'ONE_OF_LIST',
+                  values: [
+                    { userEnteredValue: 'pending' },
+                    { userEnteredValue: 'done' },
+                  ],
+                },
+                showCustomUi: true,
+                strict: true,
+                inputMessage: 'Chỉ chọn pending hoặc done',
+              },
+            },
+          },
+          {
+            setDataValidation: {
+              range: {
+                sheetId: sheetId,
+                startRowIndex: 1,
+                endRowIndex: 1000,
+                startColumnIndex: paymentColumnIndex,
+                endColumnIndex: paymentColumnIndex + 1,
+              },
+              rule: {
+                condition: {
+                  type: 'ONE_OF_LIST',
+                  values: [
+                    { userEnteredValue: 'yes' },
+                    { userEnteredValue: 'no' },
+                  ],
+                },
+                showCustomUi: true,
+                strict: true,
+                inputMessage: 'Chỉ chọn yes hoặc no',
+              },
+            },
+          },
+        ],
+      },
+    });
+  }
+
   // Ghi dữ liệu vào dòng tiếp theo
-  const values = [...Object.values(data), 'pending'];
+  const values = [...Object.values(data), 'pending', 'no'];
   // Tìm dòng trống tiếp theo
   const getRows = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
