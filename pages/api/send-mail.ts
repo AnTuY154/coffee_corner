@@ -22,7 +22,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       pass: process.env.GMAIL_PASS, // Đặt biến môi trường này
     },
   });
-
+  
+  console.log('Email sent successfully', process.env.GMAIL_USER);
+  
   try {
     transporter.sendMail({
       from: process.env.GMAIL_USER,
