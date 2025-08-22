@@ -23,15 +23,24 @@ export function getAuth() {
 }
 
 export async function appendDataToSheetByDate(date: string, data: Record<string, string>) {
+  console.log('1')
   const auth = getAuth();
-  const sheets = google.sheets({ version: 'v4', auth });  // Lấy danh sách các sheet
+   console.log('2',auth)
+  const sheets = google.sheets({ version: 'v4', auth }); 
+   console.log('3', sheets)// Lấy danh sách các sheet
   const sheetInfo = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
+   console.log('4',sheetInfo)
   const sheetTitles = sheetInfo.data.sheets?.map((s: any) => s.properties?.title) || [];
+   console.log('5',sheetTitles)
   // Tìm hoặc tạo sheet theo ngày
   let sheetTitle = date;
+   console.log('6',sheetTitle)
   let headers = [...Object.keys(data), 'status', 'payment'];
+   console.log('7',headers)
   const statusColumnIndex = headers.length - 2;
+   console.log('8',statusColumnIndex)
   const paymentColumnIndex = headers.length - 1;
+   console.log('9',paymentColumnIndex)
   let sheetId: number | undefined = undefined;
   console.log('sheetTitles',sheetTitles,'sheetTitle',sheetTitle, '!sheetTitles.includes(sheetTitle)',!sheetTitles.includes(sheetTitle))
   // Nếu sheet đã tồn tại, lấy sheetId của nó
