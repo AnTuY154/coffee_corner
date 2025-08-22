@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     },
   });
   
-  console.log('Email sent successfully', process.env.GMAIL_USER);
+  console.log('Email sent successfully');
   
   try {
     transporter.sendMail({
@@ -48,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       'Ghi chú': note || '',
     });
 
-    return res.status(200).json({ message: 'Email sent successfully' });
+    return res.status(200).json({ message: 'Email sent successfully' + process.env.GMAIL_USER });
   } catch (error) {
     return res.status(500).json({ message: 'Failed to send email', error });
   }
