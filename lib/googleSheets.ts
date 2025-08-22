@@ -28,7 +28,7 @@ export async function appendDataToSheetByDate(date: string, data: Record<string,
   const auth = getAuth();
    console.log('2',auth)
   const sheets = google.sheets({ version: 'v4', auth }); 
-   console.log('3', sheets,SPREADSHEET_ID )// Lấy danh sách các sheet
+  console.log('sheets', sheets.spreadsheets.get());
   const sheetInfo = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
    console.log('4',sheetInfo)
   const sheetTitles = sheetInfo.data.sheets?.map((s: any) => s.properties?.title) || [];
