@@ -29,7 +29,6 @@ export async function appendDataToSheetByDate(date: string, data: Record<string,
   // Lấy danh sách các sheet
   const sheetInfo = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
   const sheetTitles = sheetInfo.data.sheets?.map((s: any) => s.properties?.title) || [];
-
   // Tìm hoặc tạo sheet theo ngày
   let sheetTitle = date;
   let headers = [...Object.keys(data), 'status', 'payment'];
@@ -43,7 +42,7 @@ export async function appendDataToSheetByDate(date: string, data: Record<string,
     const rawExistingId = existedSheet?.properties?.sheetId;
     sheetId = typeof rawExistingId === 'number' ? rawExistingId : undefined;
   }
-
+  console.log('sheetTitles', sheetTitles, 'auth', auth);
   if (!sheetTitles.includes(sheetTitle)) {
     // Tạo sheet mới
     const addSheetRes = await sheets.spreadsheets.batchUpdate({
@@ -133,6 +132,8 @@ export async function appendDataToSheetByDate(date: string, data: Record<string,
     spreadsheetId: SPREADSHEET_ID,
     range: `${sheetTitle}!A1:${String.fromCharCode(65 + headers.length - 1)}1`,
   });
+  console.log('headerCheck', headerCheck);
+
   const headerRow = headerCheck.data.values?.[0] || [];
   const isHeaderMismatched =
     headerRow.length !== headers.length || headers.some((h, i) => headerRow[i] !== h);
@@ -211,7 +212,12 @@ export async function appendDataToSheetByDate(date: string, data: Record<string,
     range: `${sheetTitle}!A:A`,
   });
   const nextRow = (getRows.data.values?.length || 0) + 1;
-
+  console.log('nextRow', {
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${sheetTitle}!A${nextRow}`,
+    valueInputOption: 'RAW',
+    requestBody: { values: [values] },
+  });
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
     range: `${sheetTitle}!A${nextRow}`,
