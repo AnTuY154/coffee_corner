@@ -23,11 +23,12 @@ export function getAuth() {
 }
 
 export async function appendDataToSheetByDate(date: string, data: Record<string, string>) {
-  console.log('1')
+ try {
+     console.log('1')
   const auth = getAuth();
    console.log('2',auth)
   const sheets = google.sheets({ version: 'v4', auth }); 
-   console.log('3', sheets)// Lấy danh sách các sheet
+   console.log('3', sheets,SPREADSHEET_ID )// Lấy danh sách các sheet
   const sheetInfo = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
    console.log('4',sheetInfo)
   const sheetTitles = sheetInfo.data.sheets?.map((s: any) => s.properties?.title) || [];
@@ -230,6 +231,12 @@ export async function appendDataToSheetByDate(date: string, data: Record<string,
     valueInputOption: 'RAW',
     requestBody: { values: [values] },
   });
+ }catch(error){
+console.log(error)
+   
+ }
+  
+
 }
 
 export async function appendFeedbackRow(name: string, feedback: string, date: string) {
