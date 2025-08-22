@@ -23,11 +23,8 @@ export function getAuth() {
 }
 
 export async function appendDataToSheetByDate(date: string, data: Record<string, string>) {
-  console.log('1')
   const auth = getAuth();
-  const sheets = google.sheets({ version: 'v4', auth });
-  console.log('2',auth, sheets)
-  // Lấy danh sách các sheet
+  const sheets = google.sheets({ version: 'v4', auth });  // Lấy danh sách các sheet
   const sheetInfo = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
   const sheetTitles = sheetInfo.data.sheets?.map((s: any) => s.properties?.title) || [];
   // Tìm hoặc tạo sheet theo ngày
@@ -36,14 +33,13 @@ export async function appendDataToSheetByDate(date: string, data: Record<string,
   const statusColumnIndex = headers.length - 2;
   const paymentColumnIndex = headers.length - 1;
   let sheetId: number | undefined = undefined;
-
+  console.log('sheetTitles',sheetTitles,'sheetTitle',sheetTitle, '!sheetTitles.includes(sheetTitle)',!sheetTitles.includes(sheetTitle))
   // Nếu sheet đã tồn tại, lấy sheetId của nó
   if (sheetTitles.includes(sheetTitle)) {
     const existedSheet = sheetInfo.data.sheets?.find((s: any) => s.properties?.title === sheetTitle);
     const rawExistingId = existedSheet?.properties?.sheetId;
     sheetId = typeof rawExistingId === 'number' ? rawExistingId : undefined;
   }
-  console.log('sheetTitles', sheetTitles, 'auth', auth);
   if (!sheetTitles.includes(sheetTitle)) {
     // Tạo sheet mới
     const addSheetRes = await sheets.spreadsheets.batchUpdate({
