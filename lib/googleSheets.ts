@@ -24,12 +24,10 @@ export function getAuth() {
 
 export async function appendDataToSheetByDate(date: string, data: Record<string, string>) {
  try {
-     console.log('1')
   const auth = getAuth();
-   console.log('2',auth)
   const sheets = google.sheets({ version: 'v4', auth }); 
   console.log('sheets', sheets.spreadsheets.get);
-  const sheetInfo = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
+  const sheetInfo =  sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
    console.log('4',sheetInfo)
   const sheetTitles = sheetInfo.data.sheets?.map((s: any) => s.properties?.title) || [];
    console.log('5',sheetTitles)
