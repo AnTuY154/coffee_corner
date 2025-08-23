@@ -105,18 +105,29 @@ export async function appendDataToSheetByDate(date: string, data: Record<string,
 
     // Kiểm tra sheets API có được khởi tạo đúng không
     if (!sheets || !sheets.spreadsheets || typeof sheets.spreadsheets.get !== 'function') {
+      console.error('❌ Google Sheets API không được khởi tạo đúng cách');
+      console.error('sheets object:', sheets);
+      console.error('sheets.spreadsheets:', sheets?.spreadsheets);
+      console.error('sheets.spreadsheets.get type:', typeof sheets?.spreadsheets?.get);
       throw new Error('Google Sheets API không được khởi tạo đúng cách');
     }
 
     console.log('🔍 Gọi sheets.spreadsheets.get...');
+    console.log('🔍 sheets object:', {
+      hasSheets: !!sheets.spreadsheets,
+      sheetsType: typeof sheets.spreadsheets,
+      hasGetMethod: typeof sheets.spreadsheets?.get === 'function',
+      getMethodType: typeof sheets.spreadsheets?.get
+    });
+    
     const sheetInfo = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
     console.log('✅ Lấy thông tin spreadsheet thành công');
-
+    
     // Kiểm tra response từ Google Sheets API
     if (!sheetInfo || !sheetInfo.data || !sheetInfo.data.sheets) {
       throw new Error('Không thể lấy thông tin spreadsheet từ Google Sheets API');
     }
-
+    
     console.log('📊 Sheet info:', {
       spreadsheetId: SPREADSHEET_ID,
       sheetsCount: sheetInfo.data.sheets.length,
