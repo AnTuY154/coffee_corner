@@ -9,6 +9,7 @@ const coffeeList = [
   { name: 'Espresso', img: '/image/espresso.png' },
   { name: 'Bạc Xỉu', img: '/image/bacxiu.png' },
   { name: 'Nâu Đá', img: '/image/nauda.png' },
+  { name: 'Matcha Latte', img: '/image/matcha.png' },
 ];
 
 const Page1: React.FC<Page1Props> = ({ onNext, onFeedback }) => {

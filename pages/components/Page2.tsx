@@ -6,23 +6,25 @@ interface Page2Props {
   selectedDrink: string | null;
 }
 
-type DrinkName = 'Bạc Xỉu' | 'Nâu Đá' | 'Espresso';
+type DrinkName = 'Bạc Xỉu' | 'Nâu Đá' | 'Espresso' | 'Matcha Latte';
 // Giá từng loại
 const PRICES: Record<DrinkName, { M: number; L: number }> = {
   'Bạc Xỉu': { M: 20000, L: 25000 },
   'Nâu Đá': { M: 18000, L: 23000 },
   'Espresso': { M: 15000, L: 20000 },
+  'Matcha Latte': { M: 30000, L: 30000 },
 };
 // Ảnh từng loại
 const DRINK_IMAGES: Record<DrinkName, string> = {
   'Bạc Xỉu': '/image/bacxiu.png',
   'Nâu Đá': '/image/nauda.png',
   'Espresso': '/image/espresso.png',
+  'Matcha Latte': '/image/matcha.png',
 };
 
 const Page2: React.FC<Page2Props> = ({ onBack, selectedDrink }) => {
   const drink: DrinkName = (selectedDrink as DrinkName) || 'Bạc Xỉu';
-  const [size, setSize] = useState<'M' | 'L'>('M');
+  const [size, setSize] = useState<'M' | 'L'>(drink === 'Matcha Latte' ? 'L' : 'M');
   const [name, setName] = useState('');
   const [note, setNote] = useState('');
   // Thành phần mặc định từng loại
@@ -41,6 +43,9 @@ const Page2: React.FC<Page2Props> = ({ onBack, selectedDrink }) => {
       return size === 'M'
         ? { condensedMilk: 0, robusta: 8, arabica: 2, freshMilk: 0 }
         : { condensedMilk: 0, robusta: 12, arabica: 3, freshMilk: 0 };
+    }
+    if (drink === 'Matcha Latte') {
+      return { condensedMilk: 0, robusta: 0, arabica: 0, freshMilk: 0 };
     }
     return { condensedMilk: 0, robusta: 0, arabica: 0, freshMilk: 0 };
   };
@@ -63,6 +68,9 @@ const Page2: React.FC<Page2Props> = ({ onBack, selectedDrink }) => {
 
   // Cập nhật giá và thành phần khi đổi size hoặc loại đồ uống
   useEffect(() => {
+    if (drink === 'Matcha Latte') {
+      setSize('L');
+    }
     setPrice(PRICES[drink][size]);
     const def = getDefaultIngredients(drink, size);
     setCondensedMilk(def.condensedMilk);
@@ -70,10 +78,11 @@ const Page2: React.FC<Page2Props> = ({ onBack, selectedDrink }) => {
     setArabica(def.arabica);
     setFreshMilk(def.freshMilk);
     setIce(3); // Reset đá về mặc định khi đổi size/drink
-  }, [size, drink]);
+  }, [drink]); // Chỉ phụ thuộc vào drink, không phụ thuộc vào size
 
   // Nếu là Bạc Xỉu, Nâu Đá, Espresso: khi robusta đổi thì arabica tự động đổi
   useEffect(() => {
+    if (drink === 'Matcha Latte') return; // Không áp dụng cho Matcha Latte
     if (drink === 'Bạc Xỉu') {
       setArabica(size === 'M' ? 10 - robusta : 16 - robusta);
     } else if (drink === 'Nâu Đá') {
@@ -98,12 +107,12 @@ const Page2: React.FC<Page2Props> = ({ onBack, selectedDrink }) => {
         body: JSON.stringify({
           name,
           drink,
-          size,
+          size: drink === 'Matcha Latte' ? 'L' : size,
           price,
-          condensedMilk,
-          robusta,
-          arabica,
-          freshMilk,
+          condensedMilk: drink === 'Matcha Latte' ? 0 : condensedMilk,
+          robusta: drink === 'Matcha Latte' ? 0 : robusta,
+          arabica: drink === 'Matcha Latte' ? 0 : arabica,
+          freshMilk: drink === 'Matcha Latte' ? 0 : freshMilk,
           ice, // Thêm đá vào payload
           note, // Thêm note vào payload
         }),
@@ -241,31 +250,41 @@ const Page2: React.FC<Page2Props> = ({ onBack, selectedDrink }) => {
 
         <div style={{ marginBottom: 18 }}>
           <div style={{ marginBottom: 4, fontWeight: 500 }}>Size:</div>
-          <label style={{ marginRight: 16, fontWeight: 500 }}><input type="radio" name="size" value="M" checked={size === 'M'} onChange={() => setSize('M')} /> M</label>
-          <label style={{ fontWeight: 500 }}><input type="radio" name="size" value="L" checked={size === 'L'} onChange={() => setSize('L')} /> L</label>
+          {drink === 'Matcha Latte' ? (
+            <label style={{ fontWeight: 500 }}><input type="radio" name="size" value="L" checked={size === 'L'} onChange={() => setSize('L')} /> L</label>
+          ) : (
+            <>
+              <label style={{ marginRight: 16, fontWeight: 500 }}><input type="radio" name="size" value="M" checked={size === 'M'} onChange={() => setSize('M')} /> M</label>
+              <label style={{ fontWeight: 500 }}><input type="radio" name="size" value="L" checked={size === 'L'} onChange={() => setSize('L')} /> L</label>
+            </>
+          )}
         </div>
         {/* Luôn luôn render Robusta và Arabica */}
-        <div style={{ marginBottom: 18 }}>
-          <div style={{ marginBottom: 4, fontWeight: 500 }}>Robusta:</div>
-          {(() => {
-            let options: number[] = [];
-            if (drink === 'Bạc Xỉu') options = size === 'M' ? [3, 5, 7] : [6, 8, 10];
-            else if (drink === 'Nâu Đá') options = size === 'M' ? [8, 10, 12] : [12, 15, 18];
-            else if (drink === 'Espresso') options = size === 'M' ? [6, 8, 10] : [10, 12, 14];
-            return options.map(val => (
-              <label key={val} style={{ marginRight: 16, fontWeight: 500 }}>
-                <input type="radio" name="robusta" value={val} checked={robusta === val} onChange={() => setRobusta(val)} /> {val}g
-              </label>
-            ));
-          })()}
-        </div>
-        <div style={{ marginBottom: 18, opacity: 0.7 }}>
-          <div style={{ marginBottom: 4, fontWeight: 500 }}>Arabica (tự động):</div>
-          <span style={{ display: 'inline-block', minWidth: 60, fontWeight: 600, color: '#b6894c', fontSize: 16 }}>{arabica}g</span>
-          <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
-            Tổng robusta + arabica = {drink === 'Bạc Xỉu' ? (size === 'M' ? 10 : 16) : drink === 'Nâu Đá' ? (size === 'M' ? 12 : 18) : (size === 'M' ? 10 : 15)}g
-          </div>
-        </div>
+        {drink !== 'Matcha Latte' && (
+          <>
+            <div style={{ marginBottom: 18 }}>
+              <div style={{ marginBottom: 4, fontWeight: 500 }}>Robusta:</div>
+              {(() => {
+                let options: number[] = [];
+                if (drink === 'Bạc Xỉu') options = size === 'M' ? [3, 5, 7] : [6, 8, 10];
+                else if (drink === 'Nâu Đá') options = size === 'M' ? [8, 10, 12] : [12, 15, 18];
+                else if (drink === 'Espresso') options = size === 'M' ? [6, 8, 10] : [10, 12, 14];
+                return options.map(val => (
+                  <label key={val} style={{ marginRight: 16, fontWeight: 500 }}>
+                    <input type="radio" name="robusta" value={val} checked={robusta === val} onChange={() => setRobusta(val)} /> {val}g
+                  </label>
+                ));
+              })()}
+            </div>
+            <div style={{ marginBottom: 18, opacity: 0.7 }}>
+              <div style={{ marginBottom: 4, fontWeight: 500 }}>Arabica (tự động):</div>
+              <span style={{ display: 'inline-block', minWidth: 60, fontWeight: 600, color: '#b6894c', fontSize: 16 }}>{arabica}g</span>
+              <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
+                Tổng robusta + arabica = {drink === 'Bạc Xỉu' ? (size === 'M' ? 10 : 16) : drink === 'Nâu Đá' ? (size === 'M' ? 12 : 18) : (size === 'M' ? 10 : 15)}g
+              </div>
+            </div>
+          </>
+        )}
         {/* Thêm thành phần Đá */}
         <div style={{ marginBottom: 18 }}>
           <div style={{ marginBottom: 4, fontWeight: 500 }}>Đá (viên):</div>
@@ -276,7 +295,7 @@ const Page2: React.FC<Page2Props> = ({ onBack, selectedDrink }) => {
           ))}
         </div>
 
-        {renderIngredients()}
+        {drink !== 'Matcha Latte' && renderIngredients()}
 
         <div style={{ marginBottom: 20 }}>
           <textarea
