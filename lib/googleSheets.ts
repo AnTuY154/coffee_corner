@@ -8,39 +8,121 @@ export function getAuth() {
   if (!process.env.GOOGLE_CREDENTIALS) {
     throw new Error('GOOGLE_CREDENTIALS env not set');
   }
-  // Parse JSON từ biến môi trường
-  const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-  // Nếu private_key bị escape \\n, chuyển lại thành \n
-  if (credentials.private_key) {
-    credentials.private_key = credentials.private_key.replace(/\\n/g, '\n');
+  
+  try {
+    // Parse JSON từ biến môi trường
+    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+    
+    // Kiểm tra các field bắt buộc
+    if (!credentials.client_email || !credentials.private_key) {
+      throw new Error('GOOGLE_CREDENTIALS thiếu client_email hoặc private_key');
+    }
+    
+    // Nếu private_key bị escape \\n, chuyển lại thành \n
+    if (credentials.private_key) {
+      credentials.private_key = credentials.private_key.replace(/\\n/g, '\n');
+    }
+    
+    const client = new JWT({
+      email: credentials.client_email,
+      key: credentials.private_key,
+      scopes: SCOPES,
+    });
+    
+    return client;
+  } catch (error) {
+    console.error('Lỗi khi khởi tạo Google Auth:', error);
+    if (error instanceof Error) {
+      throw new Error(`Lỗi Google Auth: ${error.message}`);
+    }
+    throw new Error('Lỗi không xác định khi khởi tạo Google Auth');
   }
-  const client = new JWT({
-    email: credentials.client_email,
-    key: credentials.private_key,
-    scopes: SCOPES,
-  });
-  return client;
+}
+
+// Function để test authentication trên Vercel
+export async function testGoogleSheetsConnection() {
+  try {
+    console.log('🔍 Bắt đầu test Google Sheets connection...');
+    
+    // Kiểm tra environment variables
+    console.log('📋 Kiểm tra GOOGLE_CREDENTIALS:', {
+      exists: !!process.env.GOOGLE_CREDENTIALS,
+      length: process.env.GOOGLE_CREDENTIALS?.length || 0,
+      preview: process.env.GOOGLE_CREDENTIALS?.substring(0, 100) + '...'
+    });
+    
+    // Test authentication
+    const auth = getAuth();
+    console.log('✅ Auth object created successfully');
+    
+    // Test Google Sheets API
+    const sheets = google.sheets({ version: 'v4', auth });
+    console.log('✅ Google Sheets API initialized');
+    
+    // Test basic API call
+    const testResponse = await sheets.spreadsheets.get({ 
+      spreadsheetId: SPREADSHEET_ID,
+      ranges: ['A1'], // Chỉ lấy 1 cell để test
+      fields: 'sheets.properties.title'
+    });
+    
+    console.log('✅ Google Sheets API call successful:', {
+      spreadsheetId: SPREADSHEET_ID,
+      sheetsCount: testResponse.data.sheets?.length || 0,
+      sheetTitles: testResponse.data.sheets?.map(s => s.properties?.title) || []
+    });
+    
+    return { success: true, message: 'Kết nối Google Sheets thành công' };
+    
+  } catch (error) {
+    console.error('❌ Lỗi test Google Sheets connection:', error);
+    
+    const errorInfo = {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      type: error?.constructor?.name || 'Unknown'
+    };
+    
+    console.error('📊 Chi tiết lỗi:', errorInfo);
+    
+    return { 
+      success: false, 
+      error: errorInfo,
+      message: 'Kết nối Google Sheets thất bại'
+    };
+  }
 }
 
 export async function appendDataToSheetByDate(date: string, data: Record<string, string>) {
   try {
+    console.log('🚀 Bắt đầu appendDataToSheetByDate với:', { date, dataKeys: Object.keys(data) });
+    
     const auth = getAuth();
+    console.log('✅ Auth thành công');
+    
     const sheets = google.sheets({ version: 'v4', auth });
+    console.log('✅ Google Sheets API khởi tạo thành công');
 
     // Kiểm tra sheets API có được khởi tạo đúng không
     if (!sheets || !sheets.spreadsheets || typeof sheets.spreadsheets.get !== 'function') {
       throw new Error('Google Sheets API không được khởi tạo đúng cách');
     }
 
-    console.log('sheets', sheets.spreadsheets.get);
+    console.log('🔍 Gọi sheets.spreadsheets.get...');
     const sheetInfo = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
+    console.log('✅ Lấy thông tin spreadsheet thành công');
 
     // Kiểm tra response từ Google Sheets API
     if (!sheetInfo || !sheetInfo.data || !sheetInfo.data.sheets) {
       throw new Error('Không thể lấy thông tin spreadsheet từ Google Sheets API');
     }
 
-    console.log('4', sheetInfo)
+    console.log('📊 Sheet info:', {
+      spreadsheetId: SPREADSHEET_ID,
+      sheetsCount: sheetInfo.data.sheets.length,
+      sheetTitles: sheetInfo.data.sheets.map((s: any) => s.properties?.title)
+    });
+    
     const sheetTitles = sheetInfo.data.sheets?.map((s: any) => s.properties?.title) || [];
     console.log('5', sheetTitles)
     // Tìm hoặc tạo sheet theo ngày
