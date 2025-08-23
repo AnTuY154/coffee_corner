@@ -23,58 +23,148 @@ export function getAuth() {
 }
 
 export async function appendDataToSheetByDate(date: string, data: Record<string, string>) {
- try {
-  const auth = getAuth();
-  const sheets = google.sheets({ version: 'v4', auth }); 
-  console.log('sheets', sheets.spreadsheets.get);
-  const sheetInfo = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
-   console.log('4',sheetInfo)
-  const sheetTitles = sheetInfo.data.sheets?.map((s: any) => s.properties?.title) || [];
-   console.log('5',sheetTitles)
-  // Tìm hoặc tạo sheet theo ngày
-  let sheetTitle = date;
-   console.log('6',sheetTitle)
-  let headers = [...Object.keys(data), 'status', 'payment'];
-   console.log('7',headers)
-  const statusColumnIndex = headers.length - 2;
-   console.log('8',statusColumnIndex)
-  const paymentColumnIndex = headers.length - 1;
-   console.log('9',paymentColumnIndex)
-  let sheetId: number | undefined = undefined;
-  console.log('sheetTitles',sheetTitles,'sheetTitle',sheetTitle, '!sheetTitles.includes(sheetTitle)',!sheetTitles.includes(sheetTitle))
-  // Nếu sheet đã tồn tại, lấy sheetId của nó
-  if (sheetTitles.includes(sheetTitle)) {
-    const existedSheet = sheetInfo.data.sheets?.find((s: any) => s.properties?.title === sheetTitle);
-    const rawExistingId = existedSheet?.properties?.sheetId;
-    sheetId = typeof rawExistingId === 'number' ? rawExistingId : undefined;
-  }
-  if (!sheetTitles.includes(sheetTitle)) {
-    // Tạo sheet mới
-    const addSheetRes = await sheets.spreadsheets.batchUpdate({
-      spreadsheetId: SPREADSHEET_ID,
-      requestBody: {
-        requests: [
-          {
-            addSheet: {
-              properties: { title: sheetTitle },
-            },
-          },
-        ],
-      },
-    });
-    // Lấy sheetId vừa tạo, ép kiểu về number | undefined
-    const rawSheetId = addSheetRes.data.replies?.[0]?.addSheet?.properties?.sheetId;
-    sheetId = typeof rawSheetId === 'number' ? rawSheetId : undefined;
+  try {
+    const auth = getAuth();
+    const sheets = google.sheets({ version: 'v4', auth });
 
-    // Ghi header vào dòng 1
-    await sheets.spreadsheets.values.update({
+    // Kiểm tra sheets API có được khởi tạo đúng không
+    if (!sheets || !sheets.spreadsheets || typeof sheets.spreadsheets.get !== 'function') {
+      throw new Error('Google Sheets API không được khởi tạo đúng cách');
+    }
+
+    console.log('sheets', sheets.spreadsheets.get);
+    const sheetInfo = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
+
+    // Kiểm tra response từ Google Sheets API
+    if (!sheetInfo || !sheetInfo.data || !sheetInfo.data.sheets) {
+      throw new Error('Không thể lấy thông tin spreadsheet từ Google Sheets API');
+    }
+
+    console.log('4', sheetInfo)
+    const sheetTitles = sheetInfo.data.sheets?.map((s: any) => s.properties?.title) || [];
+    console.log('5', sheetTitles)
+    // Tìm hoặc tạo sheet theo ngày
+    let sheetTitle = date;
+    console.log('6', sheetTitle)
+    let headers = [...Object.keys(data), 'status', 'payment'];
+    console.log('7', headers)
+    const statusColumnIndex = headers.length - 2;
+    console.log('8', statusColumnIndex)
+    const paymentColumnIndex = headers.length - 1;
+    console.log('9', paymentColumnIndex)
+    let sheetId: number | undefined = undefined;
+    console.log('sheetTitles', sheetTitles, 'sheetTitle', sheetTitle, '!sheetTitles.includes(sheetTitle)', !sheetTitles.includes(sheetTitle))
+    // Nếu sheet đã tồn tại, lấy sheetId của nó
+    if (sheetTitles.includes(sheetTitle)) {
+      const existedSheet = sheetInfo.data.sheets?.find((s: any) => s.properties?.title === sheetTitle);
+      const rawExistingId = existedSheet?.properties?.sheetId;
+      sheetId = typeof rawExistingId === 'number' ? rawExistingId : undefined;
+    }
+    if (!sheetTitles.includes(sheetTitle)) {
+      // Tạo sheet mới
+      const addSheetRes = await sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SPREADSHEET_ID,
+        requestBody: {
+          requests: [
+            {
+              addSheet: {
+                properties: { title: sheetTitle },
+              },
+            },
+          ],
+        },
+      });
+      // Lấy sheetId vừa tạo, ép kiểu về number | undefined
+      const rawSheetId = addSheetRes.data.replies?.[0]?.addSheet?.properties?.sheetId;
+      sheetId = typeof rawSheetId === 'number' ? rawSheetId : undefined;
+
+      // Ghi header vào dòng 1
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${sheetTitle}!A1:${String.fromCharCode(65 + headers.length - 1)}1`,
+        valueInputOption: 'RAW',
+        requestBody: { values: [headers] },
+      });
+
+      // Thêm data validation cho cột status và payment
+      if (sheetId !== undefined) {
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId: SPREADSHEET_ID,
+          requestBody: {
+            requests: [
+              {
+                setDataValidation: {
+                  range: {
+                    sheetId: sheetId,
+                    startRowIndex: 1, // Bắt đầu từ dòng 2 (dòng 1 là header)
+                    endRowIndex: 1000, // Số dòng tối đa, có thể tăng nếu cần
+                    startColumnIndex: statusColumnIndex, // Cột status
+                    endColumnIndex: statusColumnIndex + 1,
+                  },
+                  rule: {
+                    condition: {
+                      type: 'ONE_OF_LIST',
+                      values: [
+                        { userEnteredValue: 'pending' },
+                        { userEnteredValue: 'done' },
+                      ],
+                    },
+                    showCustomUi: true,
+                    strict: true,
+                    inputMessage: 'Chỉ chọn pending hoặc done',
+                  },
+                },
+              },
+              {
+                setDataValidation: {
+                  range: {
+                    sheetId: sheetId,
+                    startRowIndex: 1,
+                    endRowIndex: 1000,
+                    startColumnIndex: paymentColumnIndex, // Cột payment
+                    endColumnIndex: paymentColumnIndex + 1,
+                  },
+                  rule: {
+                    condition: {
+                      type: 'ONE_OF_LIST',
+                      values: [
+                        { userEnteredValue: 'yes' },
+                        { userEnteredValue: 'no' },
+                      ],
+                    },
+                    showCustomUi: true,
+                    strict: true,
+                    inputMessage: 'Chỉ chọn yes hoặc no',
+                  },
+                },
+              },
+            ],
+          },
+        });
+      }
+    }
+
+    // Đảm bảo header và data validation tồn tại ngay cả khi sheet đã tồn tại trước đó
+    const headerCheck = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${sheetTitle}!A1:${String.fromCharCode(65 + headers.length - 1)}1`,
-      valueInputOption: 'RAW',
-      requestBody: { values: [headers] },
     });
+    console.log('headerCheck', headerCheck);
 
-    // Thêm data validation cho cột status và payment
+    const headerRow = headerCheck.data.values?.[0] || [];
+    const isHeaderMismatched =
+      headerRow.length !== headers.length || headers.some((h, i) => headerRow[i] !== h);
+
+    if (isHeaderMismatched) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${sheetTitle}!A1:${String.fromCharCode(65 + headers.length - 1)}1`,
+        valueInputOption: 'RAW',
+        requestBody: { values: [headers] },
+      });
+    }
+
+    // Đặt/đặt lại data validation cho status và payment
     if (sheetId !== undefined) {
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId: SPREADSHEET_ID,
@@ -84,9 +174,9 @@ export async function appendDataToSheetByDate(date: string, data: Record<string,
               setDataValidation: {
                 range: {
                   sheetId: sheetId,
-                  startRowIndex: 1, // Bắt đầu từ dòng 2 (dòng 1 là header)
-                  endRowIndex: 1000, // Số dòng tối đa, có thể tăng nếu cần
-                  startColumnIndex: statusColumnIndex, // Cột status
+                  startRowIndex: 1,
+                  endRowIndex: 1000,
+                  startColumnIndex: statusColumnIndex,
                   endColumnIndex: statusColumnIndex + 1,
                 },
                 rule: {
@@ -109,7 +199,7 @@ export async function appendDataToSheetByDate(date: string, data: Record<string,
                   sheetId: sheetId,
                   startRowIndex: 1,
                   endRowIndex: 1000,
-                  startColumnIndex: paymentColumnIndex, // Cột payment
+                  startColumnIndex: paymentColumnIndex,
                   endColumnIndex: paymentColumnIndex + 1,
                 },
                 rule: {
@@ -130,110 +220,40 @@ export async function appendDataToSheetByDate(date: string, data: Record<string,
         },
       });
     }
-  }
 
-  // Đảm bảo header và data validation tồn tại ngay cả khi sheet đã tồn tại trước đó
-  const headerCheck = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
-    range: `${sheetTitle}!A1:${String.fromCharCode(65 + headers.length - 1)}1`,
-  });
-  console.log('headerCheck', headerCheck);
-
-  const headerRow = headerCheck.data.values?.[0] || [];
-  const isHeaderMismatched =
-    headerRow.length !== headers.length || headers.some((h, i) => headerRow[i] !== h);
-
-  if (isHeaderMismatched) {
+    // Ghi dữ liệu vào dòng tiếp theo
+    const values = [...Object.values(data), 'pending', 'no'];
+    // Tìm dòng trống tiếp theo
+    const getRows = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${sheetTitle}!A:A`,
+    });
+    const nextRow = (getRows.data.values?.length || 0) + 1;
+    console.log('nextRow', {
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${sheetTitle}!A${nextRow}`,
+      valueInputOption: 'RAW',
+      requestBody: { values: [values] },
+    });
     await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${sheetTitle}!A1:${String.fromCharCode(65 + headers.length - 1)}1`,
+      range: `${sheetTitle}!A${nextRow}`,
       valueInputOption: 'RAW',
-      requestBody: { values: [headers] },
+      requestBody: { values: [values] },
     });
+  } catch (error) {
+    console.error('Lỗi trong appendDataToSheetByDate:', error);
+
+    // Log chi tiết hơn cho debugging
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+
+    // Re-throw error để caller có thể xử lý
+    throw error;
   }
 
-  // Đặt/đặt lại data validation cho status và payment
-  if (sheetId !== undefined) {
-    await sheets.spreadsheets.batchUpdate({
-      spreadsheetId: SPREADSHEET_ID,
-      requestBody: {
-        requests: [
-          {
-            setDataValidation: {
-              range: {
-                sheetId: sheetId,
-                startRowIndex: 1,
-                endRowIndex: 1000,
-                startColumnIndex: statusColumnIndex,
-                endColumnIndex: statusColumnIndex + 1,
-              },
-              rule: {
-                condition: {
-                  type: 'ONE_OF_LIST',
-                  values: [
-                    { userEnteredValue: 'pending' },
-                    { userEnteredValue: 'done' },
-                  ],
-                },
-                showCustomUi: true,
-                strict: true,
-                inputMessage: 'Chỉ chọn pending hoặc done',
-              },
-            },
-          },
-          {
-            setDataValidation: {
-              range: {
-                sheetId: sheetId,
-                startRowIndex: 1,
-                endRowIndex: 1000,
-                startColumnIndex: paymentColumnIndex,
-                endColumnIndex: paymentColumnIndex + 1,
-              },
-              rule: {
-                condition: {
-                  type: 'ONE_OF_LIST',
-                  values: [
-                    { userEnteredValue: 'yes' },
-                    { userEnteredValue: 'no' },
-                  ],
-                },
-                showCustomUi: true,
-                strict: true,
-                inputMessage: 'Chỉ chọn yes hoặc no',
-              },
-            },
-          },
-        ],
-      },
-    });
-  }
-
-  // Ghi dữ liệu vào dòng tiếp theo
-  const values = [...Object.values(data), 'pending', 'no'];
-  // Tìm dòng trống tiếp theo
-  const getRows = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
-    range: `${sheetTitle}!A:A`,
-  });
-  const nextRow = (getRows.data.values?.length || 0) + 1;
-  console.log('nextRow', {
-    spreadsheetId: SPREADSHEET_ID,
-    range: `${sheetTitle}!A${nextRow}`,
-    valueInputOption: 'RAW',
-    requestBody: { values: [values] },
-  });
-  await sheets.spreadsheets.values.update({
-    spreadsheetId: SPREADSHEET_ID,
-    range: `${sheetTitle}!A${nextRow}`,
-    valueInputOption: 'RAW',
-    requestBody: { values: [values] },
-  });
- }catch(error){
-console.log(error)
-   
- }
-  
 
 }
 
