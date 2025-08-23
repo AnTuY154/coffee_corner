@@ -8,7 +8,6 @@ interface Page3Props {
 const Page3: React.FC<Page3Props> = ({ onBack }) => {
   const [name, setName] = useState('');
   const [feedback, setFeedback] = useState('');
-  const [loading, setLoading] = useState(false);
   const [showNoti, setShowNoti] = useState(false);
   const [notiMsg, setNotiMsg] = useState('');
 
@@ -19,7 +18,6 @@ const Page3: React.FC<Page3Props> = ({ onBack }) => {
       setShowNoti(true);
       return;
     }
-    setLoading(true);
     try {
       fetch('/api/feedback', {
         method: 'POST',
@@ -31,8 +29,8 @@ const Page3: React.FC<Page3Props> = ({ onBack }) => {
       setShowNoti(true);
       setFeedback('');
 
-    } finally {
-      setLoading(false);
+    } catch {
+      alert('Có lỗi khi gửi feedback. Vui lòng thử lại!');
     }
   };
 
@@ -109,12 +107,10 @@ const Page3: React.FC<Page3Props> = ({ onBack }) => {
           />
         </div>
 
-        <button type="submit" style={{ width: '100%', padding: 14, borderRadius: 12, background: loading ? '#e0c9a5' : '#b6894c', color: '#fff', fontWeight: 700, fontSize: 18, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', boxShadow: '0 2px 8px rgba(182,137,76,0.10)', transition: 'background 0.2s', opacity: loading ? 0.7 : 1 }}
-          onMouseOver={e => { if (!loading) e.currentTarget.style.background = '#a06d2c'; }}
-          onMouseOut={e => { if (!loading) e.currentTarget.style.background = '#b6894c'; }}
-          disabled={loading}
+        <button type="submit" style={{ width: '100%', padding: 14, borderRadius: 12, background: '#b6894c', color: '#fff', fontWeight: 700, fontSize: 18, border: 'none', cursor: 'pointer', boxShadow: '0 2px 8px rgba(182,137,76,0.10)' }}
+
         >
-          {loading ? 'Đang gửi...' : 'Gửi'}
+          {'Gửi'}
         </button>
       </form>
     </>

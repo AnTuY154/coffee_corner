@@ -86,10 +86,13 @@ const Page2: React.FC<Page2Props> = ({ onBack, selectedDrink }) => {
   // Khi submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    // setLoading(true);
     localStorage.setItem('CoffeeCornerCustomerName', name);
+
+    setNotiMsg('Cảm ơn bạn ghé thăm ❤ \n Làm việc hăng say nhé ^^');
+    setShowNoti(true);
     try {
-      const res = await fetch('/api/send-mail', {
+      fetch('/api/send-mail', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -106,15 +109,8 @@ const Page2: React.FC<Page2Props> = ({ onBack, selectedDrink }) => {
         }),
         keepalive: true, // Đảm bảo gửi request khi tab bị đóng nhanh
       });
-      if (res.ok) {
-        setNotiMsg('Cảm ơn bạn ghé thăm ❤ \n Làm việc hăng say nhé ^^');
-        setShowNoti(true);
-      } else {
-        setNotiMsg('Có lỗi khi gửi đơn hàng. Vui lòng thử lại!');
-        setShowNoti(true);
-      }
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      alert('Có lỗi khi gửi đơn hàng. Vui lòng thử lại!');
     }
   };
 
@@ -188,117 +184,117 @@ const Page2: React.FC<Page2Props> = ({ onBack, selectedDrink }) => {
         />
       )}
       <form onSubmit={handleSubmit} style={{ maxWidth: 400, width: "100%", background: '#f7ede2', borderRadius: 20, boxShadow: '0 4px 24px rgba(182,137,76,0.10)', padding: 32, margin: '0 auto', position: 'relative', border: '1.5px solid #e3c9a5' }}>
-      <button
-        type="button"
-        onClick={onBack}
-        style={{
-          position: 'absolute',
-          left: 24,
-          top: 24,
-          width: 40,
-          height: 40,
-          borderRadius: '50%',
-          background: '#fff7ec',
-          border: '2px solid #b6894c',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 2px 8px rgba(182,137,76,0.10)',
-          color: '#b6894c',
-          fontSize: 22,
-          cursor: 'pointer',
-          transition: 'background 0.2s, color 0.2s, border 0.2s',
-        }}
-        onMouseOver={e => {
-          e.currentTarget.style.background = '#f5e9da';
-          e.currentTarget.style.color = '#a06d2c';
-          e.currentTarget.style.border = '2px solid #a06d2c';
-        }}
-        onMouseOut={e => {
-          e.currentTarget.style.background = '#fff7ec';
-          e.currentTarget.style.color = '#b6894c';
-          e.currentTarget.style.border = '2px solid #b6894c';
-        }}
-        aria-label="Quay lại"
-      >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12.5 15L8 10.5L12.5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </button>
-      <h2 style={{ textAlign: 'center', marginBottom: 16, fontWeight: 700, fontSize: 28, letterSpacing: 1 }}>{drink}</h2>
-      <div style={{ textAlign: 'center', marginBottom: 16 }}>
-        <img src={DRINK_IMAGES[drink] || '/image/bacxiu.png'} alt={drink} style={{ width: 100, height: 100, objectFit: 'contain', borderRadius: 16, boxShadow: '0 2px 8px rgba(182,137,76,0.08)' }} />
-      </div>
-      <div style={{ fontWeight: 600, fontSize: 22, textAlign: 'center', marginBottom: 16 }}>
-        Giá: <span style={{ color: '#b6894c', fontWeight: 700 }}>{price.toLocaleString()}đ</span>
-      </div>
-      <div style={{ marginBottom: 20 }}>
-        <input
-          type="text"
-          placeholder="HBLAB ID (Ex: TuanDTA)"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e0e0e0', fontSize: 17, background: '#faf8f6', marginBottom: 2, outline: 'none', transition: 'border 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}
-          required
-        />
-      </div>
-   
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ marginBottom: 4, fontWeight: 500 }}>Size:</div>
-        <label style={{ marginRight: 16, fontWeight: 500 }}><input type="radio" name="size" value="M" checked={size === 'M'} onChange={() => setSize('M')} /> M</label>
-        <label style={{ fontWeight: 500 }}><input type="radio" name="size" value="L" checked={size === 'L'} onChange={() => setSize('L')} /> L</label>
-      </div>
-      {/* Luôn luôn render Robusta và Arabica */}
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ marginBottom: 4, fontWeight: 500 }}>Robusta:</div>
-        {(() => {
-          let options: number[] = [];
-          if (drink === 'Bạc Xỉu') options = size === 'M' ? [3, 5, 7] : [6, 8, 10];
-          else if (drink === 'Nâu Đá') options = size === 'M' ? [8, 10, 12] : [12, 15, 18];
-          else if (drink === 'Espresso') options = size === 'M' ? [6, 8, 10] : [10, 12, 14];
-          return options.map(val => (
-            <label key={val} style={{ marginRight: 16, fontWeight: 500 }}>
-              <input type="radio" name="robusta" value={val} checked={robusta === val} onChange={() => setRobusta(val)} /> {val}g
-            </label>
-          ));
-        })()}
-      </div>
-      <div style={{ marginBottom: 18, opacity: 0.7 }}>
-        <div style={{ marginBottom: 4, fontWeight: 500 }}>Arabica (tự động):</div>
-        <span style={{ display: 'inline-block', minWidth: 60, fontWeight: 600, color: '#b6894c', fontSize: 16 }}>{arabica}g</span>
-        <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
-          Tổng robusta + arabica = {drink === 'Bạc Xỉu' ? (size === 'M' ? 10 : 16) : drink === 'Nâu Đá' ? (size === 'M' ? 12 : 18) : (size === 'M' ? 10 : 15)}g
+        <button
+          type="button"
+          onClick={onBack}
+          style={{
+            position: 'absolute',
+            left: 24,
+            top: 24,
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            background: '#fff7ec',
+            border: '2px solid #b6894c',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(182,137,76,0.10)',
+            color: '#b6894c',
+            fontSize: 22,
+            cursor: 'pointer',
+            transition: 'background 0.2s, color 0.2s, border 0.2s',
+          }}
+          onMouseOver={e => {
+            e.currentTarget.style.background = '#f5e9da';
+            e.currentTarget.style.color = '#a06d2c';
+            e.currentTarget.style.border = '2px solid #a06d2c';
+          }}
+          onMouseOut={e => {
+            e.currentTarget.style.background = '#fff7ec';
+            e.currentTarget.style.color = '#b6894c';
+            e.currentTarget.style.border = '2px solid #b6894c';
+          }}
+          aria-label="Quay lại"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12.5 15L8 10.5L12.5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        <h2 style={{ textAlign: 'center', marginBottom: 16, fontWeight: 700, fontSize: 28, letterSpacing: 1 }}>{drink}</h2>
+        <div style={{ textAlign: 'center', marginBottom: 16 }}>
+          <img src={DRINK_IMAGES[drink] || '/image/bacxiu.png'} alt={drink} style={{ width: 100, height: 100, objectFit: 'contain', borderRadius: 16, boxShadow: '0 2px 8px rgba(182,137,76,0.08)' }} />
         </div>
-      </div>
-      {/* Thêm thành phần Đá */}
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ marginBottom: 4, fontWeight: 500 }}>Đá (viên):</div>
-        {[0, 2, 3, 4].map(val => (
-          <label key={val} style={{ marginRight: 16, fontWeight: 500 }}>
-            <input type="radio" name="ice" value={val} checked={ice === val} onChange={() => setIce(val)} /> {val}
-          </label>
-        ))}
-      </div>
-    
-      {renderIngredients()}
+        <div style={{ fontWeight: 600, fontSize: 22, textAlign: 'center', marginBottom: 16 }}>
+          Giá: <span style={{ color: '#b6894c', fontWeight: 700 }}>{price.toLocaleString()}đ</span>
+        </div>
+        <div style={{ marginBottom: 20 }}>
+          <input
+            type="text"
+            placeholder="HBLAB ID (Ex: TuanDTA)"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e0e0e0', fontSize: 17, background: '#faf8f6', marginBottom: 2, outline: 'none', transition: 'border 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}
+            required
+          />
+        </div>
 
-      <div style={{ marginBottom: 20 }}>
-        <textarea
-          placeholder="Ghi chú (tuỳ chọn)"
-          value={note}
-          onChange={e => setNote(e.target.value)}
-          rows={2}
-          style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e0e0e0', fontSize: 16, background: '#faf8f6', marginBottom: 2, outline: 'none', transition: 'border 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.02)', resize: 'none' }}
-        />
-      </div>
-      <button type="submit" style={{ width: '100%', padding: 14, borderRadius: 12, background: loading ? '#e0c9a5' : '#b6894c', color: '#fff', fontWeight: 700, fontSize: 20, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', boxShadow: '0 2px 8px rgba(182,137,76,0.10)', transition: 'background 0.2s', opacity: loading ? 0.7 : 1 }}
-        onMouseOver={e => { if (!loading) e.currentTarget.style.background = '#a06d2c'; }}
-        onMouseOut={e => { if (!loading) e.currentTarget.style.background = '#b6894c'; }}
-        disabled={loading}
-      >
-        {loading ? 'Đang gửi...' : 'Order Now'}
-      </button>
-    </form>
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ marginBottom: 4, fontWeight: 500 }}>Size:</div>
+          <label style={{ marginRight: 16, fontWeight: 500 }}><input type="radio" name="size" value="M" checked={size === 'M'} onChange={() => setSize('M')} /> M</label>
+          <label style={{ fontWeight: 500 }}><input type="radio" name="size" value="L" checked={size === 'L'} onChange={() => setSize('L')} /> L</label>
+        </div>
+        {/* Luôn luôn render Robusta và Arabica */}
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ marginBottom: 4, fontWeight: 500 }}>Robusta:</div>
+          {(() => {
+            let options: number[] = [];
+            if (drink === 'Bạc Xỉu') options = size === 'M' ? [3, 5, 7] : [6, 8, 10];
+            else if (drink === 'Nâu Đá') options = size === 'M' ? [8, 10, 12] : [12, 15, 18];
+            else if (drink === 'Espresso') options = size === 'M' ? [6, 8, 10] : [10, 12, 14];
+            return options.map(val => (
+              <label key={val} style={{ marginRight: 16, fontWeight: 500 }}>
+                <input type="radio" name="robusta" value={val} checked={robusta === val} onChange={() => setRobusta(val)} /> {val}g
+              </label>
+            ));
+          })()}
+        </div>
+        <div style={{ marginBottom: 18, opacity: 0.7 }}>
+          <div style={{ marginBottom: 4, fontWeight: 500 }}>Arabica (tự động):</div>
+          <span style={{ display: 'inline-block', minWidth: 60, fontWeight: 600, color: '#b6894c', fontSize: 16 }}>{arabica}g</span>
+          <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
+            Tổng robusta + arabica = {drink === 'Bạc Xỉu' ? (size === 'M' ? 10 : 16) : drink === 'Nâu Đá' ? (size === 'M' ? 12 : 18) : (size === 'M' ? 10 : 15)}g
+          </div>
+        </div>
+        {/* Thêm thành phần Đá */}
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ marginBottom: 4, fontWeight: 500 }}>Đá (viên):</div>
+          {[0, 2, 3, 4].map(val => (
+            <label key={val} style={{ marginRight: 16, fontWeight: 500 }}>
+              <input type="radio" name="ice" value={val} checked={ice === val} onChange={() => setIce(val)} /> {val}
+            </label>
+          ))}
+        </div>
+
+        {renderIngredients()}
+
+        <div style={{ marginBottom: 20 }}>
+          <textarea
+            placeholder="Ghi chú (tuỳ chọn)"
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            rows={2}
+            style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1.5px solid #e0e0e0', fontSize: 16, background: '#faf8f6', marginBottom: 2, outline: 'none', transition: 'border 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.02)', resize: 'none' }}
+          />
+        </div>
+        <button type="submit" style={{ width: '100%', padding: 14, borderRadius: 12, background: loading ? '#e0c9a5' : '#b6894c', color: '#fff', fontWeight: 700, fontSize: 20, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', boxShadow: '0 2px 8px rgba(182,137,76,0.10)', transition: 'background 0.2s', opacity: loading ? 0.7 : 1 }}
+          onMouseOver={e => { if (!loading) e.currentTarget.style.background = '#a06d2c'; }}
+          onMouseOut={e => { if (!loading) e.currentTarget.style.background = '#b6894c'; }}
+          disabled={loading}
+        >
+          {loading ? 'Đang gửi...' : 'Order Now'}
+        </button>
+      </form>
     </>
   );
 };

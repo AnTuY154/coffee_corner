@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.log('Email sent successfully');
   
   try {
-    transporter.sendMail({
+    await transporter.sendMail({
       from: process.env.GMAIL_USER,
       to: 'cornersinabag@gmail.com',
       subject: `Đơn hàng mới từ ${name}`,
