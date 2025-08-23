@@ -35,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const today = new Date();
     const dateStr = `${today.getDate().toString().padStart(2, '0')}.${(today.getMonth() + 1).toString().padStart(2, '0')}`;
-    appendDataToSheetByDate(dateStr, {
+    await appendDataToSheetByDate(dateStr, {
       'Khách hàng': name,
       'Tên món': drink,
       'Size': size,
