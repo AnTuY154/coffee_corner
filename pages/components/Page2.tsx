@@ -24,11 +24,81 @@ const DRINK_IMAGES: Record<DrinkName, string> = {
 
 const Page2: React.FC<Page2Props> = ({ onBack, selectedDrink }) => {
   const drink: DrinkName = (selectedDrink as DrinkName) || "Bạc Xỉu";
+
+  // Hàm lấy settings từ localStorage
+  const getSavedSettings = (drinkName: string) => {
+    try {
+      const saved = localStorage.getItem(`CoffeeSettings_${drinkName}`);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  // Hàm lưu settings vào localStorage
+  const saveSettings = (drinkName: string, settings: any) => {
+    try {
+      localStorage.setItem(
+        `CoffeeSettings_${drinkName}`,
+        JSON.stringify(settings)
+      );
+    } catch {
+      // Ignore localStorage errors
+    }
+  };
+
+  // Khởi tạo state với giá trị từ localStorage hoặc default
+  const getInitialSettings = () => {
+    const savedSettings = getSavedSettings(drink);
+    const defaultSettings = getDefaultIngredients(
+      drink,
+      drink === "Matcha Latte" ? "L" : "M"
+    );
+
+    if (savedSettings) {
+      return {
+        size: drink === "Matcha Latte" ? "L" : savedSettings.size || "M",
+        condensedMilk:
+          savedSettings.condensedMilk ?? defaultSettings.condensedMilk,
+        robusta: savedSettings.robusta ?? defaultSettings.robusta,
+        arabica: savedSettings.arabica ?? defaultSettings.arabica,
+        freshMilk: savedSettings.freshMilk ?? defaultSettings.freshMilk,
+        ice: savedSettings.ice ?? 3,
+      };
+    }
+
+    return {
+      size: drink === "Matcha Latte" ? "L" : "M",
+      condensedMilk: defaultSettings.condensedMilk,
+      robusta: defaultSettings.robusta,
+      arabica: defaultSettings.arabica,
+      freshMilk: defaultSettings.freshMilk,
+      ice: 3,
+    };
+  };
+
+  const initialSettings = getInitialSettings();
   const [size, setSize] = useState<"M" | "L">(
-    drink === "Matcha Latte" ? "L" : "M"
+    initialSettings.size as "M" | "L"
   );
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
+
+  // State thành phần với giá trị từ localStorage
+  const [condensedMilk, setCondensedMilk] = useState(
+    initialSettings.condensedMilk
+  );
+  const [robusta, setRobusta] = useState(initialSettings.robusta);
+  const [arabica, setArabica] = useState(initialSettings.arabica);
+  const [freshMilk, setFreshMilk] = useState(initialSettings.freshMilk);
+  const [ice, setIce] = useState(initialSettings.ice);
+  const [price, setPrice] = useState(
+    PRICES[drink][initialSettings.size as "M" | "L"]
+  );
+  const [loading, setLoading] = useState(false);
+  const [showNoti, setShowNoti] = useState(false);
+  const [notiMsg, setNotiMsg] = useState("");
+
   // Thành phần mặc định từng loại
   const getDefaultIngredients = (drink: string, size: "M" | "L") => {
     if (drink === "Bạc Xỉu") {
@@ -51,24 +121,6 @@ const Page2: React.FC<Page2Props> = ({ onBack, selectedDrink }) => {
     }
     return { condensedMilk: 0, robusta: 0, arabica: 0, freshMilk: 0 };
   };
-  // State thành phần
-  const [condensedMilk, setCondensedMilk] = useState(
-    getDefaultIngredients(drink, "M").condensedMilk
-  );
-  const [robusta, setRobusta] = useState(
-    getDefaultIngredients(drink, "M").robusta
-  );
-  const [arabica, setArabica] = useState(
-    getDefaultIngredients(drink, "M").arabica
-  );
-  const [freshMilk, setFreshMilk] = useState(
-    getDefaultIngredients(drink, "M").freshMilk
-  );
-  const [ice, setIce] = useState(3); // Thêm state cho Đá, mặc định 3
-  const [price, setPrice] = useState(PRICES[drink][size]);
-  const [loading, setLoading] = useState(false);
-  const [showNoti, setShowNoti] = useState(false);
-  const [notiMsg, setNotiMsg] = useState("");
 
   // Lấy tên từ localStorage
   useEffect(() => {
@@ -76,19 +128,26 @@ const Page2: React.FC<Page2Props> = ({ onBack, selectedDrink }) => {
     if (savedName) setName(savedName);
   }, []);
 
-  // Cập nhật giá và thành phần khi đổi size hoặc loại đồ uống
+  // Effect để lưu settings khi có thay đổi
+  useEffect(() => {
+    const settings = {
+      size,
+      condensedMilk,
+      robusta,
+      arabica,
+      freshMilk,
+      ice,
+    };
+    saveSettings(drink, settings);
+  }, [drink, size, condensedMilk, robusta, arabica, freshMilk, ice]);
+
+  // Cập nhật giá khi đổi size
   useEffect(() => {
     if (drink === "Matcha Latte") {
       setSize("L");
     }
     setPrice(PRICES[drink][size]);
-    const def = getDefaultIngredients(drink, size);
-    setCondensedMilk(def.condensedMilk);
-    setRobusta(def.robusta);
-    setArabica(def.arabica);
-    setFreshMilk(def.freshMilk);
-    setIce(3); // Reset đá về mặc định khi đổi size/drink
-  }, [drink, size]); // Thêm size vào dependency để cập nhật khi đổi size
+  }, [drink, size]);
 
   // Nếu là Bạc Xỉu, Nâu Đá, Espresso: khi robusta đổi thì arabica tự động đổi
   useEffect(() => {
