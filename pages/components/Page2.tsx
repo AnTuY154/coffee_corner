@@ -25,8 +25,32 @@ const DRINK_IMAGES: Record<DrinkName, string> = {
 const Page2: React.FC<Page2Props> = ({ onBack, selectedDrink }) => {
   const drink: DrinkName = (selectedDrink as DrinkName) || "Bạc Xỉu";
 
+  // Thành phần mặc định từng loại - di chuyển lên đầu
+  const getDefaultIngredients = (drink: string, size: "M" | "L") => {
+    if (drink === "Bạc Xỉu") {
+      return size === "M"
+        ? { condensedMilk: 10, robusta: 7, arabica: 3, freshMilk: 15 }
+        : { condensedMilk: 20, robusta: 11, arabica: 4, freshMilk: 15 };
+    }
+    if (drink === "Nâu Đá") {
+      return size === "M"
+        ? { condensedMilk: 10, robusta: 7, arabica: 3, freshMilk: 0 }
+        : { condensedMilk: 15, robusta: 11, arabica: 4, freshMilk: 0 };
+    }
+    if (drink === "Espresso") {
+      return size === "M"
+        ? { condensedMilk: 0, robusta: 8, arabica: 2, freshMilk: 0 }
+        : { condensedMilk: 0, robusta: 12, arabica: 3, freshMilk: 0 };
+    }
+    if (drink === "Matcha Latte") {
+      return { condensedMilk: 0, robusta: 0, arabica: 0, freshMilk: 0 };
+    }
+    return { condensedMilk: 0, robusta: 0, arabica: 0, freshMilk: 0 };
+  };
+
   // Hàm lấy settings từ localStorage
   const getSavedSettings = (drinkName: string) => {
+    if (typeof window === "undefined") return null; // SSR safety
     try {
       const saved = localStorage.getItem(`CoffeeSettings_${drinkName}`);
       return saved ? JSON.parse(saved) : null;
@@ -37,6 +61,7 @@ const Page2: React.FC<Page2Props> = ({ onBack, selectedDrink }) => {
 
   // Hàm lưu settings vào localStorage
   const saveSettings = (drinkName: string, settings: any) => {
+    if (typeof window === "undefined") return; // SSR safety
     try {
       localStorage.setItem(
         `CoffeeSettings_${drinkName}`,
@@ -99,33 +124,12 @@ const Page2: React.FC<Page2Props> = ({ onBack, selectedDrink }) => {
   const [showNoti, setShowNoti] = useState(false);
   const [notiMsg, setNotiMsg] = useState("");
 
-  // Thành phần mặc định từng loại
-  const getDefaultIngredients = (drink: string, size: "M" | "L") => {
-    if (drink === "Bạc Xỉu") {
-      return size === "M"
-        ? { condensedMilk: 10, robusta: 7, arabica: 3, freshMilk: 15 }
-        : { condensedMilk: 20, robusta: 11, arabica: 4, freshMilk: 15 };
-    }
-    if (drink === "Nâu Đá") {
-      return size === "M"
-        ? { condensedMilk: 10, robusta: 7, arabica: 3, freshMilk: 0 }
-        : { condensedMilk: 15, robusta: 11, arabica: 4, freshMilk: 0 };
-    }
-    if (drink === "Espresso") {
-      return size === "M"
-        ? { condensedMilk: 0, robusta: 8, arabica: 2, freshMilk: 0 }
-        : { condensedMilk: 0, robusta: 12, arabica: 3, freshMilk: 0 };
-    }
-    if (drink === "Matcha Latte") {
-      return { condensedMilk: 0, robusta: 0, arabica: 0, freshMilk: 0 };
-    }
-    return { condensedMilk: 0, robusta: 0, arabica: 0, freshMilk: 0 };
-  };
-
   // Lấy tên từ localStorage
   useEffect(() => {
-    const savedName = localStorage.getItem("CoffeeCornerCustomerName");
-    if (savedName) setName(savedName);
+    if (typeof window !== "undefined") {
+      const savedName = localStorage.getItem("CoffeeCornerCustomerName");
+      if (savedName) setName(savedName);
+    }
   }, []);
 
   // Effect để lưu settings khi có thay đổi
