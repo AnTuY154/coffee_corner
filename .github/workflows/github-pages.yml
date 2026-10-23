@@ -1,0 +1,57 @@
+name: GitHub Pages 3D demo
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages-preview
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Check catalogue
+        run: npm run check:catalog
+      - name: Test 3D navigation
+        run: npm run test:3d
+      - name: Build static demo
+        run: npm run build:pages
+      - name: Validate static assets
+        run: |
+          test -f out/index.html
+          test -f out/3d-shop/index.html
+          test -f out/menu/index.html
+          test -f out/products/nang-xuan.svg
+          test -f out/.nojekyll
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./out
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
