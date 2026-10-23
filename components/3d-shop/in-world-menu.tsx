@@ -25,7 +25,7 @@ function Printed({position,size,lines,background=dark,ink=cream,align="center"}:
 }
 function Key({position,size,label,onClick,tone="green"}:{position:[number,number,number];size:[number,number];label:string;onClick:()=>void;tone?:"green"|"cream"|"gold"}){
  const bg=tone==="green"?"#27694a":tone==="gold"?"#efd38d":"#f6e9cb";
- const fg=tone==="cream"?dark:dark===bg?"#fff6e1":tone==="gold"?"#274b38":"#fff7e4";
+ const fg=tone==="cream"?dark:tone==="gold"?"#274b38":"#fff7e4";
  const [hover,setHover]=useState(false);
  return <group position={position} onClick={e=>{e.stopPropagation();onClick();}} onPointerOver={e=>{e.stopPropagation();setHover(true);document.body.style.cursor="pointer";}} onPointerOut={()=>{setHover(false);document.body.style.cursor="";}}>
    <mesh scale={hover?[1.035,1.035,1]:[1,1,1]}>
@@ -67,7 +67,7 @@ export function InWorldMenu({open,count,onAdd,onClose,onCheckout}:Props){
       <mesh position={[0,.61,.08]}><cylinderGeometry args={[.63,.63,.10,24]}/><meshStandardMaterial color="#fff8e2"/></mesh>
       <mesh position={[.13,.89,.08]} rotation={[0,0,-.17]}><cylinderGeometry args={[.035,.035,.55,8]}/><meshStandardMaterial color="#fffaf0"/></mesh>
     </group>
-    <Printed position={[.88,.40,.15]} size={[3.36,.77]} lines={[{text:current.name.toUpperCase("vi"),size:77}]} background="#f8edce" ink={dark} align="left"/>
+    <Printed position={[.88,.40,.15]} size={[3.36,.77]} lines={[{text:current.name.toLocaleUpperCase("vi"),size:77}]} background="#f8edce" ink={dark} align="left"/>
     <Printed position={[.88,-.14,.15]} size={[3.36,.45]} lines={[{text:current.flavour.slice(0,53),size:49}]} background="#f8edce" ink="#63745b" align="left"/>
     <Printed position={[.88,-.65,.15]} size={[3.36,.52]} lines={[{text:currency(current.price)+" / LY",size:88}]} background="#f8edce" ink="#ac7142" align="left"/>
     <Key position={[-2.3,-1.25,.18]} size={[.62,.55]} label="◀" onClick={()=>{setIndex(i=>(i+5)%6);setAdded(false);}}/>
