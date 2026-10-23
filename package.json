@@ -10,7 +10,7 @@
     "check:catalog": "node scripts/check-catalog.mjs",
     "test:orders": "node scripts/test-google-apps-script.mjs",
     "test:3d": "node --experimental-strip-types scripts/test-3d-shop.mjs",
-    "build:pages": "node scripts/build-github-pages.mjs"
+    "test:immersive": "node scripts/test-immersive-world.mjs"
   },
   "dependencies": {
     "next": "^15.5.0",

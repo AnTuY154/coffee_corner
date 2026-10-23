@@ -30,6 +30,8 @@ jobs:
         run: npm run check:catalog
       - name: Test 3D navigation
         run: npm run test:3d
+      - name: Test immersive world
+        run: npm run test:immersive
       - name: Build static demo
         run: npm run build:pages
       - name: Validate static assets

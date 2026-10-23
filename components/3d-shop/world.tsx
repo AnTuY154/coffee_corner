@@ -5,6 +5,9 @@ import { RoundedBox, Float } from "@react-three/drei";
 import * as THREE from "three";
 import type { ShopControls } from "./types";
 import { stepMovement } from "./types";
+import { CatBarista, PlayerAvatar, WalkingCustomer, GardenDog } from "./characters";
+import { GardenDetails } from "./garden";
+import { InWorldMenu } from "./in-world-menu";
 
 const COLORS = {
   pine: "#235c3d", deep: "#1b4836", leaf: "#77a76a", lime: "#b3c989",
@@ -198,44 +201,73 @@ function SkyDecor({reducedMotion}:{reducedMotion:boolean}) {
   </group>;
   return reducedMotion?deco:<Float speed={1.4} rotationIntensity={.15} floatIntensity={.3}>{deco}</Float>;
 }
-function FirstPersonCamera({controls,onNearChange,onArrive}: {controls:React.RefObject<ShopControls>;onNearChange:(near:boolean)=>void;onArrive:()=>void}) {
+function ThirdPersonCamera({controls,menuOpen,onNearChange,onArrive}: {
+  controls:React.RefObject<ShopControls>;menuOpen:boolean;
+  onNearChange:(near:boolean)=>void;onArrive:()=>void;
+}) {
   const nearRef=useRef(false);
-  const pos=useMemo(()=>new THREE.Vector3(),[]);
-  useFrame(({camera},delta)=>{
-    const c=controls.current;
-    if(!c)return;
+  const dest=useMemo(()=>new THREE.Vector3(),[]);
+  const target=useMemo(()=>new THREE.Vector3(),[]);
+  useFrame(({camera,size},delta)=>{
+    const c=controls.current;if(!c)return;
     const {near,arrived}=stepMovement(c,delta);
-    pos.set(c.x,1.74,c.z);
-    camera.position.lerp(pos,1-Math.exp(-9*Math.min(delta,.07)));
-    camera.lookAt(camera.position.x-Math.sin(c.yaw)*9,1.74+c.pitch*6,camera.position.z-Math.cos(c.yaw)*9);
+    const compact=size.width<680;
+    if(menuOpen){
+      dest.set(0,compact?3.25:3.02,compact?8.15:7.5);
+      target.set(0,2.65,1.1);
+    }else{
+      const follow=compact?3.75:4.4;
+      dest.set(c.x+Math.sin(c.yaw)*follow*.40,2.9,c.z+follow);
+      target.set(c.x,1.83,c.z-4.5);
+    }
+    camera.position.lerp(dest,1-Math.exp(-5*Math.min(delta,.06)));
+    // The camera looks over the player's shoulder; it is not a first-person view.
+    camera.lookAt(target);
     if(near!==nearRef.current){nearRef.current=near;onNearChange(near);}
     if(arrived)onArrive();
   });
   return null;
 }
-export function ShopWorld({controls,onNearChange,onArrive,onCounterInteract,reducedMotion,lowPower,onCanvasError}: {
+export function ShopWorld({controls,menuOpen,cartCount,onAdd,onCheckout,onCloseMenu,onNearChange,onArrive,onCounterInteract,onApproach,reducedMotion,lowPower,onCanvasError}: {
   controls:React.RefObject<ShopControls>;
+  menuOpen:boolean;
+  cartCount:number;
+  onAdd:(id:string)=>void;
+  onCheckout:()=>void;
+  onCloseMenu:()=>void;
   onNearChange:(near:boolean)=>void;
   onArrive:()=>void;
   onCounterInteract:()=>void;
+  onApproach:()=>void;
   reducedMotion:boolean;
   lowPower:boolean;
   onCanvasError:()=>void;
 }) {
   return <Canvas
-    camera={{position:[0,1.74,9.4],fov:67,near:.08,far:160}}
-    dpr={lowPower?[1,1.2]:[1,1.7]}
+    camera={{position:[0,2.9,13.8],fov:59,near:.08,far:160}}
+    dpr={lowPower?[1,1.2]:[1,1.65]}
     gl={{antialias:!lowPower,powerPreference:"high-performance",alpha:false}}
     shadows={!lowPower}
     onCreated={({gl})=>{
-      gl.setClearColor("#cce1ca");
+      gl.setClearColor("#cee7d0");
       gl.domElement.addEventListener("webglcontextlost",onCanvasError,{once:true});
     }}
     fallback={<div className="shop-webgl-fallback">Thiết bị không hỗ trợ WebGL.</div>}
   >
-    <fog attach="fog" args={["#cce1ca",23,85]}/>
+    <fog attach="fog" args={["#cee7d0",28,86]}/>
     <ShopArchitecture onCounterInteract={onCounterInteract}/>
+    {/* Touchable 3D wayfinding sign, not a 2D overlay. */}
+    <group onClick={e=>{e.stopPropagation();onApproach();}} position={[3.4,1.3,6.6]} rotation={[0,-.2,0]}>
+      <Block position={[0,-.6,-.15]} size={[.11,1.9,.11]} color="#996845"/>
+      <ShopSign position={[0,.27,.02]} dimensions={[2.3,1.02]} main="VÀO QUẦY" sub="CHẠM HOẶC NHẤN E" color="#1b583e"/>
+    </group>
+    <GardenDetails reducedMotion={reducedMotion} lowPower={lowPower}/>
+    <CatBarista reducedMotion={reducedMotion}/>
+    <WalkingCustomer reducedMotion={reducedMotion}/>
+    <GardenDog reducedMotion={reducedMotion}/>
+    <PlayerAvatar controls={controls} reducedMotion={reducedMotion}/>
     <SkyDecor reducedMotion={reducedMotion}/>
-    <FirstPersonCamera controls={controls} onNearChange={onNearChange} onArrive={onArrive}/>
+    <InWorldMenu open={menuOpen} count={cartCount} onAdd={onAdd} onClose={onCloseMenu} onCheckout={onCheckout}/>
+    <ThirdPersonCamera controls={controls} menuOpen={menuOpen} onNearChange={onNearChange} onArrive={onArrive}/>
   </Canvas>;
 }
