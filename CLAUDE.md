@@ -12,3 +12,6 @@ For each change, run at least 5 quality passes against the checklist in `docs/FI
 
 ## 3D shop agents
 Use `3d-world-builder`, `3d-interaction-engineer`, `3d-performance-auditor` along with existing UX, QA, and commerce agents. See `docs/3D_SHOP_SPEC.md` and run `npm run test:3d` before build. Do not replace checkout with WebGL UI.
+
+## 3D experience evaluation
+Three role-based review/fix loops and evidence: docs/IMMERSIVE_REVIEW_LOOPS.md. Agent roles in .claude/agents/immersive-*.md. Do not regenerate a static image instead of modifying R3F code.

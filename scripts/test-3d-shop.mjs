@@ -28,14 +28,19 @@ const make=()=>({keys:new Set(),x:START_POSITION.x,z:START_POSITION.z,yaw:0,pitc
  assert(c.x<0);assert(Math.abs(c.z-START_POSITION.z)<.001);
 }
 const file=(p)=>readFileSync(resolve(root,p),'utf8');
-const page=file('app/3d-shop/page.tsx'),wrapper=file('components/3d-shop/immersive-shop.tsx'),world=file('components/3d-shop/world.tsx');
+const page=file('app/3d-shop/page.tsx');
+const wrapper=file('components/3d-shop/immersive-shop.tsx');
+const world=file('components/3d-shop/world.tsx');
+const menu=file('components/3d-shop/in-world-menu.tsx');
 assert(page.includes('ImmersiveShop'));
-assert(wrapper.includes('"KeyE"')&&wrapper.includes('openMenu()')&&wrapper.includes('goToCounter(true)'));
-assert(wrapper.includes('useCart()') && wrapper.includes('add(product.id)'));
+assert(wrapper.includes('KeyE')&&wrapper.includes('openMenu()')&&wrapper.includes('goToCounter()'));
+assert(wrapper.includes('useCart()') && wrapper.includes('add(id)'));
 assert(wrapper.includes('webglAvailable===false'));
-assert(wrapper.includes('aria-modal="true"'));
+assert(!wrapper.includes('aria-modal="true"'));
 assert(world.includes('Blender')&&world.includes('Juicer')&&world.includes('Crate')&&world.includes('Pineapple'));
-assert(file('app/page.tsx').includes('href="/3d-shop"'));
-assert(file('components/site-header.tsx').includes('Vào quán 3D'));
-assert(existsSync(resolve(root,'app/api/orders/route.ts')),'existing order API must remain');
-console.log('3D shop movement, navigation, fallbacks, basket and prop invariants passed.');
+assert(world.includes('CatBarista') && world.includes('PlayerAvatar') && world.includes('InWorldMenu'));
+assert(menu.includes('onAdd(current.id)') && menu.includes('onClick={onCheckout}'));
+assert(file('app/page.tsx').includes('<ImmersiveShop/>'));
+assert(file('app/menu/page.tsx').includes('<ImmersiveShop/>'));
+assert(existsSync(resolve(root,'app/api/orders/route.ts')),'production order API must remain');
+console.log('3D game movement, true mesh menu, avatar, cat NPC and commerce invariants passed.');
