@@ -55,3 +55,10 @@ Six Claude Code agent prompts are provided at `.claude/agents/` and their roles 
 ## Source and usage
 
 Images in `public/products/` are **original vector illustrations** generated for this prototype. They are not actual beverage photos, and should be replaced/augmented after product photo shoots. Fruit months are indicative, not real-time stock data.
+
+
+## Cửa hàng 3D nhập vai
+
+Vào `/3d-shop` để di chuyển bằng WASD/phím mũi tên hoặc D-pad trên mobile. Đến gần quầy và nhấn E/chạm để mở menu. Có chế độ đi đến quầy tự động. Món thêm từ menu 3D dùng chung giỏ hàng và checkout hiện có. Nếu WebGL không khả dụng thì sử dụng `/menu`. Xem `docs/3D_SHOP_SPEC.md`.
+
+Bản đầu dựng cảnh 3D bằng hình học procedural, chưa phải bộ model sản phẩm photorealistic. Google Apps Script Web App và hosting cần được kích hoạt riêng; xem `docs/DEPLOYMENT.md`.

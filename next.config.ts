@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode:true,
+  transpilePackages:["three"],
   poweredByHeader:false,
   async headers(){return [{source:"/(.*)",headers:[
     {key:"X-Content-Type-Options",value:"nosniff"},

@@ -9,3 +9,6 @@ Operate six dedicated specialised agent configurations in `.claude/agents/`. The
 6. `qa-accessibility` -> validation and release gate.
 
 For each change, run at least 5 quality passes against the checklist in `docs/FIVE_REVIEWS.md`. Every pass must identify real issues or state verified evidence; do not mark browser tests passed unless actually run.
+
+## 3D shop agents
+Use `3d-world-builder`, `3d-interaction-engineer`, `3d-performance-auditor` along with existing UX, QA, and commerce agents. See `docs/3D_SHOP_SPEC.md` and run `npm run test:3d` before build. Do not replace checkout with WebGL UI.
