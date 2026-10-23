@@ -1,54 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Vườn Ép — Seasonal Juice Store
 
-## Getting Started
+Next.js 15 + React 19 + TypeScript, a fresh buyer-facing seasonal juice storefront written from scratch for `AnTuY154/coffee_corner`.
 
-First, run the development server:
+**Current state:** customer pages, 24 season-linked drinks with unique local illustrations, product recipes, basket and checkout UI, a validated `/api/orders` endpoint and an Apps Script Google Sheets adapter. **Not production-live:** shop-specific merchant details and Google Sheet secrets have not been configured, and an external integration test is pending. Prices/recipes/illustrations are demonstration content.
+
+## Start locally
+
+Requires Node 20.9+:
 
 ```bash
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000. The menu, detail pages and basket work without Google Sheets. Checkout intentionally returns an error until configured.
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+## Connect Google Sheets to orders
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+1. Use the [existing private Vườn Ép Google Sheet](https://docs.google.com/spreadsheets/d/1dpKiV2zToICNhmXpMpxzU5NAfvx5zhNIAhxcEtVK6SA/edit), which already contains `Orders` and `Hướng dẫn`.
+2. In Google Sheets, choose **Extensions → Apps Script**. Paste `scripts/google-apps-script.gs` into the editor.
+3. In **Project Settings → Script Properties**, create `SPREADSHEET_ID` and `ORDER_WEBHOOK_SECRET` (choose a long random secret). The same secret must be set in Next.js server environment.
+4. In Apps Script **Deploy → New deployment → Web app**, choose **Execute as: Me** and **Who has access: Anyone**. Copy the deployed `/exec` URL (not a test `/dev` URL). Permissions are needed for script to write to your private Sheet.
+5. Set server environment variables:
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
-
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
-
-## Cấu hình gửi mail với Nodemailer
-
-Tạo file `.env.local` ở thư mục gốc dự án với nội dung:
-
-```
-GMAIL_USER=your_gmail@gmail.com
-GMAIL_PASS=your_gmail_app_password
+```dotenv
+GOOGLE_APPS_SCRIPT_WEBHOOK_URL=https://script.google.com/macros/s/DEPLOYMENT_ID/exec
+ORDER_WEBHOOK_SECRET=your-long-random-secret
+NEXT_PUBLIC_STORE_PHONE=...
+NEXT_PUBLIC_STORE_ADDRESS=...
+NEXT_PUBLIC_STORE_HOURS=...
+NEXT_PUBLIC_SITE_URL=https://yourdomain.vn
 ```
 
-- `GMAIL_USER`: Địa chỉ Gmail dùng để gửi mail.
-- `GMAIL_PASS`: App password của Gmail (không phải mật khẩu đăng nhập thông thường, xem hướng dẫn tạo app password trên Google).
+6. Restart/redeploy Next.js, submit a small test order, and check the new `Orders` sheet. A row with `NEW_UNCONFIRMED` means the seller must still confirm price, stock, delivery zone/fee and timing. No cards are charged here.
 
-Sau đó khởi động lại server Next.js để các biến môi trường có hiệu lực.
+**Important:** The Apps Script `/exec` endpoint is accessible to the public, but the shared secret is never sent by the customer browser: only the Next.js server calls it. Do not put either secret or the Google Spreadsheet ID in `NEXT_PUBLIC_` variables. For an Internet-facing launch, add managed rate-limiting and spam protection and publish a real privacy policy.
+
+## Quality checks
+
+```bash
+npm run check:catalog
+npm run test:orders
+npm run typecheck
+npm run build
+```
+
+The source includes a GitHub Actions workflow to run these quality gates on pull requests and main. Hosting deployment is a separate step; see `docs/DEPLOYMENT.md`.
+
+## Specialised agents and five passes
+
+Six Claude Code agent prompts are provided at `.claude/agents/` and their roles are described in `CLAUDE.md`. Full product plan: `docs/PLAN.md`. The five static review passes, mitigations and still-pending browser/integration gates: `docs/FIVE_REVIEWS.md`.
+
+## Source and usage
+
+Images in `public/products/` are **original vector illustrations** generated for this prototype. They are not actual beverage photos, and should be replaced/augmented after product photo shoots. Fruit months are indicative, not real-time stock data.
