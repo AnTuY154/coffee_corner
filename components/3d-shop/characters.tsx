@@ -152,18 +152,19 @@ export function PlayerAvatar({controls,reducedMotion}:{controls:React.RefObject<
 }
 
 /** Customers add life to the scene; paths remain outside the player collision strip. */
-export function WalkingCustomer({reducedMotion}:{reducedMotion:boolean}){
+export function WalkingCustomer({reducedMotion,variant=0}:{reducedMotion:boolean;variant?:number}){
  const root=useRef<THREE.Group>(null);const left=useRef<THREE.Group>(null),right=useRef<THREE.Group>(null);
- useFrame(({clock})=>{if(!root.current)return;const t=reducedMotion?0:clock.elapsedTime*.42;
-  root.current.position.set(-4.0+Math.sin(t)*.42,0,3.6+Math.cos(t)*1.6);
-  root.current.rotation.y=Math.sin(t)*.17;
+ useFrame(({clock})=>{if(!root.current)return;const t=reducedMotion?0:clock.elapsedTime*.42+variant*Math.PI;
+  root.current.position.set((variant?3.95:-4.0)+Math.sin(t)*.65,0,3.6+Math.cos(t)*1.3);
+  // Follow the path tangent rather than sliding sideways across the garden.
+  root.current.rotation.y=reducedMotion?0:Math.atan2(.65*Math.cos(t),-1.3*Math.sin(t));
   const step=reducedMotion?0:Math.sin(clock.elapsedTime*6)*.46;
   if(left.current)left.current.rotation.x=step;if(right.current)right.current.rotation.x=-step;
  });
  return <group ref={root} position={[-4,0,4]} rotation={[0,.2,0]}>
-   <Orb position={[0,1.24,0]} scale={[.33,.46,.25]} color="#ecdfbd"/>
+   <Orb position={[0,1.24,0]} scale={[.33,.46,.25]} color={variant?"#91a88c":"#ecdfbd"}/>
    <Orb position={[0,1.8,0]} scale={[.29,.32,.29]} color="#dab395"/>
-   <Orb position={[0,2.0,0]} scale={[.32,.20,.31]} color="#44342b"/>
+   <Orb position={[0,2.0,0]} scale={[.32,.20,.31]} color={variant?"#584b3a":"#44342b"}/>
    <group ref={left} position={[-.18,.85,0]}><Limb position={[0,-.35,0]} color="#6a8375" length={.7}/></group>
    <group ref={right} position={[.18,.85,0]}><Limb position={[0,-.35,0]} color="#6a8375" length={.7}/></group>
    <Orb position={[-.42,1.23,-.08]} scale={[.13,.36,.17]} color="#ba9068"/>
