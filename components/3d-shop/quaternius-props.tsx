@@ -76,3 +76,37 @@ export function QuaterniusProp({fallback=null,...props}:QuaterniusPropProps){
    <Suspense fallback={fallback}><Model {...props}/></Suspense>
  </AssetBoundary>;
 }
+
+const FLOWER_GLB=`${BASE}/models/quaternius/garden-flowers.glb`;
+const FLOWER_VARIANTS=["Flower_1_Group","Flower_2_Group","Flower_3_Group","Flower_4_Group"] as const;
+
+function FlowerModel({position,height,variant,lowPower}:{
+ position:[number,number,number];height:number;variant:0|1|2|3;lowPower:boolean;
+}){
+ const {scene}=useGLTF(FLOWER_GLB,false,false);
+ const model=useMemo(()=>{
+  const original=scene.getObjectByName(FLOWER_VARIANTS[variant]);
+  if(!original)throw new Error("Quaternius flower model missing: "+FLOWER_VARIANTS[variant]);
+  const copy=original.clone(true);
+  copy.traverse(obj=>{const mesh=obj as THREE.Mesh;if(mesh.isMesh){mesh.castShadow=!lowPower;mesh.receiveShadow=false;}});
+  return copy;
+ },[scene,variant,lowPower]);
+ const bounds=useMemo(()=>{
+  model.updateMatrixWorld(true);
+  const box=new THREE.Box3().setFromObject(model,true);
+  const h=Math.max(.001,box.max.y-box.min.y);
+  const size=height/h;
+  return {size,x:-(box.min.x+box.max.x)*size/2,y:-box.min.y*size,z:-(box.min.z+box.max.z)*size/2};
+ },[model,height]);
+ return <group position={position}>
+  <group position={[bounds.x,bounds.y,bounds.z]} scale={bounds.size}><primitive object={model}/></group>
+ </group>;
+}
+/** Select one real flower mesh from Quaternius's multi-asset GLB; never display all LODs together. */
+export function QuaterniusFlowers({position,height=.62,variant=0,lowPower=false,fallback=null}:{
+ position:[number,number,number];height?:number;variant?:0|1|2|3;lowPower?:boolean;fallback?:ReactNode;
+}){
+ return <AssetBoundary fallback={fallback}>
+  <Suspense fallback={fallback}><FlowerModel position={position} height={height} variant={variant} lowPower={lowPower}/></Suspense>
+ </AssetBoundary>;
+}
