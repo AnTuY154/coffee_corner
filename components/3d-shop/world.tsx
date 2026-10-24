@@ -208,6 +208,7 @@ function ThirdPersonCamera({controls,menuOpen,onNearChange,onArrive}: {
   const nearRef=useRef(false);
   const dest=useMemo(()=>new THREE.Vector3(),[]);
   const target=useMemo(()=>new THREE.Vector3(),[]);
+  const smoothTarget=useMemo(()=>new THREE.Vector3(0,1.83,4),[]);
   useFrame(({camera,size},delta)=>{
     const c=controls.current;if(!c)return;
     const {near,arrived}=stepMovement(c,delta);
@@ -217,12 +218,16 @@ function ThirdPersonCamera({controls,menuOpen,onNearChange,onArrive}: {
       target.set(0,2.65,1.1);
     }else{
       const follow=compact?3.75:4.4;
-      dest.set(c.x+Math.sin(c.yaw)*follow*.40,2.9,c.z+follow);
-      target.set(c.x,1.83,c.z-4.5);
+      const sin=Math.sin(c.yaw),cos=Math.cos(c.yaw);
+      // Orbit behind the player in local heading space, not fixed world +Z.
+      // The shoulder offset rotates with the camera so turns work in either direction.
+      dest.set(c.x+sin*follow+cos*.42,2.7+c.pitch*2.0,c.z+cos*follow-sin*.42);
+      target.set(c.x-sin*4.5,1.83+c.pitch*1.7,c.z-cos*4.5);
     }
     camera.position.lerp(dest,1-Math.exp(-5*Math.min(delta,.06)));
     // The camera looks over the player's shoulder; it is not a first-person view.
-    camera.lookAt(target);
+    smoothTarget.lerp(target,1-Math.exp(-8*Math.min(delta,.06)));
+    camera.lookAt(smoothTarget);
     if(near!==nearRef.current){nearRef.current=near;onNearChange(near);}
     if(arrived)onArrive();
   });
