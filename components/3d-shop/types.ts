@@ -11,6 +11,18 @@ export type ShopControls = {
 export const START_POSITION = { x: 0, z: 9.4 };
 export const COUNTER_RANGE = 3.5;
 export const COUNTER_NEAR_Z = 3.25;
+/** Camera position is a pure function so yaw/pitch orbit can be regression-tested without WebGL. */
+export function cameraAnchor(c: Pick<ShopControls, "x" | "z" | "yaw" | "pitch">, compact: boolean): {
+  position: [number, number, number];
+  lookAt: [number, number, number];
+} {
+  const follow = compact ? 3.75 : 4.4;
+  const sin = Math.sin(c.yaw), cos = Math.cos(c.yaw);
+  return {
+    position: [c.x + sin * follow + cos * .42, 2.7 + c.pitch * 2, c.z + cos * follow - sin * .42],
+    lookAt: [c.x - sin * 4.5, 1.83 + c.pitch * 1.7, c.z - cos * 4.5],
+  };
+}
 export function nearCounter(x: number, z: number): boolean {
   return Math.abs(x) <= COUNTER_RANGE && z <= COUNTER_NEAR_Z;
 }
