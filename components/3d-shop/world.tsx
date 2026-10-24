@@ -216,8 +216,9 @@ function ThirdPersonCamera({controls,menuOpen,onNearChange,onArrive}: {
     const {near,arrived}=stepMovement(c,delta);
     const compact=size.width<680;
     if(menuOpen){
-      dest.set(0,compact?3.25:3.02,compact?8.15:7.5);
-      target.set(0,2.65,1.1);
+      // A world-space kiosk to the right of the cat leaves the counter visible.
+      dest.set(compact?2.4:2.45,compact?3.25:3.07,compact?8.25:7.4);
+      target.set(2.35,2.65,1.1);
     }else{
       const anchor=cameraAnchor(c,compact);
       dest.set(...anchor.position);
