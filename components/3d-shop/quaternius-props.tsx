@@ -3,10 +3,10 @@ import {Component, Suspense, useMemo, type ReactNode} from "react";
 import {useGLTF} from "@react-three/drei";
 import * as THREE from "three";
 
-export type QuaterniusPropKind="garden-chair"|"garden-armchair"|"garden-couch"|"shop-bookcase"|"houseplant"|"waste-bin"|"garden-rug";
+export type QuaterniusPropKind="garden-chair"|"garden-armchair"|"garden-couch"|"shop-bookcase"|"houseplant"|"waste-bin"|"garden-rug"|"fruit-crate";
 export type QuaterniusPropProps={
  kind:QuaterniusPropKind;position:[number,number,number];
- height?:number;width?:number;rotation?:number;
+ height?:number;width?:number;size?:[number,number,number];rotation?:number;
  lowPower?:boolean;fallback?:ReactNode;
 };
 const BASE=process.env.NEXT_PUBLIC_BASE_PATH||"";
@@ -18,10 +18,11 @@ const PATHS:Record<QuaterniusPropKind,string>={
  houseplant:`${BASE}/models/quaternius/houseplant.glb`,
  "waste-bin":`${BASE}/models/quaternius/waste-bin.glb`,
  "garden-rug":`${BASE}/models/quaternius/garden-rug.glb`,
+ "fruit-crate":`${BASE}/models/quaternius/fruit-crate.glb`,
 };
 
 /** Static asset instances are clones: never rescale or recolour Drei's shared GLTF scene. */
-function Model({kind,position,height,width,rotation=0,lowPower=false}:QuaterniusPropProps){
+function Model({kind,position,height,width,size,rotation=0,lowPower=false}:QuaterniusPropProps){
  // GLBs use EXT_meshopt_compression: the third argument MUST be true.
  const {scene}=useGLTF(PATHS[kind],false,true);
  const model=useMemo(()=>{
@@ -33,11 +34,14 @@ function Model({kind,position,height,width,rotation=0,lowPower=false}:Quaternius
     mesh.receiveShadow=!lowPower;
     const original=Array.isArray(mesh.material)?mesh.material:[mesh.material];
     // Give Quaternius's blue lounge seating a warm sage upholstery without touching cached materials.
-    if(kind==="garden-chair"||kind==="garden-couch"){
+    if(kind==="garden-chair"||kind==="garden-couch"||kind==="fruit-crate"){
      const altered=original.map(material=>{
       if(!(material instanceof THREE.MeshStandardMaterial))return material;
       const duplicate=material.clone();
-      if(/chair|couch_blue/i.test(duplicate.name))duplicate.color.set("#88a787");
+      if(kind==="fruit-crate"){
+       if(/darkwood/i.test(duplicate.name))duplicate.color.set("#875d40");
+       else if(/^wood$/i.test(duplicate.name))duplicate.color.set("#b88960");
+      }else if(/chair|couch_blue/i.test(duplicate.name))duplicate.color.set("#88a787");
       return duplicate;
      });
      mesh.material=Array.isArray(mesh.material)?altered:altered[0];
@@ -49,15 +53,23 @@ function Model({kind,position,height,width,rotation=0,lowPower=false}:Quaternius
  const fit=useMemo(()=>{
   model.updateMatrixWorld(true);
   const bounds=new THREE.Box3().setFromObject(model,true);
-  const size=bounds.getSize(new THREE.Vector3());
-  const selectedSize=width?Math.max(size.x,size.z):size.y;
-  const scale=(width??height??1)/Math.max(selectedSize,.001);
+  const sizeOf=bounds.getSize(new THREE.Vector3());
+  const selectedSize=width?Math.max(sizeOf.x,sizeOf.z):sizeOf.y;
+  const uniform=(width??height??1)/Math.max(selectedSize,.001);
+  // Wooden produce bins are intentionally shallow. Scale authored geometry to the bin's
+  // usable footprint rather than applying one square/cube dimension to every axis.
+  const scales:[number,number,number]=size?[
+   size[0]/Math.max(sizeOf.x,.001),
+   size[1]/Math.max(sizeOf.y,.001),
+   size[2]/Math.max(sizeOf.z,.001)
+  ]:[uniform,uniform,uniform];
   return {
-   scale, x:-(bounds.min.x+bounds.max.x)*.5*scale,
-   y:-bounds.min.y*scale,
-   z:-(bounds.min.z+bounds.max.z)*.5*scale
+   scale:scales,
+   x:-(bounds.min.x+bounds.max.x)*.5*scales[0],
+   y:-bounds.min.y*scales[1],
+   z:-(bounds.min.z+bounds.max.z)*.5*scales[2]
   };
- },[model,width,height]);
+ },[model,width,height,size]);
  return <group position={position} rotation={[0,rotation,0]}>
    <group position={[fit.x,fit.y,fit.z]} scale={fit.scale}>
      <primitive object={model}/>
