@@ -22,7 +22,8 @@ const PATHS:Record<QuaterniusPropKind,string>={
 
 /** Static asset instances are clones: never rescale or recolour Drei's shared GLTF scene. */
 function Model({kind,position,height,width,rotation=0,lowPower=false}:QuaterniusPropProps){
- const {scene}=useGLTF(PATHS[kind],false,false);
+ // GLBs use EXT_meshopt_compression: the third argument MUST be true.
+ const {scene}=useGLTF(PATHS[kind],false,true);
  const model=useMemo(()=>{
   const copy=scene.clone(true);
   copy.traverse(object=>{
@@ -83,7 +84,7 @@ const FLOWER_VARIANTS=["Flower_1_Group","Flower_2_Group","Flower_3_Group","Flowe
 function FlowerModel({position,height,variant,lowPower}:{
  position:[number,number,number];height:number;variant:0|1|2|3;lowPower:boolean;
 }){
- const {scene}=useGLTF(FLOWER_GLB,false,false);
+ const {scene}=useGLTF(FLOWER_GLB,false,true);
  const model=useMemo(()=>{
   const original=scene.getObjectByName(FLOWER_VARIANTS[variant]);
   if(!original)throw new Error("Quaternius flower model missing: "+FLOWER_VARIANTS[variant]);
@@ -108,5 +109,64 @@ export function QuaterniusFlowers({position,height=.62,variant=0,lowPower=false,
 }){
  return <AssetBoundary fallback={fallback}>
   <Suspense fallback={fallback}><FlowerModel position={position} height={height} variant={variant} lowPower={lowPower}/></Suspense>
+ </AssetBoundary>;
+}
+
+/** Single-mesh selections from the official CC0 Stylized Nature MegaKit.
+ * Do not mount the whole family scene: it includes every variant and .lod1 duplicate.
+ */
+export type QuaterniusNatureKind = "rock" | "grass" | "clover";
+const NATURE_PATHS: Record<QuaterniusNatureKind, string> = {
+ rock: `${BASE}/models/quaternius/garden-rocks.glb`,
+ grass: `${BASE}/models/quaternius/garden-grass.glb`,
+ clover: `${BASE}/models/quaternius/garden-clover.glb`,
+};
+const NATURE_VARIANTS: Record<QuaterniusNatureKind, readonly string[]> = {
+ rock: ["Rock_Big_1","Rock_Big_2","Rock_Medium_1","Rock_Medium_3"],
+ grass: ["Grass_Common_Short","Grass_Wide_Tall","Grass_Wispy_Short","Grass_Wispy_Tall"],
+ clover: ["Clover_1","Clover_2"],
+};
+type NatureProps = {
+ kind: QuaterniusNatureKind;
+ position: [number,number,number];
+ height: number;
+ variant?: 0|1|2|3;
+ rotation?: number;
+ lowPower?: boolean;
+ fallback?: ReactNode;
+};
+function NatureModel({kind,position,height,variant=0,rotation=0,lowPower=false}:NatureProps){
+ const {scene}=useGLTF(NATURE_PATHS[kind],false,true);
+ const model=useMemo(()=>{
+  const key=NATURE_VARIANTS[kind][variant % NATURE_VARIANTS[kind].length];
+  const original=scene.getObjectByName(key);
+  if(!original)throw new Error("Quaternius "+kind+" variant missing: "+key);
+  const copy=original.clone(true);
+  copy.traverse(obj=>{
+   const mesh=obj as THREE.Mesh;
+   if(!mesh.isMesh)return;
+   mesh.castShadow=!lowPower && kind==="rock";
+   mesh.receiveShadow=!lowPower && kind==="rock";
+  });
+  return copy;
+ },[scene,kind,variant,lowPower]);
+ const fit=useMemo(()=>{
+  model.updateMatrixWorld(true);
+  const box=new THREE.Box3().setFromObject(model,true);
+  const scale=height/Math.max(box.max.y-box.min.y,.001);
+  return {
+   scale,
+   x:-(box.min.x+box.max.x)*scale*.5,
+   y:-box.min.y*scale,
+   z:-(box.min.z+box.max.z)*scale*.5
+  };
+ },[model,height]);
+ return <group position={position} rotation={[0,rotation,0]}>
+  <group position={[fit.x,fit.y,fit.z]} scale={fit.scale}><primitive object={model}/></group>
+ </group>;
+}
+export function QuaterniusNature({fallback=null,...props}:NatureProps){
+ return <AssetBoundary fallback={fallback}>
+  <Suspense fallback={fallback}><NatureModel {...props}/></Suspense>
  </AssetBoundary>;
 }

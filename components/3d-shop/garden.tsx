@@ -3,7 +3,7 @@ import {useRef} from "react";
 import {useFrame} from "@react-three/fiber";
 import * as THREE from "three";
 import {GardenModel} from "./garden-models";
-import {QuaterniusProp,QuaterniusFlowers} from "./quaternius-props";
+import {QuaterniusProp,QuaterniusFlowers,QuaterniusNature} from "./quaternius-props";
 import {WEATHER_PROFILE,type WeatherMode} from "./weather";
 
 function Wood({position,size,color="#a77a4d"}:{position:[number,number,number];size:[number,number,number];color?:string}){
@@ -44,6 +44,18 @@ export function GardenDetails({reducedMotion,lowPower,weather}:{reducedMotion:bo
   <GardenModel kind="bush" position={[-7.15,0,7]} height={1.25} weather={weather} reducedMotion={reducedMotion} lowPower={lowPower} phase={.1}/>
   <GardenModel kind="bush" position={[7.2,0,7.1]} height={1.18} weather={weather} reducedMotion={reducedMotion} lowPower={lowPower} phase={2}/>
   {!lowPower&&<GardenModel kind="bush" position={[-9.8,0,1]} height={1.4} weather={weather} reducedMotion={reducedMotion} lowPower={lowPower} phase={4}/>}
+  {/* Quaternius CC0 garden rocks, clovers and grass: each variant is an authored GLB mesh. */}
+  <QuaterniusNature kind="rock" position={[-9.2,0,7.8]} height={1.05} variant={0} lowPower={lowPower} rotation={.55}/>
+  <QuaterniusNature kind="rock" position={[9.0,0,7.75]} height={.95} variant={1} lowPower={lowPower} rotation={-.4}/>
+  {!lowPower&&<QuaterniusNature kind="rock" position={[7.6,0,-.3]} height={.68} variant={3} rotation={.9}/>}
+  <QuaterniusNature kind="grass" position={[-6.1,0,7.6]} height={.44} variant={0} lowPower={lowPower}/>
+  <QuaterniusNature kind="grass" position={[6.2,0,7.9]} height={.45} variant={2} lowPower={lowPower}/>
+  {!lowPower&&<>
+   <QuaterniusNature kind="grass" position={[-5.25,0,6.25]} height={.6} variant={3} rotation={.65}/>
+   <QuaterniusNature kind="grass" position={[5.5,0,6.45]} height={.53} variant={1} rotation={-.5}/>
+  </>}
+  <QuaterniusNature kind="clover" position={[-5.7,0,8.7]} height={.2} variant={0} lowPower={lowPower}/>
+  <QuaterniusNature kind="clover" position={[5.9,0,8.8]} height={.2} variant={1} lowPower={lowPower}/>
   {/* Cafe pergola / outdoor seating left of the shop */}
   {[-10,-6.9].map(x=><Wood key={x} position={[x,2.0,1.3]} size={[.19,4,.19]}/>)}
   {[-10,-6.9].map(x=><Wood key={x} position={[x,2.0,5.4]} size={[.19,4,.19]}/>)}

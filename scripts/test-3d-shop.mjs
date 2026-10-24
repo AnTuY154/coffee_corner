@@ -106,6 +106,24 @@ const flowerJson=JSON.parse(flowers.toString('utf8',20,20+flowers.readUInt32LE(1
 const flowerNames=new Set(flowerJson.nodes.map(n=>n.name));
 assert(flowerNames.has('Flower_1_Group')&&flowerNames.has('Flower_4_Group'),'flower GLB must provide named group meshes');
 assert(quaternius.includes('scene.getObjectByName(FLOWER_VARIANTS[variant])'),'loader must select exact flower, not all meshes and LODs');
+assert(quaternius.includes('useGLTF(PATHS[kind],false,true)'),'meshopt-compressed prop GLBs must enable their decoder');
+assert(quaternius.includes('useGLTF(FLOWER_GLB,false,true)'),'meshopt-compressed flower GLB must enable its decoder');
+assert(quaternius.includes('useGLTF(NATURE_PATHS[kind],false,true)'),'meshopt-compressed grass and rock GLBs must enable their decoder');
+for(const [name, requiredNames] of Object.entries({
+ "garden-grass.glb":["Grass_Common_Short","Grass_Wispy_Tall"],
+ "garden-rocks.glb":["Rock_Big_1","Rock_Medium_3"],
+ "garden-clover.glb":["Clover_1","Clover_2"]
+})){
+ const bytes=readFileSync(resolve(root,'public/models/quaternius',name));
+ assert.equal(bytes.toString('ascii',0,4),'glTF','real binary: '+name);
+ assert.equal(bytes.readUInt32LE(8),bytes.length,'not truncated: '+name);
+ const json=JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)));
+ assert(json.extensionsRequired?.includes('EXT_meshopt_compression'),'decoder needed for '+name);
+ const nodes=new Set(json.nodes?.map(node=>node.name));
+ for(const node of requiredNames)assert(nodes.has(node),'missing Quaternius '+node);
+ assert(sources.includes(name),'GLB provenance documented: '+name);
+}
+assert(file('components/3d-shop/garden.tsx').includes('<QuaterniusNature'),'garden renders real licensed nature GLBs');
 assert(file('components/3d-shop/garden.tsx').includes('<QuaterniusFlowers'),'garden renders authored GLB flowers');
 assert(quaternius.includes('scene.clone(true)'),'GLB instances must not mutate the shared scene');
 assert(quaternius.includes('NEXT_PUBLIC_BASE_PATH'),'GLBs should load on Pages subpaths');
