@@ -16,6 +16,8 @@ Original model catalogue: https://poly.pizza (individual IDs below)
 | `waste-bin.glb` | `trash.glb` | `i7HDuYDLkx` | Customer-area recycling bin |
 | `garden-rug.glb` | `rug_round.glb` | `ZYBzMHnSbM` | Pergola floor decoration |
 
+**Additional Nature MegaKit GLBs (grass, rocks and clovers):** `garden-grass.glb`, `garden-rocks.glb` and `garden-clover.glb`, from the same Quaternius **Stylized Nature MegaKit** CC0 family exports. Source binaries: https://github.com/tilakpatell/tilakpatell.com/tree/main/public/kit/naturemega (`grass.glb`, `rock.glb`, `clover.glb`). Pack manifest declares `licence: CC0-1.0`: https://github.com/tilakpatell/tilakpatell.com/blob/main/public/kit/naturemega/index.json. The loader clones only a named variant node in each family, without duplicated `.lod1` meshes. Models are locally hosted and only a limited number of plants render on mobile.
+
 **Additional Nature MegaKit GLB:** `garden-flowers.glb`, from Quaternius **Stylized Nature MegaKit** family-export (`Flower_1_Group` through `Flower_4_Group`). Source: https://github.com/tilakpatell/tilakpatell.com/blob/main/public/kit/naturemega/flower.glb. Pack manifest: https://github.com/tilakpatell/tilakpatell.com/blob/main/public/kit/naturemega/index.json (`licence: CC0-1.0`, attributed to Quaternius). Original pack: https://quaternius.com/packs/stylizednaturemegakit.html. The multi-model GLB is not rendered wholesale; a specifically named flower-group mesh is cloned, avoiding the duplicate `.lod1` geometry. This replaces six old flower clusters in the playable garden.
 
 **License scope:** This manifest points to previously published, individually tagged CC0 assets. Do not assume new releases of Quaternius packs have identical redistribution rights: the current Quaternius Asset License may differ from historical CC0. Import only verified CC0 binaries or obtain permission when adding new models.
@@ -26,7 +28,7 @@ Original model catalogue: https://poly.pizza (individual IDs below)
 - Model boundaries are computed from true GLB geometry. Props use a floor-aligned and centred group; furniture sizes are normalised by original height, rugs by original footprint width.
 - Shared GLTF cached scenes are never transformed. Static object instances clone their `scene` so multiple positions do not move each other. Per-model Suspense/error boundaries maintain gameplay if a particular GLB cannot load.
 - Quaternius upholstery materials are palette-shifted toward sage green for visual consistency; original shared GLTF materials remain untouched.
-- GLBs use `EXT_meshopt_compression`, and the bookcase also uses `EXT_texture_webp`. Validate with a real WebGL browser after build; TypeScript/build tests alone cannot confirm runtime GLTF decoding or photographic quality.
+- GLBs use `EXT_meshopt_compression`, and the bookcase also uses `EXT_texture_webp`. All Quaternius prop, flower and nature calls now enable `useGLTF(path, false, true)` to register the bundled Meshopt decoder. Build/static tests inspect this setting and the binary extension headers. Validate real WebGL/browser appearance and FPS separately; those are not certified by CI.
 - Maintain mobile-friendly limited shadows. Models and materials can be shared across the few visible props.
 
 ### Still intentionally procedural
