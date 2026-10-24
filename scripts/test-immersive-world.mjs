@@ -30,7 +30,7 @@ assert.match(styles,/\.ve-immersive-fullscreen \.sr-only\{position:absolute!impo
 assert.match(characters,/Rounded hoodie and oversized chibi head/,'player has an intentionally chibi silhouette');
 assert.match(characters,/row=>\[-2,-1,0,1,2\]\.map\(col=>/,'player hair must be actual 3D geometry');
 assert.match(world,/HangingVines lowPower/,'cinematic foliage frames the storefront');
-assert.match(world,/SkyClouds lowPower/,'sky receives real 3D clouds');
+assert.match(world,/WeatherSystem mode=\{weather\}/,'sky, rain and sun follow weather simulation');
 assert.match(menu,/seasonOrder\.map\(key =>/,'four seasons are directly selectable');
 assert.match(menu,/products\.filter\(p =>/,'catalogue is sourced from 24 real products');
 assert.match(menu,/onClick=\{\(\) => \{ add\(product\.id\)/,'add-to-cart works from 2D cards');
@@ -46,5 +46,11 @@ assert.match(characters,/juiceStream\.current\.visible/,'cat pour animation has 
 assert.match(characters,/strideWeight\.current=THREE\.MathUtils\.damp/,'player walk transitions have damping');
 assert.match(world,/variant={1}/,'desktop should render a second customer');
 assert.match(immersive, /onApproach=\{goToCounter\}/,'touch navigation must exist');
-assert.match(menu,/onCheckout\(\)/,'2D basket can proceed to existing checkout');
+assert.match(menu,/setView\("checkout"\)/,'2D basket opens same-scene checkout');
+assert.doesNotMatch(immersive,/router\.push/,'fullscreen shop never navigates to a checkout page');
+const checkout=src('components/3d-shop/in-scene-checkout.tsx');
+assert.match(checkout,/fetch\("\/api\/orders"/,'checkout still invokes the secure real backend');
+assert.match(checkout,/setConfirmed\(payload\.orderId\)/,'order confirmation is real');
+assert.match(garden,/GardenModel kind="tree-a"/,'real licensed GLB trees replace procedural geometry');
+assert.match(world,/HangingVines lowPower=\{lowPower\} weather=\{weather\}/,'wind sways hanging plants');
 console.log('PASS: immersive WebGL world, real GLB characters, accessible 2D catalogue/menu, cart and mobile game controls.');
