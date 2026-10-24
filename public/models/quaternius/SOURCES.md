@@ -16,6 +16,8 @@ Original model catalogue: https://poly.pizza (individual IDs below)
 | `waste-bin.glb` | `trash.glb` | `i7HDuYDLkx` | Customer-area recycling bin |
 | `garden-rug.glb` | `rug_round.glb` | `ZYBzMHnSbM` | Pergola floor decoration |
 
+**Additional Nature MegaKit GLB:** `garden-flowers.glb`, from Quaternius **Stylized Nature MegaKit** family-export (`Flower_1_Group` through `Flower_4_Group`). Source: https://github.com/tilakpatell/tilakpatell.com/blob/main/public/kit/naturemega/flower.glb. Pack manifest: https://github.com/tilakpatell/tilakpatell.com/blob/main/public/kit/naturemega/index.json (`licence: CC0-1.0`, attributed to Quaternius). Original pack: https://quaternius.com/packs/stylizednaturemegakit.html. The multi-model GLB is not rendered wholesale; a specifically named flower-group mesh is cloned, avoiding the duplicate `.lod1` geometry. This replaces six old flower clusters in the playable garden.
+
 **License scope:** This manifest points to previously published, individually tagged CC0 assets. Do not assume new releases of Quaternius packs have identical redistribution rights: the current Quaternius Asset License may differ from historical CC0. Import only verified CC0 binaries or obtain permission when adding new models.
 
 ### Geometry / interaction constraints
