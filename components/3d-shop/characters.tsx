@@ -22,29 +22,57 @@ function Ear({x,rotation=0}:{x:number;rotation?:number}){
 export function CatBarista({reducedMotion=false}:{reducedMotion?:boolean}){
  const root=useRef<THREE.Group>(null);const paw=useRef<THREE.Group>(null);const tail=useRef<THREE.Group>(null);
  const eyelids=useRef<THREE.Group>(null);
+ const pitcher=useRef<THREE.Group>(null);const juiceStream=useRef<THREE.Mesh>(null);
  useFrame(({clock})=>{
    if(reducedMotion)return;
    const t=clock.getElapsedTime();
    if(root.current)root.current.position.y=1.72+Math.sin(t*1.5)*.027;
    if(paw.current)paw.current.rotation.z=-.19+Math.sin(t*2.3)*.18;
+   // A short, repeated pour is performed with an actual 3D pitcher and juice stream.
+   const pouring=Math.max(0,Math.sin(t*1.15));
+   if(pitcher.current)pitcher.current.rotation.z=-.25-pouring*.38;
+   if(juiceStream.current){juiceStream.current.visible=pouring>.55;juiceStream.current.scale.y=Math.max(.03,(pouring-.55)*2);}
    if(tail.current)tail.current.rotation.y=Math.sin(t*1.6)*.3;
-   if(eyelids.current){const blink=(t%5.2)>5.02?1:.01;eyelids.current.scale.y=blink;}
+   if(eyelids.current){const phase=t%5.2;
+     const blink=phase>4.92 ? Math.sin(((phase-4.92)/.28)*Math.PI)**2 : .01;
+     eyelids.current.scale.y=Math.max(.01,blink);}
  });
  return <group ref={root} position={[0,1.72,-3.45]}>
    <Orb position={[0,.3,0]} scale={[.62,.77,.48]} color="#b8a79c"/>
    <Orb position={[0,.26,.42]} scale={[.42,.47,.10]} color="#f0e0cc"/>
+   {/* Sculpted layered coat silhouette: lightweight meshes rather than alpha fur cards. */}
+   {[-1,1].map(side=>Array.from({length:5},(_,i)=><mesh key={`${side}-${i}`} castShadow position={[side*(.43+i*.016),.64-i*.21,-.055]} rotation={[0,0,side*(.36+i*.10)]}>
+     <coneGeometry args={[.16-i*.012,.36,5]}/><M color={i%2?"#ae9a8f":"#c2afa1"}/>
+   </mesh>))}
    {/* Actual green apron, straps and leaf badge */}
    <mesh castShadow position={[0,.22,.5]}><boxGeometry args={[.77,.8,.06]}/><M color="#246044"/></mesh>
    <Orb position={[0,.28,.557]} scale={[.10,.065,.025]} color="#d8e5ae"/>
+   <mesh position={[0,-.005,.545]}><boxGeometry args={[.33,.25,.035]}/><M color="#1a4c38"/></mesh>
+   <mesh position={[0,.29,.586]}><sphereGeometry args={[.033,10,8]}/><meshStandardMaterial color="#f4dc9a" metalness={.5} roughness={.26}/></mesh>
    {[-.35,.35].map(x=><mesh key={x} position={[x,.75,.27]} rotation={[0,0,x]}><boxGeometry args={[.085,.62,.07]}/><M color="#195238"/></mesh>)}
-   <group ref={tail} position={[-.5,.01,-.2]} rotation={[0,0,.5]}><Orb position={[-.25,-.05,-.1]} scale={[.16,.5,.16]} color="#ad998d"/></group>
+   <group ref={tail} position={[-.5,.01,-.2]} rotation={[0,0,.5]}>
+     <Orb position={[-.22,-.09,-.1]} scale={[.18,.41,.17]} color="#ad998d"/>
+     <Orb position={[-.4,.21,-.15]} scale={[.15,.34,.14]} color="#c2b0a2"/>
+     <Orb position={[-.46,.44,-.15]} scale={[.14,.15,.14]} color="#9c8a82"/>
+   </group>
    <group position={[0,1.16,0]}>
      <Ear x={-.38} rotation={.26}/><Ear x={.38} rotation={-.26}/>
      <Orb position={[0,.12,0]} scale={[.68,.57,.58]} color="#bda99c"/>
      <Orb position={[0,-.15,.45]} scale={[.49,.25,.22]} color="#e3cdb8"/>
+     {/* Full round cheeks, softly marked brow and forehead fur; all real geometry. */}
+     {[-1,1].map(side=><group key={side}>
+       <Orb position={[side*.42,-.19,.32]} scale={[.27,.23,.31]} color="#e6d3be"/>
+       <Orb position={[side*.30,.45,.38]} scale={[.23,.085,.12]} color="#a89389"/>
+       {Array.from({length:3},(_,i)=><mesh key={i} position={[side*(.54+i*.055),-.02-i*.12,.22]} rotation={[0,0,side*(.65+i*.2)]}>
+         <coneGeometry args={[.10,.27-i*.03,5]}/><M color={i%2?"#c0ad9e":"#b19d92"}/>
+       </mesh>)}
+     </group>)}
+     <Orb position={[0,.32,.51]} scale={[.12,.19,.085]} color="#ccb5a4"/>
      {/* Forward-facing amber eyes, dark pupils, warm highlights */}
      {[-.29,.29].map(x=><group key={x} position={[x,.16,.503]}>
-       <Orb scale={[.155,.19,.07]} color="#f0bc63"/>
+       <Orb scale={[.172,.205,.077]} color="#58463a"/>
+       <mesh position={[0,0,.038]} scale={[.157,.184,.065]}><sphereGeometry args={[1,20,16]}/><meshPhysicalMaterial color="#e5a84d" roughness={.16} clearcoat={.82} clearcoatRoughness={.08}/></mesh>
+       <Orb position={[.04,-.025,.089]} scale={[.052,.102,.009]} color="#f0bc63"/>
        <Orb position={[.015,0,.065]} scale={[.066,.13,.028]} color="#372c22"/>
        <Orb position={[-.04,.07,.095]} scale={[.027,.035,.014]} color="#fff9e5"/>
      </group>)}
@@ -60,10 +88,17 @@ export function CatBarista({reducedMotion=false}:{reducedMotion?:boolean}){
    <group ref={paw} position={[-.50,.62,.25]} rotation={[0,0,-.19]}><Limb position={[-.09,-.05,.1]} rotation={[0,0,-1]} length={.57} color="#baa699"/><Orb position={[-.51,-.24,.17]} scale={[.17,.15,.16]} color="#d1bdb0"/></group>
    <group position={[.47,.53,.24]}><Limb position={[.1,-.06,.07]} rotation={[0,0,1.05]} length={.59} color="#b6a396"/><Orb position={[.50,-.30,.18]} scale={[.18,.15,.17]} color="#d5c0b2"/></group>
    {/* Juice pitcher: follows the cat's preparation gesture */}
-   <group position={[-.86,.32,.77]} rotation={[0,0,-.35]}>
+   <group ref={pitcher} position={[-.86,.32,.77]} rotation={[0,0,-.35]}>
      <mesh><cylinderGeometry args={[.22,.17,.39,12]}/><meshPhysicalMaterial color="#c9eee0" transparent opacity={.47} roughness={.12}/></mesh>
      <mesh position={[0,-.085,0]}><cylinderGeometry args={[.16,.15,.18,12]}/><M color="#7ab065"/></mesh>
      <mesh position={[.26,0,0]} rotation={[0,0,Math.PI/2]}><torusGeometry args={[.16,.035,7,12]}/><M color="#dbeadd"/></mesh>
+   </group>
+   <mesh ref={juiceStream} position={[-1.14,-.04,.97]} visible={false}>
+     <cylinderGeometry args={[.028,.015,.54,7]}/><meshPhysicalMaterial color="#e9a74c" transparent opacity={.73} roughness={.22}/>
+   </mesh>
+   <group position={[-1.13,-.12,1.0]}>
+     <mesh><cylinderGeometry args={[.21,.15,.31,16]}/><meshPhysicalMaterial color="#f2e9cf" transparent opacity={.7} roughness={.18}/></mesh>
+     <mesh position={[0,-.08,0]}><cylinderGeometry args={[.14,.135,.13,16]}/><M color="#edb356"/></mesh>
    </group>
  </group>;
 }
@@ -91,16 +126,19 @@ function Person({shirt="#efe5ce",pants="#55795e",backpack=false}:{shirt?:string;
 /** Visible third-person avatar controlled by the exact same position and movement state as the camera. */
 export function PlayerAvatar({controls,reducedMotion}:{controls:React.RefObject<ShopControls>;reducedMotion:boolean}){
  const root=useRef<THREE.Group>(null);const left=useRef<THREE.Group>(null),right=useRef<THREE.Group>(null),armL=useRef<THREE.Group>(null),armR=useRef<THREE.Group>(null);
- useFrame(({clock})=>{
+ const strideWeight=useRef(0);
+ useFrame(({clock},delta)=>{
    const c=controls.current;if(!c||!root.current)return;
    const moving=!c.locked&&(c.autoWalk||c.keys.size>0);
    root.current.position.set(c.x,0,c.z);root.current.rotation.y=Math.PI+c.yaw;
-   const stride=moving&&!reducedMotion?Math.sin(clock.elapsedTime*9)*.55:0;
+   // Damped locomotion prevents legs snapping between walk and idle on key release.
+   strideWeight.current=THREE.MathUtils.damp(strideWeight.current,moving&&!reducedMotion?1:0,10,Math.min(delta,.1));
+   const stride=Math.sin(clock.elapsedTime*9)*.55*strideWeight.current;
    if(left.current)left.current.rotation.x=stride;
    if(right.current)right.current.rotation.x=-stride;
    if(armL.current)armL.current.rotation.x=-stride*.65;
    if(armR.current)armR.current.rotation.x=stride*.65;
-   root.current.position.y=!reducedMotion&&moving?Math.abs(Math.sin(clock.elapsedTime*9))*.025:0;
+   root.current.position.y=reducedMotion?0:Math.abs(Math.sin(clock.elapsedTime*9))*.027*strideWeight.current;
  });
  return <group ref={root} position={[0,0,9.4]}>
    <Orb position={[0,1.2,0]} scale={[.35,.51,.26]} color="#eee9d5"/>
@@ -114,18 +152,19 @@ export function PlayerAvatar({controls,reducedMotion}:{controls:React.RefObject<
 }
 
 /** Customers add life to the scene; paths remain outside the player collision strip. */
-export function WalkingCustomer({reducedMotion}:{reducedMotion:boolean}){
+export function WalkingCustomer({reducedMotion,variant=0}:{reducedMotion:boolean;variant?:number}){
  const root=useRef<THREE.Group>(null);const left=useRef<THREE.Group>(null),right=useRef<THREE.Group>(null);
- useFrame(({clock})=>{if(!root.current)return;const t=reducedMotion?0:clock.elapsedTime*.42;
-  root.current.position.set(-4.0+Math.sin(t)*.42,0,3.6+Math.cos(t)*1.6);
-  root.current.rotation.y=Math.sin(t)*.17;
+ useFrame(({clock})=>{if(!root.current)return;const t=reducedMotion?0:clock.elapsedTime*.42+variant*Math.PI;
+  root.current.position.set((variant?3.95:-4.0)+Math.sin(t)*.65,0,3.6+Math.cos(t)*1.3);
+  // Follow the path tangent rather than sliding sideways across the garden.
+  root.current.rotation.y=reducedMotion?0:Math.atan2(.65*Math.cos(t),-1.3*Math.sin(t));
   const step=reducedMotion?0:Math.sin(clock.elapsedTime*6)*.46;
   if(left.current)left.current.rotation.x=step;if(right.current)right.current.rotation.x=-step;
  });
  return <group ref={root} position={[-4,0,4]} rotation={[0,.2,0]}>
-   <Orb position={[0,1.24,0]} scale={[.33,.46,.25]} color="#ecdfbd"/>
+   <Orb position={[0,1.24,0]} scale={[.33,.46,.25]} color={variant?"#91a88c":"#ecdfbd"}/>
    <Orb position={[0,1.8,0]} scale={[.29,.32,.29]} color="#dab395"/>
-   <Orb position={[0,2.0,0]} scale={[.32,.20,.31]} color="#44342b"/>
+   <Orb position={[0,2.0,0]} scale={[.32,.20,.31]} color={variant?"#584b3a":"#44342b"}/>
    <group ref={left} position={[-.18,.85,0]}><Limb position={[0,-.35,0]} color="#6a8375" length={.7}/></group>
    <group ref={right} position={[.18,.85,0]}><Limb position={[0,-.35,0]} color="#6a8375" length={.7}/></group>
    <Orb position={[-.42,1.23,-.08]} scale={[.13,.36,.17]} color="#ba9068"/>

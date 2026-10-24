@@ -25,10 +25,10 @@ function LeafyTree({position,scale=1,reducedMotion}:{position:[number,number,num
    </group>
   </group>;
 }
-function GardenLamp({position}:{position:[number,number,number]}){
+function GardenLamp({position,illuminate=false}:{position:[number,number,number];illuminate?:boolean}){
  return <group position={position}>
   <mesh><sphereGeometry args={[.14,10,8]}/><meshBasicMaterial color="#fff4c7"/></mesh>
-  <pointLight color="#ffdb8f" intensity={.55} distance={3}/>
+  {illuminate&&<pointLight color="#ffdb8f" intensity={.55} distance={4.5}/>}
  </group>;
 }
 export function GardenDetails({reducedMotion,lowPower}:{reducedMotion:boolean;lowPower:boolean}){
@@ -59,7 +59,7 @@ export function GardenDetails({reducedMotion,lowPower}:{reducedMotion:boolean;lo
   <mesh position={[0,5.17,5.8]} rotation={[0,0,-.03]}><cylinderGeometry args={[.018,.018,15.2,5]}/><meshStandardMaterial color="#5a5942"/></mesh>
   {Array.from({length:lowPower?7:13},(_,i)=>{
     const x=lowPower?-5.8+i*1.9:-6.5+i*1.09;
-    return <GardenLamp key={i} position={[x,5.17+.03*x,5.8]}/>;
+    return <GardenLamp key={i} position={[x,5.17+.03*x,5.8]} illuminate={!lowPower&&(i===3||i===9)}/>;
   })}
  </group>;
 }
