@@ -191,8 +191,39 @@ function ShopArchitecture({onCounterInteract,lowPower}:{onCounterInteract:()=>vo
       <circleGeometry args={[.26+(i%3)*.05,9]}/><meshStandardMaterial color="#d0cfb4"/>
     </mesh>)}
     <ambientLight intensity={.55}/><hemisphereLight color="#fff9d8" groundColor="#617c50" intensity={.95}/>
-    <directionalLight position={[-5,10,5]} intensity={2.0} color="#fff4da" castShadow={!lowPower} shadow-mapSize={[1024,1024]} shadow-camera-left={-12} shadow-camera-right={12} shadow-camera-top={12} shadow-camera-bottom={-12}/>
+    <directionalLight position={[-5,10,5]} intensity={2.0} color="#fff4da" castShadow={!lowPower} shadow-normalBias={.026} shadow-mapSize={[1024,1024]} shadow-camera-left={-12} shadow-camera-right={12} shadow-camera-top={12} shadow-camera-bottom={-12}/>
   </group>;
+}
+
+/** Lightweight puffy world-space clouds add depth without a post-processing pass. */
+function SkyClouds({lowPower}:{lowPower:boolean}){
+ const positions:[number,number,number][]=[[-12,10,-17],[8,11,-23],[18,9,-15]];
+ return <group>
+   {positions.slice(0,lowPower?2:3).map((p,i)=><group key={i} position={p}>
+     {[-1,0,1].map((k)=><mesh key={k} position={[k*.95,(k===0?.35:0),0]} scale={[1.45,k===0?.94:.68,.65]}>
+       <sphereGeometry args={[1,12,10]}/><meshBasicMaterial color="#fcf8e9" fog={false}/>
+     </mesh>)}
+   </group>)}
+ </group>;
+}
+/** Hanging plants frame the kiosk instead of sitting across the middle of the camera. */
+function HangingVines({lowPower}:{lowPower:boolean}){
+ return <group>
+   {[-5.1,5.1].flatMap((x,side)=>Array.from({length:lowPower?2:4},(_,strand)=>{
+      const sx=x+(side?-.16:.16)*strand;
+      const height=1.1+(strand%2)*.42;
+      return <group key={`${side}-${strand}`} position={[sx,4.55,-.48]}>
+        <mesh position={[0,-height/2,0]}><cylinderGeometry args={[.015,.013,height,5]}/><meshStandardMaterial color="#4d7540"/></mesh>
+        {Array.from({length:lowPower?3:5},(_,leaf)=>{
+          const y=-(leaf+.75)*(height/(lowPower?4:6)),dir=(leaf%2?1:-1);
+          return <group key={leaf} position={[dir*.12,y,0]} rotation={[0,0,dir*.36]}>
+            <mesh scale={[.15,.28,.10]}><sphereGeometry args={[1,9,7]}/><meshStandardMaterial color={leaf%2?"#5d9a4e":"#81b76b"} roughness={.86}/></mesh>
+            {!lowPower&&leaf===3&&<mesh position={[0,-.13,.10]}><sphereGeometry args={[.065,7,6]}/><meshStandardMaterial color="#f9e5b2"/></mesh>}
+          </group>;
+        })}
+      </group>;
+   }))}
+ </group>;
 }
 
 function SkyDecor({reducedMotion}:{reducedMotion:boolean}) {
@@ -254,14 +285,16 @@ export function ShopWorld({controls,menuOpen,cartCount,onAdd,onCheckout,onCloseM
     gl={{antialias:!lowPower,powerPreference:"high-performance",alpha:false}}
     shadows={!lowPower}
     onCreated={({gl})=>{
-      gl.setClearColor("#cee7d0");
+      gl.setClearColor("#a7d9ee");
       gl.toneMapping=THREE.ACESFilmicToneMapping;
       gl.toneMappingExposure=1.12;
       gl.domElement.addEventListener("webglcontextlost",onCanvasError,{once:true});
     }}
     fallback={<div className="shop-webgl-fallback">Thiết bị không hỗ trợ WebGL.</div>}
   >
-    <fog attach="fog" args={["#cee7d0",28,86]}/>
+    <fog attach="fog" args={["#b9d8c8",35,100]}/>
+    <SkyClouds lowPower={lowPower}/>
+    <HangingVines lowPower={lowPower}/>
     <ShopArchitecture onCounterInteract={onCounterInteract} lowPower={lowPower}/>
     {/* Touchable 3D wayfinding sign, not a 2D overlay. */}
     <group onClick={e=>{e.stopPropagation();onApproach();}} position={[3.4,1.3,6.6]} rotation={[0,-.2,0]}>
