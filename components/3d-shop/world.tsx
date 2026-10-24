@@ -5,7 +5,7 @@ import { RoundedBox, Float } from "@react-three/drei";
 import * as THREE from "three";
 import type { ShopControls } from "./types";
 import { cameraAnchor, stepMovement } from "./types";
-import { CatBarista, GardenDog } from "./characters";
+import { RiggedCatBarista, RiggedGardenDog } from "./animated-animals";
 import { RiggedPlayer, RiggedCustomer } from "./rigged-characters";
 import { GardenDetails } from "./garden";
 import {QuaterniusProp} from "./quaternius-props";
@@ -286,10 +286,10 @@ export function ShopWorld({controls,menuOpen,onNearChange,onArrive,onCounterInte
       <ShopSign position={[0,.27,.02]} dimensions={[2.3,1.02]} main="VÀO QUẦY" sub="CHẠM HOẶC NHẤN E" color="#1b583e"/>
     </group>
     <GardenDetails reducedMotion={reducedMotion} lowPower={lowPower} weather={weather}/>
-    <CatBarista reducedMotion={reducedMotion}/>
+    <RiggedCatBarista reducedMotion={reducedMotion} lowPower={lowPower}/>
     <RiggedCustomer reducedMotion={reducedMotion}/>
     {!lowPower&&<RiggedCustomer reducedMotion={reducedMotion} variant={1}/>}
-    <GardenDog reducedMotion={reducedMotion}/>
+    <RiggedGardenDog reducedMotion={reducedMotion} lowPower={lowPower}/>
     <RiggedPlayer controls={controls} reducedMotion={reducedMotion}/>
     <SkyDecor reducedMotion={reducedMotion}/>
     {/* Product browsing lives in the accessible 2D overlay after interacting with the 3D kiosk. */}
