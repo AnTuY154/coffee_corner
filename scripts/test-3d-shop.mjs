@@ -45,6 +45,8 @@ const wrapper=file('components/3d-shop/immersive-shop.tsx');
 const world=file('components/3d-shop/world.tsx');
 const menu=file('components/3d-shop/shop-menu-2d.tsx');
 const rig=file('components/3d-shop/rigged-characters.tsx');
+const inlineCheckout=file('components/3d-shop/in-scene-checkout.tsx');
+const weatherSystem=file('components/3d-shop/weather-system.tsx');
 assert(page.includes('ImmersiveShop'));
 assert(wrapper.includes('KeyE')&&wrapper.includes('openMenu()')&&wrapper.includes('goToCounter()'));
 assert(menu.includes('useCart()') && menu.includes('add(product.id)'),'2D menu owns shared cart integration');
@@ -54,7 +56,9 @@ assert.match(wrapper,/gestures=useRef<Map<number,Gesture>>/,'mobile must support
 assert.match(wrapper,/Math.atan2\(Math.sin\(yaw\),Math.cos\(yaw\)\)/,'camera turning should wrap instead of clamping at +/-1.2');
 assert(world.includes('Blender')&&world.includes('Juicer')&&world.includes('Crate')&&world.includes('Pineapple'));
 assert(world.includes('CatBarista') && world.includes('RiggedPlayer') && !world.includes('<InWorldMenu'));
-assert(menu.includes('add(product.id)') && menu.includes('onCheckout()'));
+assert(menu.includes('add(product.id)') && menu.includes('setView("checkout")'),'product browser switches to same-scene checkout');
+assert(!wrapper.includes('router.push('),'gameplay never navigates away for checkout');
+assert(wrapper.includes('WEATHER_INTERVAL_MS'),'weather cycles automatically');
 assert(existsSync(resolve(root,'public/models/player-skater.glb')),'CC0 rigged player GLB must be local');
 assert(existsSync(resolve(root,'public/models/npc-sunny.glb')),'CC0 rigged NPC GLB must be local');
 assert(rig.includes('SkeletonUtils.js') && rig.includes('useAnimations'),'skinned model animation is required');
@@ -71,6 +75,15 @@ for (const name of ['player-skater.glb','npc-sunny.glb']) {
  assert(json.images?.every(i=>Number.isInteger(i.bufferView)),name+' texture must be embedded for offline static hosting');
 }
 
+assert(inlineCheckout.includes('fetch("/api/orders"')&&inlineCheckout.includes('setConfirmed(payload.orderId)'),'checkout must submit to real API and display verified order id');
+assert(inlineCheckout.includes('NEXT_PUBLIC_GITHUB_PAGES_DEMO')&&inlineCheckout.includes('if(isStaticDemo)return'),'Pages demo must not collect personal info');
+assert(weatherSystem.includes('RainParticles')&&weatherSystem.includes('directionalLight')&&weatherSystem.includes('sun')&&weatherSystem.includes('CloudMass'),'sun/rain/cloud effects exist');
+for (const name of ['garden-tree-a.glb','garden-tree-b.glb','garden-bush.glb']) {const p=readFileSync(resolve(root,'public/models',name));assert.equal(p.toString('ascii',0,4),'glTF');assert.equal(p.readUInt32LE(8),p.length);}
+const {WEATHER_SEQUENCE,WEATHER_INTERVAL_MS,nextWeather,WEATHER_PROFILE}=await import('../components/3d-shop/weather.ts');
+assert.equal(WEATHER_INTERVAL_MS,45000);
+assert.deepEqual(WEATHER_SEQUENCE,['sunny','overcast','windy','rainy']);
+let mode='sunny';for(let i=0;i<4;i++)mode=nextWeather(mode);assert.equal(mode,'sunny');
+assert(WEATHER_PROFILE.rainy.rain>0&&WEATHER_PROFILE.sunny.sun>WEATHER_PROFILE.overcast.sun);
 assert(file('app/page.tsx').includes('<ImmersiveShop/>'));
 assert(file('app/menu/page.tsx').includes('<ImmersiveShop/>'));
 assert(existsSync(resolve(root,'app/api/orders/route.ts')),'production order API must remain');

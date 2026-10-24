@@ -2,17 +2,19 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useCart } from "@/components/cart-context";
+import { InSceneCheckout } from "./in-scene-checkout";
 import { currency, currentSeason, products, seasonOrder, seasons, type SeasonKey } from "@/data/catalog";
 
 type Filter = SeasonKey | "all";
-type Props = { onClose: () => void; onCheckout: () => void };
+type Props = { onClose: () => void };
 const normalise = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").toLowerCase();
 
 /** The 3D counter opens this accessible 2D commerce layer; the shop behind remains WebGL. */
-export function ShopMenu2D({ onClose, onCheckout }: Props) {
+export function ShopMenu2D({ onClose }: Props) {
   const [season, setSeason] = useState<Filter>(() => currentSeason(new Date().getMonth() + 1));
   const [query, setQuery] = useState("");
   const [cartVisible, setCartVisible] = useState(false);
+  const [view, setView] = useState<"browse"|"checkout">("browse");
   const [recent, setRecent] = useState<string | null>(null);
   const { lines, add, update, remove, count, subtotal } = useCart();
   const panel = useRef<HTMLElement>(null);
@@ -43,7 +45,7 @@ export function ShopMenu2D({ onClose, onCheckout }: Props) {
   const text = normalise(query.trim());
   const matches = products.filter(p => (season === "all" || p.season === season)
     && (!text || normalise([p.name, p.tagline, p.flavour, ...p.ingredients.map(x => x.name)].join(" ")).includes(text)));
-  const checkout = () => { if (count) onCheckout(); };
+  const checkout = () => { if (count) { setCartVisible(false); setView("checkout"); } };
 
   return <div className="ve-menu-overlay" onPointerDown={e => e.stopPropagation()} onClick={e => {
     if (e.target === e.currentTarget) onClose();
@@ -56,7 +58,7 @@ export function ShopMenu2D({ onClose, onCheckout }: Props) {
         </div>
         <button className="ve-menu-close" type="button" onClick={onClose} aria-label="Đóng thực đơn, quay lại cửa hàng">✕</button>
       </header>
-      <div className="ve-menu-body">
+      {view==="checkout" ? <InSceneCheckout onBack={()=>setView("browse")} onCompleted={()=>setCartVisible(false)} onReturnToShop={onClose}/> : <div className="ve-menu-body">
         <section className="ve-menu-catalogue" aria-label="Danh sách nước ép">
           <div className="ve-menu-intro">
             <div><p className="ve-menu-kicker">MÙA NÀO THỨC ẤY</p><p id="ve-menu-description">Chọn nước ép tươi, xem nguyên liệu và thêm vào giỏ. Bạn vẫn đang ở trong cửa hàng 3D.</p></div>
@@ -121,10 +123,10 @@ export function ShopMenu2D({ onClose, onCheckout }: Props) {
             <p>Phí giao hàng và xác nhận đơn sẽ được thông báo ở bước tiếp theo.</p>
           </div>
         </aside>
-      </div>
-      <button type="button" className="ve-menu-cart-fab" onClick={() => setCartVisible(v => !v)} aria-expanded={cartVisible} aria-label="Mở giỏ hàng">
+      </div>}
+      {view==="browse"&&<button type="button" className="ve-menu-cart-fab" onClick={() => setCartVisible(v => !v)} aria-expanded={cartVisible} aria-label="Mở giỏ hàng">
         <span>🧺 Giỏ hàng ({count})</span><strong>{currency(subtotal)}</strong>
-      </button>
+      </button>}
     </section>
   </div>;
 }

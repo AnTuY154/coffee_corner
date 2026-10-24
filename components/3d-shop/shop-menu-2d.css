@@ -89,3 +89,34 @@
 }
 @media(max-width:360px){.ve-menu-card{grid-template-columns:100px minmax(0,1fr)}.ve-menu-card-details{padding:12px 8px}.ve-menu-product-bottom strong{font-size:12px}.ve-menu-add{font-size:10px;padding:8px}}
 @media(prefers-reduced-motion:reduce){.ve-menu-add,.ve-menu-seasons button{transition:none}}
+
+/* In-world checkout, order confirmation and demo mode share the existing 2D shop dialog. */
+.ve-scene-checkout{flex:1;min-height:0;overflow:auto;padding:clamp(20px,3vw,38px);background:#fffdf5;touch-action:pan-y;overscroll-behavior:contain}
+.ve-checkout-back{display:inline-flex;margin:0 0 19px;border:0;background:transparent;color:#367354;cursor:pointer;font-weight:700;font-size:13px;padding:5px}
+.ve-checkout-intro .ve-menu-kicker,.ve-order-demo .ve-menu-kicker{color:#66966d}
+.ve-checkout-intro h3,.ve-order-complete h3,.ve-order-demo h3{font:600 clamp(26px,3vw,38px)/1.18 var(--heading,Georgia),serif;margin:5px 0 10px;color:#20573c}
+.ve-checkout-intro>p:last-child,.ve-order-complete>p,.ve-order-demo>p{font-size:13px;line-height:1.7;color:#65806a;max-width:640px}
+.ve-checkout-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(210px,280px);gap:clamp(18px,3vw,36px);align-items:start;margin-top:22px}
+.ve-checkout-form{display:flex;flex-direction:column;gap:15px}
+.ve-checkout-form>label{display:flex;flex-direction:column;gap:7px;color:#355e44;font-size:13px;font-weight:650}
+.ve-checkout-form>label input,.ve-checkout-form>label textarea{display:block;width:100%;padding:12px 14px;background:#f7f8f0;border:1px solid #d6e3d4;border-radius:11px;color:#254b37;line-height:1.4;font:400 14px var(--body,Arial),sans-serif;outline-offset:3px}
+.ve-checkout-form>label :is(input,textarea):focus{outline:2px solid #6fa984;border-color:transparent}
+.ve-checkout-form fieldset{border:1px solid #d5e4d7;border-radius:12px;padding:14px}
+.ve-checkout-form legend{font-weight:700;font-size:13px;padding:0 6px}
+.ve-checkout-form fieldset label{display:flex;align-items:center;gap:8px;margin:10px 0;font-size:12px;cursor:pointer}
+.ve-checkout-form input[type=radio]{accent-color:#266a48}
+.ve-checkout-form small{font-size:11px;line-height:1.55;color:#728c77}
+.ve-checkout-honeypot{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);pointer-events:none}
+.ve-checkout-error{margin:0;padding:12px;border-radius:9px;color:#892f2f;background:#fee9e6;font-size:12px}
+.ve-checkout-summary{border-radius:14px;border:1px solid #e2e9d9;background:#f6f8ed;padding:20px 16px}
+.ve-checkout-summary h4{font:600 22px/1.2 var(--heading,Georgia),serif;color:#2d613f;margin:0 0 12px}
+.ve-checkout-summary>div{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:11px 0;border-bottom:1px solid #e1e9d8;font-size:12px;color:#5d7c65}
+.ve-checkout-summary>div>strong{white-space:nowrap;color:#8e6b3d;font-variant-numeric:tabular-nums}
+.ve-checkout-summary .ve-checkout-total{font-size:15px;border:0}
+.ve-checkout-summary .ve-checkout-total strong{color:#245b41}
+.ve-order-complete{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:340px;padding:40px 22px;gap:6px;text-align:center}
+.ve-order-success-icon{display:grid;place-items:center;width:72px;height:72px;border-radius:50%;background:#2b7952;color:#fff;font-size:36px;margin:0 0 12px}
+.ve-order-complete .ve-menu-checkout{margin-top:14px;max-width:300px}
+.ve-order-demo{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-height:270px}
+.ve-order-demo .ve-menu-checkout{max-width:270px;margin-top:20px}
+@media(max-width:700px){.ve-scene-checkout{padding:20px 16px}.ve-checkout-columns{grid-template-columns:1fr;gap:18px}.ve-checkout-summary{order:-1}.ve-checkout-intro h3{font-size:29px}.ve-menu-dialog:has(.ve-order-complete){height:auto;min-height:50dvh}}

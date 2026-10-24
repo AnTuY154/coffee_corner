@@ -8,6 +8,8 @@ import { cameraAnchor, stepMovement } from "./types";
 import { CatBarista, GardenDog } from "./characters";
 import { RiggedPlayer, RiggedCustomer } from "./rigged-characters";
 import { GardenDetails } from "./garden";
+import {WeatherSystem} from "./weather-system";
+import {WEATHER_PROFILE,type WeatherMode} from "./weather";
 
 
 const COLORS = {
@@ -191,25 +193,17 @@ function ShopArchitecture({onCounterInteract,lowPower}:{onCounterInteract:()=>vo
     {Array.from({length:12},(_,i)=><mesh key={i} position={[(i%2===0?-1:1)*(3+(i%3)*.85),-.006,3.6+Math.floor(i/2)*1.05]} rotation={[-Math.PI/2,0,(i%4)*.5]}>
       <circleGeometry args={[.26+(i%3)*.05,9]}/><meshStandardMaterial color="#d0cfb4"/>
     </mesh>)}
-    <ambientLight intensity={.55}/><hemisphereLight color="#fff9d8" groundColor="#617c50" intensity={.95}/>
-    <directionalLight position={[-5,10,5]} intensity={2.0} color="#fff4da" castShadow={!lowPower} shadow-normalBias={.026} shadow-mapSize={[1024,1024]} shadow-camera-left={-12} shadow-camera-right={12} shadow-camera-top={12} shadow-camera-bottom={-12}/>
+    {/* Lighting and sun colour are controlled by the central weather system. */}
   </group>;
 }
 
-/** Lightweight puffy world-space clouds add depth without a post-processing pass. */
-function SkyClouds({lowPower}:{lowPower:boolean}){
- const positions:[number,number,number][]=[[-12,10,-17],[8,11,-23],[18,9,-15]];
- return <group>
-   {positions.slice(0,lowPower?2:3).map((p,i)=><group key={i} position={p}>
-     {[-1,0,1].map((k)=><mesh key={k} position={[k*.95,(k===0?.35:0),0]} scale={[1.45,k===0?.94:.68,.65]}>
-       <sphereGeometry args={[1,12,10]}/><meshBasicMaterial color="#fcf8e9" fog={false}/>
-     </mesh>)}
-   </group>)}
- </group>;
-}
 /** Hanging plants frame the kiosk instead of sitting across the middle of the camera. */
-function HangingVines({lowPower}:{lowPower:boolean}){
- return <group>
+function HangingVines({lowPower,weather,reducedMotion}:{lowPower:boolean;weather:WeatherMode;reducedMotion:boolean}){
+ const root=useRef<THREE.Group>(null);
+ useFrame(({clock},delta)=>{if(!root.current)return;const strength=reducedMotion?0:WEATHER_PROFILE[weather].wind;
+   root.current.rotation.z=THREE.MathUtils.damp(root.current.rotation.z,Math.sin(clock.elapsedTime*1.18)*.019*strength,2,Math.min(delta,.08));
+ });
+ return <group ref={root}>
    {[-5.1,5.1].flatMap((x,side)=>Array.from({length:lowPower?2:4},(_,strand)=>{
       const sx=x+(side?-.16:.16)*strand;
       const height=1.1+(strand%2)*.42;
@@ -265,7 +259,7 @@ function ThirdPersonCamera({controls,menuOpen,onNearChange,onArrive}: {
   });
   return null;
 }
-export function ShopWorld({controls,menuOpen,onNearChange,onArrive,onCounterInteract,onApproach,reducedMotion,lowPower,onCanvasError}: {
+export function ShopWorld({controls,menuOpen,onNearChange,onArrive,onCounterInteract,onApproach,reducedMotion,lowPower,weather,onCanvasError}: {
   controls:React.RefObject<ShopControls>;
   menuOpen:boolean;
   onNearChange:(near:boolean)=>void;
@@ -274,6 +268,7 @@ export function ShopWorld({controls,menuOpen,onNearChange,onArrive,onCounterInte
   onApproach:()=>void;
   reducedMotion:boolean;
   lowPower:boolean;
+  weather:WeatherMode;
   onCanvasError:()=>void;
 }) {
   return <Canvas
@@ -289,16 +284,15 @@ export function ShopWorld({controls,menuOpen,onNearChange,onArrive,onCounterInte
     }}
     fallback={<div className="shop-webgl-fallback">Thiết bị không hỗ trợ WebGL.</div>}
   >
-    <fog attach="fog" args={["#b9d8c8",35,100]}/>
-    <SkyClouds lowPower={lowPower}/>
-    <HangingVines lowPower={lowPower}/>
+    <WeatherSystem mode={weather} lowPower={lowPower} reducedMotion={reducedMotion}/>
+    <HangingVines lowPower={lowPower} weather={weather} reducedMotion={reducedMotion}/>
     <ShopArchitecture onCounterInteract={onCounterInteract} lowPower={lowPower}/>
     {/* Touchable 3D wayfinding sign, not a 2D overlay. */}
     <group onClick={e=>{e.stopPropagation();onApproach();}} position={[3.4,1.3,6.6]} rotation={[0,-.2,0]}>
       <Block position={[0,-.6,-.15]} size={[.11,1.9,.11]} color="#996845"/>
       <ShopSign position={[0,.27,.02]} dimensions={[2.3,1.02]} main="VÀO QUẦY" sub="CHẠM HOẶC NHẤN E" color="#1b583e"/>
     </group>
-    <GardenDetails reducedMotion={reducedMotion} lowPower={lowPower}/>
+    <GardenDetails reducedMotion={reducedMotion} lowPower={lowPower} weather={weather}/>
     <CatBarista reducedMotion={reducedMotion}/>
     <RiggedCustomer reducedMotion={reducedMotion}/>
     {!lowPower&&<RiggedCustomer reducedMotion={reducedMotion} variant={1}/>}
