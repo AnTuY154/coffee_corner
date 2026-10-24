@@ -31,6 +31,11 @@ assert.match(characters,/Rounded hoodie and oversized chibi head/,'player has an
 assert.match(characters,/row=>\[-2,-1,0,1,2\]\.map\(col=>/,'player hair must be actual 3D geometry');
 assert.match(world,/HangingVines lowPower/,'cinematic foliage frames the storefront');
 assert.match(world,/WeatherSystem mode=\{weather\}/,'sky, rain and sun follow weather simulation');
+assert.match(world,/QuaterniusProp kind="shop-bookcase"/,'Quaternius GLB shelves replace box-geometry shelves');
+assert.match(world,/QuaterniusProp kind="houseplant"/,'Quaternius GLB houseplants replace sphere-based houseplants');
+assert.match(garden,/QuaterniusProp kind="garden-couch"/,'garden furniture is licensed GLB');
+assert.match(garden,/QuaterniusProp kind="garden-rug"/,'garden carpet is licensed GLB');
+
 assert.match(menu,/seasonOrder\.map\(key =>/,'four seasons are directly selectable');
 assert.match(menu,/products\.filter\(p =>/,'catalogue is sourced from 24 real products');
 assert.match(menu,/onClick=\{\(\) => \{ add\(product\.id\)/,'add-to-cart works from 2D cards');
