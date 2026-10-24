@@ -55,8 +55,12 @@ export function GardenDetails({reducedMotion,lowPower}:{reducedMotion:boolean;lo
   {[-5.5,-4.5,4.6,5.6].map((x,i)=><FlowerCluster key={i} position={[x,.03,3.8+i%2*2.7]} amount={lowPower?4:9}/>)}
   <FlowerCluster position={[-8.1,0,6.7]} amount={lowPower?5:10}/>
   <FlowerCluster position={[8.2,0,7]} amount={lowPower?5:10}/>
-  {/* Cafe string lights in 3D space, independently illuminated */}
-  <mesh position={[0,5.17,5.8]} rotation={[0,0,-.03]}><cylinderGeometry args={[.018,.018,15.2,5]}/><meshStandardMaterial color="#5a5942"/></mesh>
+  {/* The cord is a horizontal 3D line; cylinderGeometry points along Y by default.
+      Correct rotation prevents the 15-metre pole cutting through the camera. */}
+  <mesh position={[0,5.17,5.8]} rotation={[0,0,Math.PI/2]}>
+    <cylinderGeometry args={[.018,.018,15.2,6]}/>
+    <meshStandardMaterial color="#5a5942" roughness={.9}/>
+  </mesh>
   {Array.from({length:lowPower?7:13},(_,i)=>{
     const x=lowPower?-5.8+i*1.9:-6.5+i*1.09;
     return <GardenLamp key={i} position={[x,5.17+.03*x,5.8]} illuminate={!lowPower&&(i===3||i===9)}/>;
