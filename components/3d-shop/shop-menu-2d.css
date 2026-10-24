@@ -1,0 +1,91 @@
+/* Commerce UI appears only when the user interacts with the physical 3D counter.
+   All selectors scoped: the rest of the game remains a full-screen WebGL scene. */
+.ve-menu-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:clamp(12px,3.5vw,40px);background:rgba(14,41,30,.47);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);touch-action:auto}
+.ve-menu-dialog{position:relative;width:min(1200px,100%);max-height:min(92dvh,930px);display:flex;flex-direction:column;overflow:hidden;border:1px solid #fffae5;border-radius:27px;background:#fffdf5;box-shadow:0 30px 90px #102f2680;font-family:var(--body,Arial),sans-serif;color:#244c38;touch-action:pan-y}
+.ve-menu-header{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:19px clamp(18px,3vw,32px);background:linear-gradient(115deg,#215b3f,#174a35);color:#fff9e5}
+.ve-menu-brand{display:flex;align-items:center;gap:15px}
+.ve-menu-flower{display:grid;place-items:center;flex:0 0 48px;height:48px;border:1px solid #cfe9b169;border-radius:50%;font-size:27px;color:#f3d99a;background:#ffffff11}
+.ve-menu-kicker{margin:0 0 4px!important;font:700 10px/1.35 var(--body,Arial),sans-serif!important;letter-spacing:.16em;color:inherit;opacity:.7}
+.ve-menu-header h2{font:600 clamp(23px,2.7vw,37px)/1.18 var(--heading,Georgia),serif;letter-spacing:-.025em;margin:0}
+.ve-menu-close,.ve-menu-mobile-close{flex:0 0 40px;border:1px solid #ffffff70;border-radius:50%;background:#ffffff16;color:inherit;width:40px;height:40px;font-size:18px;cursor:pointer}
+.ve-menu-close:hover{background:#ffffff2d}
+.ve-menu-body{display:grid;grid-template-columns:minmax(0,1fr) 284px;min-height:0;flex:1}
+.ve-menu-catalogue{overflow:auto;min-height:0;scrollbar-gutter:stable;padding:27px clamp(16px,2.7vw,32px) 32px;overscroll-behavior:contain}
+.ve-menu-intro{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.ve-menu-intro .ve-menu-kicker{color:#689277}
+.ve-menu-intro p:not(.ve-menu-kicker){font:400 13px/1.6 var(--body,Arial),sans-serif;color:#748778;margin:0;max-width:490px}
+.ve-menu-search{position:relative;display:block;min-width:215px}
+.ve-menu-search input{width:100%;height:45px;border:1px solid #d7e4d0;outline:0;border-radius:100px;background:#f5f9ee;color:#27553a;padding:0 42px 0 17px;font-size:13px}
+.ve-menu-search input:focus{border-color:#347856;box-shadow:0 0 0 3px #6aaa672d}
+.ve-menu-search>span:last-child{position:absolute;right:15px;top:8px;font-size:26px;opacity:.7;pointer-events:none}
+.ve-menu-seasons{display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;margin:23px 0 25px;padding-bottom:5px}
+.ve-menu-seasons button{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:124px;border:1px solid #d7e4cd;border-radius:13px;padding:11px 14px;background:#f6f7eb;color:#375c44;font:700 13px var(--body,Arial),sans-serif;cursor:pointer;transition:background .2s,border .2s}
+.ve-menu-seasons button small{font-weight:400;font-size:10px;opacity:.72}
+.ve-menu-seasons button.active{background:#276849;border-color:#276849;color:#fff7e4;box-shadow:0 4px 12px #27684930}
+.ve-menu-section-title{display:flex;align-items:baseline;justify-content:space-between;gap:15px;margin:0 0 16px}
+.ve-menu-section-title h3{font:600 clamp(24px,2.5vw,32px)/1.2 var(--heading,Georgia),serif;margin:0;color:#20553a}
+.ve-menu-section-title span{color:#78907b;font-size:12px}
+.ve-menu-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.ve-menu-card{display:grid;grid-template-columns:minmax(98px,38%) minmax(0,1fr);min-height:205px;overflow:hidden;border:1px solid #e5ebd9;border-radius:16px;background:white;box-shadow:0 5px 22px #1c553509}
+.ve-menu-product-art{min-width:0;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.ve-menu-product-art img{object-fit:contain;display:block;width:100%;height:auto;max-height:210px;padding:10px}
+.ve-menu-product-badge{position:absolute;left:7px;top:8px;border-radius:100px;padding:5px 8px;background:#fff9eac9;font-size:9px;font-weight:700;color:#426b48}
+.ve-menu-card-details{min-width:0;display:flex;flex-direction:column;align-items:flex-start;padding:14px 12px 13px}
+.ve-menu-product-meta{color:#80a17c;font-size:10px;line-height:1.3}
+.ve-menu-card h4{font:600 clamp(17px,1.7vw,23px)/1.2 var(--heading,Georgia),serif;margin:6px 0;color:#214b36}
+.ve-menu-card-details>p{font-size:11px;line-height:1.4;color:#778978;margin:0 0 7px}
+.ve-menu-ingredients{font-size:11px;color:#577c60;margin-bottom:8px}
+.ve-menu-ingredients summary{cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.ve-menu-ingredients ul{padding:6px 0 0 15px;line-height:1.4;color:#627e64}
+.ve-menu-product-bottom{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;margin-top:auto}
+.ve-menu-product-bottom strong{font-size:13px;font-variant-numeric:tabular-nums;color:#a06a30}
+.ve-menu-add{border:0;border-radius:100px;background:#286c4d;color:#fffef2;padding:9px 11px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer}
+.ve-menu-add:hover{background:#20563d}
+.ve-menu-empty{text-align:center;padding:40px 15px;color:#789078}
+.ve-menu-basket{display:flex;flex-direction:column;min-height:0;border-left:1px solid #e3eadc;background:#f6f7ed}
+.ve-menu-basket-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:23px 20px 16px;border-bottom:1px solid #e0e7d7}
+.ve-menu-basket-top .ve-menu-kicker{color:#6a936f}
+.ve-menu-basket-top h3{font:600 26px/1.2 var(--heading,Georgia),serif;margin:0;color:#22543a}
+.ve-menu-basket-top h3 span{font:600 14px var(--body,Arial),sans-serif;color:#83a081}
+.ve-menu-mobile-close{display:none;color:#315841;border-color:#a5baaa}
+.ve-menu-basket-lines{padding:12px 17px;flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+.ve-menu-empty-basket{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;text-align:center;color:#78937d}
+.ve-menu-empty-basket>span{font-size:38px}
+.ve-menu-empty-basket p{font-weight:700;margin:12px 0 4px;font-size:14px;color:#406c49}
+.ve-menu-empty-basket small{font-size:11px;line-height:1.4}
+.ve-menu-basket-line{display:flex;flex-direction:column;gap:9px;padding:14px 0;border-bottom:1px solid #dfe7d7}
+.ve-menu-basket-line strong,.ve-menu-basket-line small{display:block}
+.ve-menu-basket-line strong{font-size:13px;color:#28563d}
+.ve-menu-basket-line small{font-size:11px;color:#9b733e;margin-top:4px}
+.ve-menu-qty{display:flex;align-items:center;gap:8px}
+.ve-menu-qty button{border:1px solid #ccdccc;border-radius:8px;width:29px;height:28px;background:#fffef7;color:#22583b;font-size:16px;cursor:pointer}
+.ve-menu-qty span{min-width:18px;text-align:center;font-variant-numeric:tabular-nums;font-size:13px}
+.ve-menu-qty .ve-menu-remove{margin-left:auto;border:0;background:transparent;color:#a07564}
+.ve-menu-basket-bottom{padding:17px 19px 18px;border-top:1px solid #dce6d4}
+.ve-menu-subtotal{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:16px;font-size:13px}
+.ve-menu-subtotal strong{color:#a96b2d;font-size:18px;font-variant-numeric:tabular-nums}
+.ve-menu-checkout{display:flex;align-items:center;justify-content:space-between;width:100%;gap:9px;border:0;border-radius:11px;background:#266a48;color:#fffae9;font-weight:700;font-size:13px;padding:14px;cursor:pointer}
+.ve-menu-checkout:disabled{opacity:.55;cursor:not-allowed}
+.ve-menu-checkout:not(:disabled):hover{background:#1c5138}
+.ve-menu-basket-bottom>p{font-size:10px;line-height:1.6;margin:11px 0 0;color:#91a090}
+.ve-menu-cart-fab{display:none}
+@media(max-width:1000px){.ve-menu-body{grid-template-columns:minmax(0,1fr) 255px}.ve-menu-grid{grid-template-columns:1fr}.ve-menu-card{min-height:180px;grid-template-columns:150px minmax(0,1fr)}}
+@media(max-width:700px){
+.ve-menu-overlay{align-items:flex-end;padding:0;background:#0a251981}
+.ve-menu-dialog{width:100%;max-height:94dvh;height:94dvh;border-radius:23px 23px 0 0}
+.ve-menu-header{padding:15px 18px}.ve-menu-header h2{font-size:26px}.ve-menu-flower{flex-basis:38px;height:38px}
+.ve-menu-body{display:block;position:relative;flex:1;min-height:0}
+.ve-menu-catalogue{height:100%;padding:16px 14px 88px;scrollbar-gutter:auto}
+.ve-menu-intro{display:block}.ve-menu-intro>div{margin-bottom:13px}.ve-menu-intro p:not(.ve-menu-kicker){font-size:12px}
+.ve-menu-search{min-width:0}
+.ve-menu-seasons{margin:18px 0}.ve-menu-seasons button{min-width:111px}
+.ve-menu-grid{grid-template-columns:1fr}.ve-menu-card{grid-template-columns:minmax(100px,38%) minmax(0,1fr);min-height:172px}
+.ve-menu-product-bottom{flex-wrap:wrap}
+.ve-menu-basket{position:absolute;z-index:5;inset:0;display:none;border-left:0;box-shadow:0 0 30px #173c2a33}
+.ve-menu-basket.is-open{display:flex}.ve-menu-mobile-close{display:block}
+.ve-menu-cart-fab{position:absolute;z-index:6;left:13px;right:13px;bottom:max(12px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:center;border:1px solid #f5eacb;border-radius:15px;padding:15px 17px;background:#215b41;color:#fff8e3;box-shadow:0 7px 20px #153a2c48;font-size:13px;font-weight:700;cursor:pointer}
+.ve-menu-cart-fab strong{font-variant-numeric:tabular-nums}
+.ve-menu-basket-bottom{padding-bottom:85px}
+}
+@media(max-width:360px){.ve-menu-card{grid-template-columns:100px minmax(0,1fr)}.ve-menu-card-details{padding:12px 8px}.ve-menu-product-bottom strong{font-size:12px}.ve-menu-add{font-size:10px;padding:8px}}
+@media(prefers-reduced-motion:reduce){.ve-menu-add,.ve-menu-seasons button{transition:none}}

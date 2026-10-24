@@ -2,7 +2,7 @@
 import dynamic from "next/dynamic";
 import {useCallback,useEffect,useRef,useState} from "react";
 import {useRouter} from "next/navigation";
-import {useCart} from "@/components/cart-context";
+import {ShopMenu2D} from "./shop-menu-2d";
 import {COUNTER_NEAR_Z,START_POSITION,type MoveKey,type ShopControls} from "./types";
 
 const World=dynamic(()=>import("./world").then(m=>m.ShopWorld),{
@@ -11,7 +11,7 @@ const World=dynamic(()=>import("./world").then(m=>m.ShopWorld),{
 const keyMap:Record<string,MoveKey>={KeyW:"forward",ArrowUp:"forward",KeyS:"back",ArrowDown:"back",KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right"};
 type Gesture={id:number;x:number;y:number;originX:number;originY:number;mode:"move"|"look"};
 
-/** Entire customer experience is one WebGL Canvas. No HTML menu/HUD/covers. */
+/** One fullscreen 3D world; the menu appears as a 2D accessible layer on counter interaction. */
 export function ImmersiveShop(){
  const router=useRouter();
  const controls=useRef<ShopControls>({keys:new Set(),x:START_POSITION.x,z:START_POSITION.z,yaw:0,pitch:0,autoWalk:false,locked:false});
@@ -23,7 +23,7 @@ export function ImmersiveShop(){
  const [webglAvailable,setWebglAvailable]=useState<boolean|null>(null);
  const [reducedMotion,setReducedMotion]=useState(false);
  const [lowPower,setLowPower]=useState(false);
- const {add,count}=useCart();
+
  useEffect(()=>{
   try{const canvas=document.createElement("canvas");setWebglAvailable(!!(canvas.getContext("webgl2")||canvas.getContext("webgl")));}
   catch{setWebglAvailable(false);}
@@ -39,7 +39,7 @@ export function ImmersiveShop(){
  const goToCounter=useCallback(()=>{controls.current.keys.clear();controls.current.autoWalk=true;setAutowalkPending(true);},[]);
  const onArrive=useCallback(()=>{setNear(true);if(autowalkPending){controls.current.locked=true;setMenuOpen(true);setAutowalkPending(false);}},[autowalkPending]);
  const onNearChange=useCallback((v:boolean)=>setNear(v),[]);
- const addItem=useCallback((id:string)=>add(id),[add]);
+
  const checkout=useCallback(()=>router.push("/thanh-toan"),[router]);
  const press=useCallback((k:MoveKey,down:boolean)=>{if(menuOpen)return;
   if(down){controls.current.keys.add(k);controls.current.autoWalk=false;setAutowalkPending(false);}
@@ -95,9 +95,10 @@ export function ImmersiveShop(){
  };
  const handleDoubleClick=()=>{if(menuOpen)return;if(near)openMenu();else goToCounter();};
  return <div className="ve-immersive-fullscreen" aria-label="Cửa hàng Vườn Ép nhập vai với mèo pha chế và nhân vật người chơi" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerCancel={handlePointerUp} onDoubleClick={handleDoubleClick}>
-   <p className="sr-only">Dùng WASD hoặc phím mũi tên để di chuyển avatar. Bấm E để tự đến quầy hoặc mở menu 3D khi đã đến gần. Kéo chuột để thay đổi hướng, trên điện thoại vuốt bên trái để đi và bên phải để nhìn. Tại bảng menu, chạm các nút 3D để đổi món hoặc thêm vào giỏ. Nhấn Escape để đóng bảng.</p>
+   <p className="sr-only">Dùng WASD hoặc phím mũi tên để di chuyển avatar. Bấm E để tự đến quầy hoặc mở thực đơn 2D khi đã đến gần. Kéo chuột để thay đổi hướng, trên điện thoại vuốt bên trái để đi và bên phải để nhìn. Chọn mùa, tìm nước ép và thêm vào giỏ trong thực đơn. Nhấn Escape để đóng.</p>
    {webglAvailable===null&&<div className="shop-loading" role="status">Đang dựng cửa hàng 3D…</div>}
    {webglAvailable===false&&<div className="shop-static-fallback" role="status"><h1>Vườn Ép 3D</h1><p>Trình duyệt chưa hỗ trợ WebGL. Hãy bật tăng tốc phần cứng hoặc thử trình duyệt mới để vào quán.</p></div>}
-   {webglAvailable===true&&<World controls={controls} menuOpen={menuOpen} cartCount={count} onAdd={addItem} onCheckout={checkout} onCloseMenu={closeMenu} onNearChange={onNearChange} onArrive={onArrive} onCounterInteract={openMenu} onApproach={goToCounter} reducedMotion={reducedMotion} lowPower={lowPower} onCanvasError={()=>setWebglAvailable(false)}/>}
+   {webglAvailable===true&&<World controls={controls} menuOpen={menuOpen} onNearChange={onNearChange} onArrive={onArrive} onCounterInteract={openMenu} onApproach={goToCounter} reducedMotion={reducedMotion} lowPower={lowPower} onCanvasError={()=>setWebglAvailable(false)}/>}
+   {menuOpen&&<ShopMenu2D onClose={closeMenu} onCheckout={checkout}/>}
  </div>;
 }
