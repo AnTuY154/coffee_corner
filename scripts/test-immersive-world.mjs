@@ -35,6 +35,7 @@ assert.match(world,/QuaterniusProp kind="shop-bookcase"/,'Quaternius GLB shelves
 assert.match(world,/QuaterniusProp kind="houseplant"/,'Quaternius GLB houseplants replace sphere-based houseplants');
 assert.match(garden,/QuaterniusProp kind="garden-couch"/,'garden furniture is licensed GLB');
 assert.match(garden,/QuaterniusProp kind="garden-rug"/,'garden carpet is licensed GLB');
+assert.match(garden,/QuaterniusFlowers/,"garden flower groups must be GLB assets");
 
 assert.match(menu,/seasonOrder\.map\(key =>/,'four seasons are directly selectable');
 assert.match(menu,/products\.filter\(p =>/,'catalogue is sourced from 24 real products');
