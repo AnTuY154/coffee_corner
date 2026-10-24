@@ -47,7 +47,7 @@ const menu=file('components/3d-shop/shop-menu-2d.tsx');
 const rig=file('components/3d-shop/rigged-characters.tsx');
 assert(page.includes('ImmersiveShop'));
 assert(wrapper.includes('KeyE')&&wrapper.includes('openMenu()')&&wrapper.includes('goToCounter()'));
-assert(wrapper.includes('useCart()') && wrapper.includes('add(id)'));
+assert(menu.includes('useCart()') && menu.includes('add(product.id)'),'2D menu owns shared cart integration');
 assert(wrapper.includes('webglAvailable===false'));
 assert(!wrapper.includes('aria-modal="true"'));
 assert.match(wrapper,/gestures=useRef<Map<number,Gesture>>/,'mobile must support independent walk/look touches');
