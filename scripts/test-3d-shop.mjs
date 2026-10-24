@@ -58,6 +58,19 @@ assert(menu.includes('add(product.id)') && menu.includes('onCheckout()'));
 assert(existsSync(resolve(root,'public/models/player-skater.glb')),'CC0 rigged player GLB must be local');
 assert(existsSync(resolve(root,'public/models/npc-sunny.glb')),'CC0 rigged NPC GLB must be local');
 assert(rig.includes('SkeletonUtils.js') && rig.includes('useAnimations'),'skinned model animation is required');
+for (const name of ['player-skater.glb','npc-sunny.glb']) {
+ const buffer=readFileSync(resolve(root,'public/models',name));
+ assert.equal(buffer.toString('ascii',0,4),'glTF',name+' must be a binary GLB');
+ assert.equal(buffer.readUInt32LE(8),buffer.length,name+' must not be truncated');
+ const jsonLength=buffer.readUInt32LE(12);
+ const json=JSON.parse(buffer.toString('utf8',20,20+jsonLength));
+ assert(json.skins?.length>=1,name+' needs a real skeleton');
+ assert(json.meshes?.length>=1,name+' needs a skinned mesh');
+ const names=new Set((json.animations||[]).map(a=>a.name));
+ assert(names.has('idle') && names.has('run'),name+' must ship with actual idle/run clips');
+ assert(json.images?.every(i=>Number.isInteger(i.bufferView)),name+' texture must be embedded for offline static hosting');
+}
+
 assert(file('app/page.tsx').includes('<ImmersiveShop/>'));
 assert(file('app/menu/page.tsx').includes('<ImmersiveShop/>'));
 assert(existsSync(resolve(root,'app/api/orders/route.ts')),'production order API must remain');
