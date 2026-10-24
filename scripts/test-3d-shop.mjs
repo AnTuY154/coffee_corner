@@ -99,6 +99,14 @@ for(const name of decorative){
  assert(meta.scenes?.length>0,'asset should include a scene: '+name);
  assert(sources.includes(name+'.glb')&&sources.includes('CC0 1.0'),'each model must have traceable CC0 provenance');
 }
+const flowers=readFileSync(resolve(root,'public/models/quaternius/garden-flowers.glb'));
+assert.equal(flowers.toString('ascii',0,4),'glTF');
+assert.equal(flowers.readUInt32LE(8),flowers.length,'multi-model flower GLB must not be truncated');
+const flowerJson=JSON.parse(flowers.toString('utf8',20,20+flowers.readUInt32LE(12)));
+const flowerNames=new Set(flowerJson.nodes.map(n=>n.name));
+assert(flowerNames.has('Flower_1_Group')&&flowerNames.has('Flower_4_Group'),'flower GLB must provide named group meshes');
+assert(quaternius.includes('scene.getObjectByName(FLOWER_VARIANTS[variant])'),'loader must select exact flower, not all meshes and LODs');
+assert(file('components/3d-shop/garden.tsx').includes('<QuaterniusFlowers'),'garden renders authored GLB flowers');
 assert(quaternius.includes('scene.clone(true)'),'GLB instances must not mutate the shared scene');
 assert(quaternius.includes('NEXT_PUBLIC_BASE_PATH'),'GLBs should load on Pages subpaths');
 assert(quaternius.includes('Suspense')&&quaternius.includes('AssetBoundary'),'fallback preserves gameplay on load errors');
