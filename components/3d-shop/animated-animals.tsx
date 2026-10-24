@@ -140,7 +140,7 @@ function CatModel({reducedMotion,lowPower}:{reducedMotion:boolean;lowPower:boole
   const idle=actions.idle;
   if(!idle)return;
   idle.reset().fadeIn(.25).play();
-  idle.setEffectiveTimeScale(reducedMotion?.14:.74);
+  idle.setEffectiveTimeScale(reducedMotion?0:.74);
   return ()=>{idle.fadeOut(.15);};
  },[actions,reducedMotion]);
  useFrame(({clock})=>{
@@ -186,9 +186,9 @@ function DogModel({reducedMotion,lowPower}:{reducedMotion:boolean;lowPower:boole
   for(const key of Object.keys(DOG_CLIPS)){
    if(key!==pose)actions[DOG_CLIPS[key as DogPose]]?.fadeOut(.24);
   }
-  action.reset().setEffectiveTimeScale(pose==="walk"?.85:.75).fadeIn(.24).play();
-  return ()=>action.fadeOut(.18);
- },[actions,pose]);
+  action.reset().setEffectiveTimeScale(reducedMotion?0:(pose==="walk"?.85:.75)).fadeIn(.24).play();
+  return ()=>{action.fadeOut(.18);};
+ },[actions,pose,reducedMotion]);
  useEffect(()=>()=>{for(const action of Object.values(actions))action?.stop();},[actions]);
  useFrame(({clock})=>{
   if(!group.current)return;
