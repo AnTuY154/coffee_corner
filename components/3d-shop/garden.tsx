@@ -3,7 +3,7 @@ import {useRef} from "react";
 import {useFrame} from "@react-three/fiber";
 import * as THREE from "three";
 import {GardenModel} from "./garden-models";
-import {QuaterniusProp} from "./quaternius-props";
+import {QuaterniusProp,QuaterniusFlowers} from "./quaternius-props";
 import {WEATHER_PROFILE,type WeatherMode} from "./weather";
 
 function Wood({position,size,color="#a77a4d"}:{position:[number,number,number];size:[number,number,number];color?:string}){
@@ -62,9 +62,14 @@ export function GardenDetails({reducedMotion,lowPower,weather}:{reducedMotion:bo
     <circleGeometry args={[.66,8]}/><meshStandardMaterial color={i%3===0?"#f3e8cc":"#e8dcc2"}/>
    </mesh>;
   })}
-  {[-5.5,-4.5,4.6,5.6].map((x,i)=><FlowerCluster key={i} position={[x,.03,3.8+i%2*2.7]} amount={lowPower?4:9}/>)}
-  <FlowerCluster position={[-8.1,0,6.7]} amount={lowPower?5:10}/>
-  <FlowerCluster position={[8.2,0,7]} amount={lowPower?5:10}/>
+  {/* Grouped flowers are now actual Quaternius MegaKit GLB meshes (each variant selects one node). */}
+  {[-5.5,-4.5,4.6,5.6].map((x,i)=><QuaterniusFlowers key={i}
+    position={[x,.03,3.8+i%2*2.7]} variant={(i%4) as 0|1|2|3} lowPower={lowPower} height={.72}
+    fallback={<FlowerCluster position={[x,.03,3.8+i%2*2.7]} amount={lowPower?4:9}/>}/>)}
+  <QuaterniusFlowers position={[-8.1,0,6.7]} lowPower={lowPower} variant={2} height={.9}
+    fallback={<FlowerCluster position={[-8.1,0,6.7]} amount={lowPower?5:10}/>}/>
+  <QuaterniusFlowers position={[8.2,0,7]} lowPower={lowPower} variant={3} height={.88}
+    fallback={<FlowerCluster position={[8.2,0,7]} amount={lowPower?5:10}/>}/>
   {/* The cord is a horizontal 3D line; cylinderGeometry points along Y by default.
       Correct rotation prevents the 15-metre pole cutting through the camera. */}
   <mesh position={[0,5.17,5.8]} rotation={[0,0,Math.PI/2]}>
