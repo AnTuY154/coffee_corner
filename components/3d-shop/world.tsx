@@ -1,10 +1,10 @@
 "use client";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { RoundedBox, Float } from "@react-three/drei";
 import * as THREE from "three";
 import type { ShopControls } from "./types";
-import { stepMovement } from "./types";
+import { cameraAnchor, stepMovement } from "./types";
 import { CatBarista, PlayerAvatar, WalkingCustomer, GardenDog } from "./characters";
 import { GardenDetails } from "./garden";
 import { InWorldMenu } from "./in-world-menu";
@@ -112,6 +112,7 @@ function ShopSign({ position, dimensions, main, sub, color=COLORS.deep, accent="
     }
     const out=new THREE.CanvasTexture(canvas);out.colorSpace=THREE.SRGBColorSpace;out.anisotropy=4;return out;
   },[main,sub,color,accent]);
+  useEffect(()=>()=>texture.dispose(),[texture]);
   return <mesh position={position}><planeGeometry args={dimensions}/><meshBasicMaterial map={texture} toneMapped={false}/></mesh>;
 }
 function StringLights() {
@@ -121,13 +122,14 @@ function StringLights() {
       const y=4.5-.27*Math.sin(i/10*Math.PI);
       return <group key={i} position={[x,y,1.2]}>
         <mesh><sphereGeometry args={[.09,8,8]}/><meshBasicMaterial color={i%3===0?"#fcd57a":"#ffe6a8"}/></mesh>
-        <pointLight color="#ffcd82" intensity={.2} distance={1.35}/>
+        {/* Emissive glass is cheap; only two shared lights illuminate the full string. */}
+        {(i===2||i===8)&&<pointLight color="#ffcd82" intensity={.34} distance={3.5}/> }
       </group>;
     })}
     <mesh position={[0,4.75,1.2]}><boxGeometry args={[12.6,.023,.02]}/><meshStandardMaterial color="#d3ad68"/></mesh>
   </group>;
 }
-function ShopArchitecture({onCounterInteract}:{onCounterInteract:()=>void}) {
+function ShopArchitecture({onCounterInteract,lowPower}:{onCounterInteract:()=>void;lowPower:boolean}) {
   return <group>
     <mesh rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[180,180]}/><meshStandardMaterial color="#dce7d0"/></mesh>
     <mesh position={[0,-.045,3]} rotation={[-Math.PI/2,0,0]} receiveShadow><planeGeometry args={[12.8,22]}/><meshStandardMaterial color="#eadfce"/></mesh>
@@ -188,8 +190,8 @@ function ShopArchitecture({onCounterInteract}:{onCounterInteract:()=>void}) {
     {Array.from({length:12},(_,i)=><mesh key={i} position={[(i%2===0?-1:1)*(3+(i%3)*.85),-.006,3.6+Math.floor(i/2)*1.05]} rotation={[-Math.PI/2,0,(i%4)*.5]}>
       <circleGeometry args={[.26+(i%3)*.05,9]}/><meshStandardMaterial color="#d0cfb4"/>
     </mesh>)}
-    <ambientLight intensity={.92}/><hemisphereLight color="#fff9d8" groundColor="#617c50" intensity={1.3}/>
-    <directionalLight position={[-5,10,5]} intensity={2.0} color="#fff4da" castShadow shadow-mapSize={[1024,1024]} shadow-camera-left={-12} shadow-camera-right={12} shadow-camera-top={12} shadow-camera-bottom={-12}/>
+    <ambientLight intensity={.55}/><hemisphereLight color="#fff9d8" groundColor="#617c50" intensity={.95}/>
+    <directionalLight position={[-5,10,5]} intensity={2.0} color="#fff4da" castShadow={!lowPower} shadow-mapSize={[1024,1024]} shadow-camera-left={-12} shadow-camera-right={12} shadow-camera-top={12} shadow-camera-bottom={-12}/>
   </group>;
 }
 
@@ -217,12 +219,9 @@ function ThirdPersonCamera({controls,menuOpen,onNearChange,onArrive}: {
       dest.set(0,compact?3.25:3.02,compact?8.15:7.5);
       target.set(0,2.65,1.1);
     }else{
-      const follow=compact?3.75:4.4;
-      const sin=Math.sin(c.yaw),cos=Math.cos(c.yaw);
-      // Orbit behind the player in local heading space, not fixed world +Z.
-      // The shoulder offset rotates with the camera so turns work in either direction.
-      dest.set(c.x+sin*follow+cos*.42,2.7+c.pitch*2.0,c.z+cos*follow-sin*.42);
-      target.set(c.x-sin*4.5,1.83+c.pitch*1.7,c.z-cos*4.5);
+      const anchor=cameraAnchor(c,compact);
+      dest.set(...anchor.position);
+      target.set(...anchor.lookAt);
     }
     camera.position.lerp(dest,1-Math.exp(-5*Math.min(delta,.06)));
     // The camera looks over the player's shoulder; it is not a first-person view.
@@ -255,12 +254,14 @@ export function ShopWorld({controls,menuOpen,cartCount,onAdd,onCheckout,onCloseM
     shadows={!lowPower}
     onCreated={({gl})=>{
       gl.setClearColor("#cee7d0");
+      gl.toneMapping=THREE.ACESFilmicToneMapping;
+      gl.toneMappingExposure=1.12;
       gl.domElement.addEventListener("webglcontextlost",onCanvasError,{once:true});
     }}
     fallback={<div className="shop-webgl-fallback">Thiết bị không hỗ trợ WebGL.</div>}
   >
     <fog attach="fog" args={["#cee7d0",28,86]}/>
-    <ShopArchitecture onCounterInteract={onCounterInteract}/>
+    <ShopArchitecture onCounterInteract={onCounterInteract} lowPower={lowPower}/>
     {/* Touchable 3D wayfinding sign, not a 2D overlay. */}
     <group onClick={e=>{e.stopPropagation();onApproach();}} position={[3.4,1.3,6.6]} rotation={[0,-.2,0]}>
       <Block position={[0,-.6,-.15]} size={[.11,1.9,.11]} color="#996845"/>
@@ -269,6 +270,7 @@ export function ShopWorld({controls,menuOpen,cartCount,onAdd,onCheckout,onCloseM
     <GardenDetails reducedMotion={reducedMotion} lowPower={lowPower}/>
     <CatBarista reducedMotion={reducedMotion}/>
     <WalkingCustomer reducedMotion={reducedMotion}/>
+    {!lowPower&&<WalkingCustomer reducedMotion={reducedMotion} variant={1}/>}
     <GardenDog reducedMotion={reducedMotion}/>
     <PlayerAvatar controls={controls} reducedMotion={reducedMotion}/>
     <SkyDecor reducedMotion={reducedMotion}/>
