@@ -1,6 +1,7 @@
 "use client";
 import { useFrame } from "@react-three/fiber";
-import { useRef } from "react";
+import { useMemo, useEffect, useRef } from "react";
+import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 import type { ShopControls } from "./types";
 
@@ -12,10 +13,39 @@ function Orb({position=[0,0,0],scale=[1,1,1],color}:{position?:[number,number,nu
 function Limb({position,rotation=[0,0,0],length=.55,color="#f6dfc5"}:{position:[number,number,number];rotation?:[number,number,number];length?:number;color?:string}){
  return <group position={position} rotation={rotation}><Orb position={[0,-length*.5,0]} scale={[.125,length*.58,.12]} color={color}/></group>;
 }
+/** Micro-stroked PBR texture maps onto curved geometry; no 2D sprite animals. */
+function useCatFurTexture(){
+ const texture=useMemo(()=>{
+  const canvas=document.createElement("canvas");canvas.width=256;canvas.height=256;
+  const ctx=canvas.getContext("2d");
+  if(ctx){
+   ctx.fillStyle="#eae0d5";ctx.fillRect(0,0,256,256);
+   for(let i=0;i<2800;i++){
+    const x=(i*79.71)%256,y=(i*47.29)%256;
+    ctx.strokeStyle=i%3===0?"#bdb0a420":"#fff7e626";
+    ctx.lineWidth=i%5===0?1.25:.8;
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+((i%3)-1)*1.8,y-3.5-(i%4));ctx.stroke();
+   }
+  }
+  const map=new THREE.CanvasTexture(canvas);
+  map.colorSpace=THREE.SRGBColorSpace;map.wrapS=THREE.RepeatWrapping;map.wrapT=THREE.RepeatWrapping;
+  map.anisotropy=4;
+  return map;
+ },[]);
+ useEffect(()=>()=>texture.dispose(),[texture]);
+ return texture;
+}
+function FurOrb({position,scale,color,texture}:{position:[number,number,number];scale:[number,number,number];color:string;texture:THREE.Texture}){
+ return <mesh castShadow position={position} scale={scale}>
+  <sphereGeometry args={[1,32,24]}/>
+  <meshStandardMaterial color={color} map={texture} roughness={.96} metalness={0}/>
+ </mesh>;
+}
 function Ear({x,rotation=0}:{x:number;rotation?:number}){
  return <group position={[x,.84,0]} rotation={[0,0,rotation]}>
-    <mesh castShadow><coneGeometry args={[.28,.58,3]}/><M color="#bca69b"/></mesh>
-    <mesh position={[0,-.025,.08]} scale={[.68,.68,.33]}><coneGeometry args={[.28,.55,3]}/><M color="#d99699"/></mesh>
+    <mesh castShadow rotation={[0,0,0]} scale={[.26,.36,.18]}><sphereGeometry args={[1,20,18]}/><M color="#bca69b"/></mesh>
+    <mesh castShadow position={[0,.15,0]}><coneGeometry args={[.22,.42,12]}/><M color="#bca69b"/></mesh>
+    <mesh position={[0,.06,.17]} scale={[.155,.24,.045]}><sphereGeometry args={[1,18,14]}/><M color="#d99699"/></mesh>
  </group>;
 }
 /** The beige/grey, round-faced amber-eyed cat in the user's photo, recreated as 3D shapes. */
@@ -23,6 +53,8 @@ export function CatBarista({reducedMotion=false}:{reducedMotion?:boolean}){
  const root=useRef<THREE.Group>(null);const paw=useRef<THREE.Group>(null);const tail=useRef<THREE.Group>(null);
  const eyelids=useRef<THREE.Group>(null);
  const pitcher=useRef<THREE.Group>(null);const juiceStream=useRef<THREE.Mesh>(null);
+ const fur=useCatFurTexture();
+ const head=useRef<THREE.Group>(null);
  useFrame(({clock})=>{
    if(reducedMotion)return;
    const t=clock.getElapsedTime();
@@ -33,19 +65,20 @@ export function CatBarista({reducedMotion=false}:{reducedMotion?:boolean}){
    if(pitcher.current)pitcher.current.rotation.z=-.25-pouring*.38;
    if(juiceStream.current){juiceStream.current.visible=pouring>.55;juiceStream.current.scale.y=Math.max(.03,(pouring-.55)*2);}
    if(tail.current)tail.current.rotation.y=Math.sin(t*1.6)*.3;
+   if(head.current){head.current.rotation.z=Math.sin(t*.72)*.025;head.current.rotation.x=Math.sin(t*.6)*.018;}
    if(eyelids.current){const phase=t%5.2;
      const blink=phase>4.92 ? Math.sin(((phase-4.92)/.28)*Math.PI)**2 : .01;
      eyelids.current.scale.y=Math.max(.01,blink);}
  });
  return <group ref={root} position={[0,1.72,-3.45]}>
-   <Orb position={[0,.3,0]} scale={[.62,.77,.48]} color="#b8a79c"/>
-   <Orb position={[0,.26,.42]} scale={[.42,.47,.10]} color="#f0e0cc"/>
+   <FurOrb position={[0,.3,0]} scale={[.65,.78,.51]} color="#d0c0b6" texture={fur}/>
+   <FurOrb position={[0,.26,.42]} scale={[.42,.47,.11]} color="#fff4e5" texture={fur}/>
    {/* Sculpted layered coat silhouette: lightweight meshes rather than alpha fur cards. */}
    {[-1,1].map(side=>Array.from({length:5},(_,i)=><mesh key={`${side}-${i}`} castShadow position={[side*(.43+i*.016),.64-i*.21,-.055]} rotation={[0,0,side*(.36+i*.10)]}>
      <coneGeometry args={[.16-i*.012,.36,5]}/><M color={i%2?"#ae9a8f":"#c2afa1"}/>
    </mesh>))}
    {/* Actual green apron, straps and leaf badge */}
-   <mesh castShadow position={[0,.22,.5]}><boxGeometry args={[.77,.8,.06]}/><M color="#246044"/></mesh>
+   <RoundedBox args={[.79,.82,.09]} radius={.13} smoothness={5} position={[0,.22,.5]} castShadow><meshStandardMaterial color="#247451" roughness={.87}/></RoundedBox>
    <Orb position={[0,.28,.557]} scale={[.10,.065,.025]} color="#d8e5ae"/>
    <mesh position={[0,-.005,.545]}><boxGeometry args={[.33,.25,.035]}/><M color="#1a4c38"/></mesh>
    <mesh position={[0,.29,.586]}><sphereGeometry args={[.033,10,8]}/><meshStandardMaterial color="#f4dc9a" metalness={.5} roughness={.26}/></mesh>
@@ -55,20 +88,20 @@ export function CatBarista({reducedMotion=false}:{reducedMotion?:boolean}){
      <Orb position={[-.4,.21,-.15]} scale={[.15,.34,.14]} color="#c2b0a2"/>
      <Orb position={[-.46,.44,-.15]} scale={[.14,.15,.14]} color="#9c8a82"/>
    </group>
-   <group position={[0,1.16,0]}>
+   <group ref={head} position={[0,1.16,0]}>
      <Ear x={-.45} rotation={.28}/><Ear x={.45} rotation={-.28}/>
      {[-1,1].map(side=><Orb key={side} position={[side*.51,.64,.04]} scale={[.22,.29,.19]} color="#bda596"/>)}
-     <Orb position={[0,.10,0]} scale={[.79,.68,.68]} color="#c7b2a2"/>
-     <Orb position={[0,-.19,.54]} scale={[.57,.30,.22]} color="#f1ddc5"/>
+     <FurOrb position={[0,.10,0]} scale={[.79,.68,.68]} color="#d8c8bb" texture={fur}/>
+     <FurOrb position={[0,-.19,.54]} scale={[.57,.30,.22]} color="#fff2db" texture={fur}/>
      {/* Full round cheeks, softly marked brow and forehead fur; all real geometry. */}
      {[-1,1].map(side=><group key={side}>
-       <Orb position={[side*.46,-.20,.50]} scale={[.34,.27,.28]} color="#f0dec9"/>
+       <FurOrb position={[side*.46,-.20,.50]} scale={[.34,.27,.28]} color="#fff4e4" texture={fur}/>
        <Orb position={[side*.30,.52,.43]} scale={[.22,.09,.12]} color="#a89389"/>
        {Array.from({length:3},(_,i)=><mesh key={i} position={[side*(.63+i*.055),-.02-i*.12,.40]} rotation={[0,0,side*(.65+i*.2)]}>
          <coneGeometry args={[.10,.27-i*.03,5]}/><M color={i%2?"#c0ad9e":"#b19d92"}/>
        </mesh>)}
      </group>)}
-     <Orb position={[0,.41,.61]} scale={[.13,.16,.083]} color="#dbc4b2"/>
+     <FurOrb position={[0,.41,.61]} scale={[.13,.16,.083]} color="#d5bda7" texture={fur}/>
      {/* Forward-facing amber eyes, dark pupils, warm highlights */}
      {[-.29,.29].map(x=><group key={x} position={[x*1.1,.15,.638]}>
        <Orb scale={[.205,.229,.078]} color="#463526"/>
@@ -80,7 +113,7 @@ export function CatBarista({reducedMotion=false}:{reducedMotion?:boolean}){
      <group ref={eyelids} position={[0,.25,.707]} scale={[1,.01,1]}>
        {[-.29,.29].map(x=><Orb key={x} position={[x,0,0]} scale={[.17,.13,.03]} color="#c6afa0"/>)}
      </group>
-     <Orb position={[0,-.22,.80]} scale={[.086,.055,.042]} color="#a9757b"/>
+     <Orb position={[0,-.22,.80]} scale={[.089,.06,.047]} color="#d98f99"/>
      <mesh position={[0,-.30,.80]} rotation={[0,0,Math.PI/2]}><torusGeometry args={[.055,.012,5,12,Math.PI]}/><M color="#6f5149"/></mesh>
      {[-1,1].flatMap(side=>[0,1,2].map(i=><mesh key={`${side}-${i}`} position={[side*.56,-.18+i*.065,.62]} rotation={[0,side*.25,side*(.12-i*.12)]}>
        <cylinderGeometry args={[.006,.006,.34,3]}/><M color="#f2e5d8"/>
