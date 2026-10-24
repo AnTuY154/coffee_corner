@@ -9,13 +9,14 @@ const World=dynamic(()=>import("./world").then(m=>m.ShopWorld),{
  ssr:false,loading:()=> <div className="shop-loading" role="status">Đang mở cửa Vườn Ép 3D…</div>
 });
 const keyMap:Record<string,MoveKey>={KeyW:"forward",ArrowUp:"forward",KeyS:"back",ArrowDown:"back",KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right"};
-type Gesture={id:number;x:number;y:number;originX:number;originY:number;mode:"move"|"look"}|null;
+type Gesture={id:number;x:number;y:number;originX:number;originY:number;mode:"move"|"look"};
 
 /** Entire customer experience is one WebGL Canvas. No HTML menu/HUD/covers. */
 export function ImmersiveShop(){
  const router=useRouter();
  const controls=useRef<ShopControls>({keys:new Set(),x:START_POSITION.x,z:START_POSITION.z,yaw:0,pitch:0,autoWalk:false,locked:false});
- const gesture=useRef<Gesture>(null);
+ // One pointer per role: two fingers can walk and look simultaneously on mobile.
+ const gestures=useRef<Map<number,Gesture>>(new Map());
  const [menuOpen,setMenuOpen]=useState(false);
  const [near,setNear]=useState(false);
  const [autowalkPending,setAutowalkPending]=useState(false);
@@ -60,20 +61,23 @@ export function ImmersiveShop(){
  useEffect(()=>{document.body.style.overflow="hidden";return()=>{document.body.style.overflow="";};},[]);
  const handlePointerDown=(e:React.PointerEvent<HTMLElement>)=>{
   if(menuOpen||!(e.target instanceof Element)||!e.target.closest("canvas"))return;
+  if(e.pointerType==="mouse"&&e.button!==0)return;
   const rect=e.currentTarget.getBoundingClientRect();
-  const mobile=e.pointerType==="touch";
-  const mode:"move"|"look"=mobile&&e.clientX<rect.left+rect.width*.48?"move":"look";
-  gesture.current={id:e.pointerId,x:e.clientX,y:e.clientY,originX:e.clientX,originY:e.clientY,mode};
+  const mode:"move"|"look"=e.pointerType==="touch"&&e.clientX<rect.left+rect.width*.48?"move":"look";
+  if([...gestures.current.values()].some(p=>p.mode===mode))return;
+  gestures.current.set(e.pointerId,{id:e.pointerId,x:e.clientX,y:e.clientY,originX:e.clientX,originY:e.clientY,mode});
  };
  const handlePointerMove=(e:React.PointerEvent<HTMLElement>)=>{
-  const p=gesture.current;if(!p||p.id!==e.pointerId||menuOpen)return;
+  const p=gestures.current.get(e.pointerId);if(!p||menuOpen)return;
   const dx=e.clientX-p.x,dy=e.clientY-p.y;
   if(p.mode==="look"){
-   controls.current.yaw=Math.max(-1.2,Math.min(1.2,controls.current.yaw-dx*.004));
-   controls.current.pitch=Math.max(-.4,Math.min(.4,controls.current.pitch+dy*.002));
+   // Normalise angular heading; no artificial +/-1.2 radian turning limit.
+   const yaw=controls.current.yaw-dx*.004;
+   controls.current.yaw=Math.atan2(Math.sin(yaw),Math.cos(yaw));
+   controls.current.pitch=Math.max(-.35,Math.min(.45,controls.current.pitch+dy*.002));
   }else{
-   const sx=(e.clientX-p.originX),sy=(e.clientY-p.originY);
-   // Touch-left behaves as a virtual joystick; no permanent 2D D-pad occupies the world.
+   const sx=e.clientX-p.originX,sy=e.clientY-p.originY;
+   // Invisible virtual joystick; the look pointer remains active independently.
    const x=Math.abs(sx)>18,y=Math.abs(sy)>18;
    for(const k of ["left","right","forward","back"] as const)controls.current.keys.delete(k);
    if(x)controls.current.keys.add(sx>0?"right":"left");
@@ -83,9 +87,11 @@ export function ImmersiveShop(){
   p.x=e.clientX;p.y=e.clientY;
  };
  const handlePointerUp=(e:React.PointerEvent<HTMLElement>)=>{
-  if(gesture.current?.id!==e.pointerId)return;
-  const p=gesture.current;gesture.current=null;
-  if(p.mode==="move")controls.current.keys.clear();
+  const p=gestures.current.get(e.pointerId);if(!p)return;
+  gestures.current.delete(e.pointerId);
+  if(p.mode==="move"){
+   for(const k of ["left","right","forward","back"] as const)controls.current.keys.delete(k);
+  }
  };
  const handleDoubleClick=()=>{if(menuOpen)return;if(near)openMenu();else goToCounter();};
  return <div className="ve-immersive-fullscreen" aria-label="Cửa hàng Vườn Ép nhập vai với mèo pha chế và nhân vật người chơi" onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerCancel={handlePointerUp} onDoubleClick={handleDoubleClick}>
