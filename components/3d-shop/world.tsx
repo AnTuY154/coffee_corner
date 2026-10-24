@@ -5,9 +5,10 @@ import { RoundedBox, Float } from "@react-three/drei";
 import * as THREE from "three";
 import type { ShopControls } from "./types";
 import { cameraAnchor, stepMovement } from "./types";
-import { CatBarista, PlayerAvatar, WalkingCustomer, GardenDog } from "./characters";
+import { CatBarista, GardenDog } from "./characters";
+import { RiggedPlayer, RiggedCustomer } from "./rigged-characters";
 import { GardenDetails } from "./garden";
-import { InWorldMenu } from "./in-world-menu";
+
 
 const COLORS = {
   pine: "#235c3d", deep: "#1b4836", leaf: "#77a76a", lime: "#b3c989",
@@ -247,9 +248,9 @@ function ThirdPersonCamera({controls,menuOpen,onNearChange,onArrive}: {
     const {near,arrived}=stepMovement(c,delta);
     const compact=size.width<680;
     if(menuOpen){
-      // A world-space kiosk to the right of the cat leaves the counter visible.
-      dest.set(compact?2.4:2.45,compact?3.25:3.07,compact?8.25:7.4);
-      target.set(2.35,2.65,1.1);
+      // 2D product selection leaves the counter and the cat visible behind the dialog.
+      dest.set(0,compact?3.05:2.85,compact?7.5:7.1);
+      target.set(0,2.1,-3.1);
     }else{
       const anchor=cameraAnchor(c,compact);
       dest.set(...anchor.position);
@@ -264,13 +265,9 @@ function ThirdPersonCamera({controls,menuOpen,onNearChange,onArrive}: {
   });
   return null;
 }
-export function ShopWorld({controls,menuOpen,cartCount,onAdd,onCheckout,onCloseMenu,onNearChange,onArrive,onCounterInteract,onApproach,reducedMotion,lowPower,onCanvasError}: {
+export function ShopWorld({controls,menuOpen,onNearChange,onArrive,onCounterInteract,onApproach,reducedMotion,lowPower,onCanvasError}: {
   controls:React.RefObject<ShopControls>;
   menuOpen:boolean;
-  cartCount:number;
-  onAdd:(id:string)=>void;
-  onCheckout:()=>void;
-  onCloseMenu:()=>void;
   onNearChange:(near:boolean)=>void;
   onArrive:()=>void;
   onCounterInteract:()=>void;
@@ -303,12 +300,12 @@ export function ShopWorld({controls,menuOpen,cartCount,onAdd,onCheckout,onCloseM
     </group>
     <GardenDetails reducedMotion={reducedMotion} lowPower={lowPower}/>
     <CatBarista reducedMotion={reducedMotion}/>
-    <WalkingCustomer reducedMotion={reducedMotion}/>
-    {!lowPower&&<WalkingCustomer reducedMotion={reducedMotion} variant={1}/>}
+    <RiggedCustomer reducedMotion={reducedMotion}/>
+    {!lowPower&&<RiggedCustomer reducedMotion={reducedMotion} variant={1}/>}
     <GardenDog reducedMotion={reducedMotion}/>
-    <PlayerAvatar controls={controls} reducedMotion={reducedMotion}/>
+    <RiggedPlayer controls={controls} reducedMotion={reducedMotion}/>
     <SkyDecor reducedMotion={reducedMotion}/>
-    <InWorldMenu open={menuOpen} count={cartCount} onAdd={onAdd} onClose={onCloseMenu} onCheckout={onCheckout}/>
+    {/* Product browsing lives in the accessible 2D overlay after interacting with the 3D kiosk. */}
     <ThirdPersonCamera controls={controls} menuOpen={menuOpen} onNearChange={onNearChange} onArrive={onArrive}/>
   </Canvas>;
 }
