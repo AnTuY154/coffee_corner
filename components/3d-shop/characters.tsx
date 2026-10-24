@@ -7,7 +7,7 @@ import type { ShopControls } from "./types";
 /** Original low-poly/soft-clay characters. No external models or copyrighted meshes. */
 const M = ({color,metalness=0,roughness=.88}:{color:string;metalness?:number;roughness?:number})=><meshStandardMaterial color={color} metalness={metalness} roughness={roughness}/>;
 function Orb({position=[0,0,0],scale=[1,1,1],color}:{position?:[number,number,number];scale?:[number,number,number];color:string}){
- return <mesh castShadow position={position} scale={scale}><sphereGeometry args={[1,16,12]}/><M color={color}/></mesh>;
+ return <mesh castShadow position={position} scale={scale}><sphereGeometry args={[1,24,20]}/><M color={color}/></mesh>;
 }
 function Limb({position,rotation=[0,0,0],length=.55,color="#f6dfc5"}:{position:[number,number,number];rotation?:[number,number,number];length?:number;color?:string}){
  return <group position={position} rotation={rotation}><Orb position={[0,-length*.5,0]} scale={[.125,length*.58,.12]} color={color}/></group>;
@@ -56,32 +56,33 @@ export function CatBarista({reducedMotion=false}:{reducedMotion?:boolean}){
      <Orb position={[-.46,.44,-.15]} scale={[.14,.15,.14]} color="#9c8a82"/>
    </group>
    <group position={[0,1.16,0]}>
-     <Ear x={-.38} rotation={.26}/><Ear x={.38} rotation={-.26}/>
-     <Orb position={[0,.12,0]} scale={[.68,.57,.58]} color="#bda99c"/>
-     <Orb position={[0,-.15,.45]} scale={[.49,.25,.22]} color="#e3cdb8"/>
+     <Ear x={-.45} rotation={.28}/><Ear x={.45} rotation={-.28}/>
+     {[-1,1].map(side=><Orb key={side} position={[side*.51,.64,.04]} scale={[.22,.29,.19]} color="#bda596"/>)}
+     <Orb position={[0,.10,0]} scale={[.79,.68,.68]} color="#c7b2a2"/>
+     <Orb position={[0,-.19,.54]} scale={[.57,.30,.22]} color="#f1ddc5"/>
      {/* Full round cheeks, softly marked brow and forehead fur; all real geometry. */}
      {[-1,1].map(side=><group key={side}>
-       <Orb position={[side*.42,-.19,.32]} scale={[.27,.23,.31]} color="#e6d3be"/>
-       <Orb position={[side*.30,.45,.38]} scale={[.23,.085,.12]} color="#a89389"/>
-       {Array.from({length:3},(_,i)=><mesh key={i} position={[side*(.54+i*.055),-.02-i*.12,.22]} rotation={[0,0,side*(.65+i*.2)]}>
+       <Orb position={[side*.46,-.20,.50]} scale={[.34,.27,.28]} color="#f0dec9"/>
+       <Orb position={[side*.30,.52,.43]} scale={[.22,.09,.12]} color="#a89389"/>
+       {Array.from({length:3},(_,i)=><mesh key={i} position={[side*(.63+i*.055),-.02-i*.12,.40]} rotation={[0,0,side*(.65+i*.2)]}>
          <coneGeometry args={[.10,.27-i*.03,5]}/><M color={i%2?"#c0ad9e":"#b19d92"}/>
        </mesh>)}
      </group>)}
-     <Orb position={[0,.32,.51]} scale={[.12,.19,.085]} color="#ccb5a4"/>
+     <Orb position={[0,.41,.61]} scale={[.13,.16,.083]} color="#dbc4b2"/>
      {/* Forward-facing amber eyes, dark pupils, warm highlights */}
-     {[-.29,.29].map(x=><group key={x} position={[x,.16,.503]}>
-       <Orb scale={[.172,.205,.077]} color="#58463a"/>
-       <mesh position={[0,0,.038]} scale={[.157,.184,.065]}><sphereGeometry args={[1,20,16]}/><meshPhysicalMaterial color="#e5a84d" roughness={.16} clearcoat={.82} clearcoatRoughness={.08}/></mesh>
+     {[-.29,.29].map(x=><group key={x} position={[x*1.1,.15,.638]}>
+       <Orb scale={[.205,.229,.078]} color="#463526"/>
+       <mesh position={[0,0,.038]} scale={[.19,.212,.065]}><sphereGeometry args={[1,20,16]}/><meshPhysicalMaterial color="#e5a84d" roughness={.16} clearcoat={.82} clearcoatRoughness={.08}/></mesh>
        <Orb position={[.04,-.025,.089]} scale={[.052,.102,.009]} color="#f0bc63"/>
        <Orb position={[.015,0,.065]} scale={[.066,.13,.028]} color="#372c22"/>
        <Orb position={[-.04,.07,.095]} scale={[.027,.035,.014]} color="#fff9e5"/>
      </group>)}
-     <group ref={eyelids} position={[0,.22,.56]} scale={[1,.01,1]}>
+     <group ref={eyelids} position={[0,.25,.707]} scale={[1,.01,1]}>
        {[-.29,.29].map(x=><Orb key={x} position={[x,0,0]} scale={[.17,.13,.03]} color="#c6afa0"/>)}
      </group>
-     <Orb position={[0,-.19,.65]} scale={[.085,.055,.035]} color="#b67f7c"/>
-     <mesh position={[0,-.27,.65]} rotation={[0,0,Math.PI/2]}><torusGeometry args={[.055,.012,5,12,Math.PI]}/><M color="#6f5149"/></mesh>
-     {[-1,1].flatMap(side=>[0,1,2].map(i=><mesh key={`${side}-${i}`} position={[side*.43,-.18+i*.065,.58]} rotation={[0,side*.25,side*(.12-i*.12)]}>
+     <Orb position={[0,-.22,.80]} scale={[.086,.055,.042]} color="#a9757b"/>
+     <mesh position={[0,-.30,.80]} rotation={[0,0,Math.PI/2]}><torusGeometry args={[.055,.012,5,12,Math.PI]}/><M color="#6f5149"/></mesh>
+     {[-1,1].flatMap(side=>[0,1,2].map(i=><mesh key={`${side}-${i}`} position={[side*.56,-.18+i*.065,.62]} rotation={[0,side*.25,side*(.12-i*.12)]}>
        <cylinderGeometry args={[.006,.006,.34,3]}/><M color="#f2e5d8"/>
      </mesh>))}
    </group>
@@ -141,13 +142,40 @@ export function PlayerAvatar({controls,reducedMotion}:{controls:React.RefObject<
    root.current.position.y=reducedMotion?0:Math.abs(Math.sin(clock.elapsedTime*9))*.027*strideWeight.current;
  });
  return <group ref={root} position={[0,0,9.4]}>
-   <Orb position={[0,1.2,0]} scale={[.35,.51,.26]} color="#eee9d5"/>
-   <Orb position={[0,1.80,0]} scale={[.31,.33,.31]} color="#d8ad91"/>
-   <Orb position={[0,2.04,-.04]} scale={[.34,.22,.30]} color="#473229"/>
-   <Orb position={[0,2.15,-.2]} scale={[.18,.12,.19]} color="#473229"/>
-   {[-.18,.18].map((x,i)=><group key={i} ref={i===0?left:right} position={[x,.89,0]}><Limb position={[0,-.33,0]} length={.65} color="#567759"/><Orb position={[0,-.76,-.08]} scale={[.15,.10,.23]} color="#f7f3df"/></group>)}
-   {[-.44,.44].map((x,i)=><group key={i} ref={i===0?armL:armR} position={[x,1.46,0]}><Limb position={[0,-.31,0]} length={.6} color="#eee9d5"/></group>)}
-   <group position={[0,1.19,-.32]}><Orb scale={[.31,.40,.22]} color="#236345"/><Orb position={[0,.06,-.21]} scale={[.10,.08,.01]} color="#c4dc9e"/></group>
+   {/* Rounded hoodie and oversized chibi head, modelled in actual geometry. */}
+   <Orb position={[0,1.18,0]} scale={[.38,.48,.30]} color="#fff0dd"/>
+   <Orb position={[0,.98,.20]} scale={[.29,.20,.16]} color="#e4e8d9"/>
+   <Orb position={[0,1.80,0]} scale={[.43,.44,.41]} color="#efc7a7"/>
+   <Orb position={[0,2.06,-.05]} scale={[.455,.255,.44]} color="#573a2b"/>
+   {[-1,0,1].flatMap(row=>[-2,-1,0,1,2].map(col=>
+     <Orb key={`${row}-${col}`} position={[col*.168+(row%2)*.03,2.04+Math.cos(col*.63)*.075,row*.16-.10]}
+       scale={[.14,.14,.145]} color={Math.abs(col)%2?"#674735":"#503529"}/>
+   ))}
+   <Orb position={[0,2.23,-.22]} scale={[.18,.16,.18]} color="#674735"/>
+   {[-1,1].map(side=><group key={side}>
+     <Orb position={[side*.40,1.77,.01]} scale={[.09,.14,.09]} color="#edbd9d"/>
+     <Orb position={[side*.24,1.80,.36]} scale={[.10,.13,.035]} color="#fffaf0"/>
+     <Orb position={[side*.24,1.78,.39]} scale={[.06,.09,.019]} color="#463427"/>
+     <Orb position={[side*.25,1.82,.414]} scale={[.02,.03,.01]} color="#fffefd"/>
+     <Orb position={[side*.32,1.67,.34]} scale={[.095,.045,.026]} color="#eaa7a0"/>
+   </group>)}
+   <Orb position={[0,1.63,.41]} scale={[.06,.03,.02]} color="#b47f72"/>
+   {[-.18,.18].map((x,i)=><group key={i} ref={i===0?left:right} position={[x,.89,0]}>
+     <Limb position={[0,-.27,0]} length={.70} color="#60856a"/>
+     <Orb position={[0,-.69,.095]} scale={[.18,.12,.27]} color="#fff8ed"/>
+     <Orb position={[0,-.69,.32]} scale={[.14,.07,.055]} color="#dba97b"/>
+   </group>)}
+   {[-.43,.43].map((x,i)=><group key={i} ref={i===0?armL:armR} position={[x,1.49,0]}>
+     <Orb position={[0,-.24,0]} scale={[.17,.33,.18]} color="#fbf0dc"/>
+     <Orb position={[0,-.46,0]} scale={[.16,.10,.16]} color="#d9e4d4"/>
+     <Orb position={[0,-.54,.035]} scale={[.13,.13,.14]} color="#edc09f"/>
+   </group>)}
+   <group position={[0,1.20,-.36]}>
+     <Orb scale={[.34,.42,.20]} color="#1c6544"/>
+     <Orb position={[0,-.17,-.19]} scale={[.27,.20,.075]} color="#277a53"/>
+     <Orb position={[0,.07,-.21]} scale={[.10,.068,.018]} color="#c9e8af"/>
+     {[-.24,.24].map(x=><Orb key={x} position={[x,.26,.18]} scale={[.08,.29,.07]} color="#317d56"/>)}
+   </group>
  </group>;
 }
 
@@ -163,8 +191,10 @@ export function WalkingCustomer({reducedMotion,variant=0}:{reducedMotion:boolean
  });
  return <group ref={root} position={[-4,0,4]} rotation={[0,.2,0]}>
    <Orb position={[0,1.24,0]} scale={[.33,.46,.25]} color={variant?"#91a88c":"#ecdfbd"}/>
-   <Orb position={[0,1.8,0]} scale={[.29,.32,.29]} color="#dab395"/>
-   <Orb position={[0,2.0,0]} scale={[.32,.20,.31]} color={variant?"#584b3a":"#44342b"}/>
+   <Orb position={[0,1.76,0]} scale={[.39,.39,.37]} color="#edc7aa"/>
+   <Orb position={[0,2.03,-.04]} scale={[.40,.20,.38]} color={variant?"#584b3a":"#44342b"}/>
+   {[-1,0,1].map(i=><Orb key={i} position={[i*.24,2.10,-.26]} scale={[.15,.15,.15]} color="#50392e"/>)}
+   {[-1,1].map(side=><group key={side}><Orb position={[side*.21,1.78,.345]} scale={[.078,.096,.026]} color="#4c302b"/><Orb position={[side*.28,1.65,.32]} scale={[.088,.037,.020]} color="#e8a29c"/></group>)}
    <group ref={left} position={[-.18,.85,0]}><Limb position={[0,-.35,0]} color="#6a8375" length={.7}/></group>
    <group ref={right} position={[.18,.85,0]}><Limb position={[0,-.35,0]} color="#6a8375" length={.7}/></group>
    <Orb position={[-.42,1.23,-.08]} scale={[.13,.36,.17]} color="#ba9068"/>
