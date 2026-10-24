@@ -33,6 +33,7 @@ assert.match(world,/HangingVines lowPower/,'cinematic foliage frames the storefr
 assert.match(world,/WeatherSystem mode=\{weather\}/,'sky, rain and sun follow weather simulation');
 assert.match(world,/QuaterniusProp kind="shop-bookcase"/,'Quaternius GLB shelves replace box-geometry shelves');
 assert.match(world,/QuaterniusProp kind="houseplant"/,'Quaternius GLB houseplants replace sphere-based houseplants');
+assert.match(world,/QuaterniusProp kind="fruit-crate"/,'four fruit crate shells are authored Quaternius GLBs');
 assert.match(garden,/QuaterniusProp kind="garden-couch"/,'garden furniture is licensed GLB');
 assert.match(garden,/QuaterniusProp kind="garden-rug"/,'garden carpet is licensed GLB');
 assert.match(garden,/QuaterniusFlowers/,"garden flower groups must be GLB assets");

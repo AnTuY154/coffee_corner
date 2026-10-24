@@ -55,11 +55,14 @@ function Pineapple({ position, scale=1 }: {position:[number,number,number];scale
       <coneGeometry args={[.09,.5,5]}/><meshStandardMaterial color="#3e794d"/></mesh>)}
   </group>;
 }
-function Crate({ position, fruit="orange", rotation=0 }: {position:[number,number,number];fruit?:"orange"|"lemon"|"apple"|"strawberry"|"mango"|"lime";rotation?:number}) {
+function Crate({ position, fruit="orange", rotation=0, lowPower=false }: {position:[number,number,number];fruit?:"orange"|"lemon"|"apple"|"strawberry"|"mango"|"lime";rotation?:number;lowPower?:boolean}) {
   return <group position={position} rotation={[0,rotation,0]}>
-    <Block position={[0,.2,0]} size={[1.25,.42,.8]} color={COLORS.wood}/>
-    <Block position={[0,.27,.42]} size={[1.3,.2,.08]} color={COLORS.darkWood}/>
-    <Block position={[0,.27,-.42]} size={[1.3,.2,.08]} color={COLORS.darkWood}/>
+    <QuaterniusProp kind="fruit-crate" position={[0,0,0]} size={[1.25,.42,.8]} lowPower={lowPower}
+      fallback={<group>
+        <Block position={[0,.2,0]} size={[1.25,.42,.8]} color={COLORS.wood}/>
+        <Block position={[0,.27,.42]} size={[1.3,.2,.08]} color={COLORS.darkWood}/>
+        <Block position={[0,.27,-.42]} size={[1.3,.2,.08]} color={COLORS.darkWood}/>
+      </group>}/>
     {Array.from({length:8},(_,i)=><Fruit key={i} type={fruit} size={fruit==="strawberry"?.13:.19} position={[-.43+(i%4)*.28,.5+(i%2)*.08,-.2+Math.floor(i/4)*.36]}/>)}
   </group>;
 }
@@ -162,10 +165,10 @@ function ShopArchitecture({onCounterInteract,lowPower}:{onCounterInteract:()=>vo
     <Cup position={[4.1,1.66,-1.87]} scale={.82}/>
     <Cup position={[3.7,1.66,-2.43]} color="#e6b952" scale={.75}/>
     {/* Fruit baskets outside storefront */}
-    <Crate position={[-5.3,.06,.1]} fruit="orange" rotation={-.25}/>
-    <Crate position={[-4.8,.36,.15]} fruit="lime" rotation={.17}/>
-    <Crate position={[5,.04,.05]} fruit="mango" rotation={.28}/>
-    <Crate position={[5.2,.43,.02]} fruit="apple" rotation={-.12}/>
+    <Crate position={[-5.3,.06,.1]} fruit="orange" rotation={-.25} lowPower={lowPower}/>
+    <Crate position={[-4.8,.36,.15]} fruit="lime" rotation={.17} lowPower={lowPower}/>
+    <Crate position={[5,.04,.05]} fruit="mango" rotation={.28} lowPower={lowPower}/>
+    <Crate position={[5.2,.43,.02]} fruit="apple" rotation={-.12} lowPower={lowPower}/>
     <Pineapple position={[5.9,.49,.3]} />
     <Pineapple position={[-5.87,.56,.33]} scale={.9}/>
     <QuaterniusProp kind="houseplant" position={[-6.45,0,-.05]} height={1.92} lowPower={lowPower}/>

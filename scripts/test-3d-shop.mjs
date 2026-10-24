@@ -87,7 +87,7 @@ assert(WEATHER_PROFILE.rainy.rain>0&&WEATHER_PROFILE.sunny.sun>WEATHER_PROFILE.o
 
 const quaternius=file('components/3d-shop/quaternius-props.tsx');
 const sources=file('public/models/quaternius/SOURCES.md');
-const decorative=['garden-chair','garden-armchair','garden-couch','shop-bookcase','houseplant','waste-bin','garden-rug'];
+const decorative=['garden-chair','garden-armchair','garden-couch','shop-bookcase','houseplant','waste-bin','garden-rug','fruit-crate'];
 for(const name of decorative){
  const path='public/models/quaternius/'+name+'.glb';
  const bytes=readFileSync(resolve(root,path));
@@ -129,6 +129,9 @@ assert(quaternius.includes('scene.clone(true)'),'GLB instances must not mutate t
 assert(quaternius.includes('NEXT_PUBLIC_BASE_PATH'),'GLBs should load on Pages subpaths');
 assert(quaternius.includes('Suspense')&&quaternius.includes('AssetBoundary'),'fallback preserves gameplay on load errors');
 assert(!world.includes('function Plant('),'placeholder planters have been replaced');
+assert(world.includes('<QuaterniusProp kind="fruit-crate"'),'produce bins now use a real Quaternius GLB');
+assert(quaternius.includes('size?:[number,number,number]'),'produce bin can be fitted to low rectangular footprint');
+assert(quaternius.includes('useGLTF(PATHS[kind],false,true)'),'Meshopt stays enabled for all prop models');
 assert(world.includes('<QuaterniusProp kind="shop-bookcase"'),'service shelves are now Quaternius GLB');
 assert(world.includes('<QuaterniusProp kind="houseplant"'),'shop displays GLB planters');
 assert(file('components/3d-shop/garden.tsx').includes('<QuaterniusProp kind="garden-couch"'),'outdoor seating uses Quaternius GLB');

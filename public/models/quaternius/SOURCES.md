@@ -16,6 +16,8 @@ Original model catalogue: https://poly.pizza (individual IDs below)
 | `waste-bin.glb` | `trash.glb` | `i7HDuYDLkx` | Customer-area recycling bin |
 | `garden-rug.glb` | `rug_round.glb` | `ZYBzMHnSbM` | Pergola floor decoration |
 
+**Standalone Quaternius fruit-crate GLB:** `fruit-crate.glb` comes from [age2pierre/solid-akkadi](https://github.com/age2pierre/solid-akkadi/blob/main/demo-app/public/assets/Crate.glb), originally Quaternius's [Crate, Poly Pizza model `3VGWnZPXmG`](https://poly.pizza/m/3VGWnZPXmG), individually published Public Domain **CC0**. Preserved binary, normalised into a shallow wood produce bin, with the scene's ingredient-specific fruit retained on top. The model has two named wood materials, copied and recoloured for the shop. Actual fruit geometry is still purpose-built, not misleadingly attributed to Quaternius.
+
 **Additional Nature MegaKit GLBs (grass, rocks and clovers):** `garden-grass.glb`, `garden-rocks.glb` and `garden-clover.glb`, from the same Quaternius **Stylized Nature MegaKit** CC0 family exports. Source binaries: https://github.com/tilakpatell/tilakpatell.com/tree/main/public/kit/naturemega (`grass.glb`, `rock.glb`, `clover.glb`). Pack manifest declares `licence: CC0-1.0`: https://github.com/tilakpatell/tilakpatell.com/blob/main/public/kit/naturemega/index.json. The loader clones only a named variant node in each family, without duplicated `.lod1` meshes. Models are locally hosted and only a limited number of plants render on mobile.
 
 **Additional Nature MegaKit GLB:** `garden-flowers.glb`, from Quaternius **Stylized Nature MegaKit** family-export (`Flower_1_Group` through `Flower_4_Group`). Source: https://github.com/tilakpatell/tilakpatell.com/blob/main/public/kit/naturemega/flower.glb. Pack manifest: https://github.com/tilakpatell/tilakpatell.com/blob/main/public/kit/naturemega/index.json (`licence: CC0-1.0`, attributed to Quaternius). Original pack: https://quaternius.com/packs/stylizednaturemegakit.html. The multi-model GLB is not rendered wholesale; a specifically named flower-group mesh is cloned, avoiding the duplicate `.lod1` geometry. This replaces six old flower clusters in the playable garden.
@@ -33,7 +35,7 @@ Original model catalogue: https://poly.pizza (individual IDs below)
 
 ### Still intentionally procedural
 
-The original juicer, blender, custom beverage cups, piles of fruit and wooden produce crates remain bespoke meshes because no *verified, functionally matching* Quaternius GLBs were imported this round. The 3D menu interaction tablet remains the interactive source-of-truth rather than a blindly replaced decorative mesh. It would be dishonest to claim every screen object has been converted.
+The original juicer, blender, custom beverage cups and piles of fruit remain bespoke meshes until equivalent properly licensed GLBs are sourced. Wooden produce crate shells now use Quaternius GLB with a geometry fallback. The 3D menu interaction tablet remains the interactive source-of-truth rather than a blindly replaced decorative mesh. It would be dishonest to claim every screen object has been converted.
 
 ### Serial source review passes
 
