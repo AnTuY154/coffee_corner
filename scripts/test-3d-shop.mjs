@@ -84,6 +84,36 @@ assert.equal(WEATHER_INTERVAL_MS,45000);
 assert.deepEqual(WEATHER_SEQUENCE,['sunny','overcast','windy','rainy']);
 let mode='sunny';for(let i=0;i<4;i++)mode=nextWeather(mode);assert.equal(mode,'sunny');
 assert(WEATHER_PROFILE.rainy.rain>0&&WEATHER_PROFILE.sunny.sun>WEATHER_PROFILE.overcast.sun);
+
+const quaternius=file('components/3d-shop/quaternius-props.tsx');
+const sources=file('public/models/quaternius/SOURCES.md');
+const decorative=['garden-chair','garden-armchair','garden-couch','shop-bookcase','houseplant','waste-bin','garden-rug'];
+for(const name of decorative){
+ const path='public/models/quaternius/'+name+'.glb';
+ const bytes=readFileSync(resolve(root,path));
+ assert.equal(bytes.toString('ascii',0,4),'glTF',name+' needs a real binary GLB, not a placeholder');
+ assert.equal(bytes.readUInt32LE(8),bytes.length,name+' must not be truncated');
+ assert(bytes.length>1200,'reject empty models');
+ const meta=JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)));
+ assert(meta.meshes?.length>0,'asset should contain real geometry: '+name);
+ assert(meta.scenes?.length>0,'asset should include a scene: '+name);
+ assert(sources.includes(name+'.glb')&&sources.includes('CC0 1.0'),'each model must have traceable CC0 provenance');
+}
+const flowers=readFileSync(resolve(root,'public/models/quaternius/garden-flowers.glb'));
+assert.equal(flowers.toString('ascii',0,4),'glTF');
+assert.equal(flowers.readUInt32LE(8),flowers.length,'multi-model flower GLB must not be truncated');
+const flowerJson=JSON.parse(flowers.toString('utf8',20,20+flowers.readUInt32LE(12)));
+const flowerNames=new Set(flowerJson.nodes.map(n=>n.name));
+assert(flowerNames.has('Flower_1_Group')&&flowerNames.has('Flower_4_Group'),'flower GLB must provide named group meshes');
+assert(quaternius.includes('scene.getObjectByName(FLOWER_VARIANTS[variant])'),'loader must select exact flower, not all meshes and LODs');
+assert(file('components/3d-shop/garden.tsx').includes('<QuaterniusFlowers'),'garden renders authored GLB flowers');
+assert(quaternius.includes('scene.clone(true)'),'GLB instances must not mutate the shared scene');
+assert(quaternius.includes('NEXT_PUBLIC_BASE_PATH'),'GLBs should load on Pages subpaths');
+assert(quaternius.includes('Suspense')&&quaternius.includes('AssetBoundary'),'fallback preserves gameplay on load errors');
+assert(!world.includes('function Plant('),'placeholder planters have been replaced');
+assert(world.includes('<QuaterniusProp kind="shop-bookcase"'),'service shelves are now Quaternius GLB');
+assert(world.includes('<QuaterniusProp kind="houseplant"'),'shop displays GLB planters');
+assert(file('components/3d-shop/garden.tsx').includes('<QuaterniusProp kind="garden-couch"'),'outdoor seating uses Quaternius GLB');
 assert(file('app/page.tsx').includes('<ImmersiveShop/>'));
 assert(file('app/menu/page.tsx').includes('<ImmersiveShop/>'));
 assert(existsSync(resolve(root,'app/api/orders/route.ts')),'production order API must remain');

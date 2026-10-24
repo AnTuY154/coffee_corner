@@ -3,6 +3,7 @@ import {useRef} from "react";
 import {useFrame} from "@react-three/fiber";
 import * as THREE from "three";
 import {GardenModel} from "./garden-models";
+import {QuaterniusProp,QuaterniusFlowers} from "./quaternius-props";
 import {WEATHER_PROFILE,type WeatherMode} from "./weather";
 
 function Wood({position,size,color="#a77a4d"}:{position:[number,number,number];size:[number,number,number];color?:string}){
@@ -47,20 +48,28 @@ export function GardenDetails({reducedMotion,lowPower,weather}:{reducedMotion:bo
   {[-10,-6.9].map(x=><Wood key={x} position={[x,2.0,1.3]} size={[.19,4,.19]}/>)}
   {[-10,-6.9].map(x=><Wood key={x} position={[x,2.0,5.4]} size={[.19,4,.19]}/>)}
   {Array.from({length:6},(_,i)=><Wood key={i} position={[-10+i*.63,4.1,3.35]} size={[.19,.14,4.4]}/>)}
-  <Wood position={[-8.45,2.2,3.35]} size={[3.45,.12,4.5]}/>
-  <mesh position={[-8.2,.92,3.25]}><cylinderGeometry args={[.91,.91,.15,12]}/><meshStandardMaterial color="#ac7748" roughness={.9}/></mesh>
-  <mesh position={[-8.2,.48,3.25]}><cylinderGeometry args={[.08,.13,.84,8]}/><meshStandardMaterial color="#96633e"/></mesh>
-  <Wood position={[-8.75,.52,4.0]} size={[.95,.17,.4]}/>
-  <Wood position={[-7.85,.52,4.0]} size={[.95,.17,.4]}/>
+  {/* Actual Quaternius GLB furniture softens the garden seating area. */}
+  <QuaterniusProp kind="garden-rug" position={[-8.45,.018,3.35]} width={3.25} lowPower={lowPower}/>
+  <QuaterniusProp kind="garden-couch" position={[-8.45,0,4.25]} height={1.2} rotation={Math.PI} lowPower={lowPower}/>
+  <QuaterniusProp kind="garden-chair" position={[-7.15,0,2.65]} height={1.22} rotation={-1.28} lowPower={lowPower}/>
+  <QuaterniusProp kind="garden-armchair" position={[-9.82,0,2.65]} height={1.15} rotation={1.3} lowPower={lowPower}/>
+  {/* Table remains a small collision-free mesh to preserve the intended tabletop height. */}
+  <mesh position={[-8.4,.71,3.12]}><cylinderGeometry args={[.59,.57,.09,16]}/><meshStandardMaterial color="#c28e5f" roughness={.85}/></mesh>
+  <Wood position={[-8.4,.36,3.12]} size={[.13,.65,.13]}/>
   {/* Orange and cream stepping stone path */}
   {Array.from({length:12},(_,i)=>{
    const row=Math.floor(i/2);return <mesh key={i} position={[(i%2===0?-.8:.8)+(row%2)*.16,.01,2.25+row*1.52]} rotation={[-Math.PI/2,0,(i%3)*.08]}>
     <circleGeometry args={[.66,8]}/><meshStandardMaterial color={i%3===0?"#f3e8cc":"#e8dcc2"}/>
    </mesh>;
   })}
-  {[-5.5,-4.5,4.6,5.6].map((x,i)=><FlowerCluster key={i} position={[x,.03,3.8+i%2*2.7]} amount={lowPower?4:9}/>)}
-  <FlowerCluster position={[-8.1,0,6.7]} amount={lowPower?5:10}/>
-  <FlowerCluster position={[8.2,0,7]} amount={lowPower?5:10}/>
+  {/* Grouped flowers are now actual Quaternius MegaKit GLB meshes (each variant selects one node). */}
+  {[-5.5,-4.5,4.6,5.6].map((x,i)=><QuaterniusFlowers key={i}
+    position={[x,.03,3.8+i%2*2.7]} variant={(i%4) as 0|1|2|3} lowPower={lowPower} height={.72}
+    fallback={<FlowerCluster position={[x,.03,3.8+i%2*2.7]} amount={lowPower?4:9}/>}/>)}
+  <QuaterniusFlowers position={[-8.1,0,6.7]} lowPower={lowPower} variant={2} height={.9}
+    fallback={<FlowerCluster position={[-8.1,0,6.7]} amount={lowPower?5:10}/>}/>
+  <QuaterniusFlowers position={[8.2,0,7]} lowPower={lowPower} variant={3} height={.88}
+    fallback={<FlowerCluster position={[8.2,0,7]} amount={lowPower?5:10}/>}/>
   {/* The cord is a horizontal 3D line; cylinderGeometry points along Y by default.
       Correct rotation prevents the 15-metre pole cutting through the camera. */}
   <mesh position={[0,5.17,5.8]} rotation={[0,0,Math.PI/2]}>
