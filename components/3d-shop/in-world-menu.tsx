@@ -51,8 +51,8 @@ export function InWorldMenu({open,count,onAdd,onClose,onCheckout}:Props){
   };window.addEventListener("keydown",listener);return()=>window.removeEventListener("keydown",listener);
  },[open,onClose,onAdd,current.id,view]);
  if(!open)return null;
- const scale=compact ? .59 : 1;
- return <group position={[0,2.75,1.10]} scale={scale}>
+ const scale=compact ? .53 : .78;
+ return <group position={[2.35,2.70,1.10]} scale={scale}>
   {/* Backlit wooden kiosk board, physically located in front of the counter. */}
   <mesh position={[0,0,-.14]} castShadow><boxGeometry args={[6.05,4.86,.22]}/><meshStandardMaterial color="#987144" roughness={.79}/></mesh>
   <mesh position={[0,0,-.01]}><boxGeometry args={[5.83,4.64,.12]}/><meshStandardMaterial color="#f8edce" roughness={.69}/></mesh>
