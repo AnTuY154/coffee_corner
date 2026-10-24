@@ -39,14 +39,14 @@ function RigBody({ url, moving, reducedMotion, height = 2.25 }: RigProps) {
     return { scale, lift: -box.min.y * scale };
   }, [rig, height]);
   const { actions } = useAnimations(gltf.animations, rig);
-  const current = useRef<"Idle" | "Run" | null>(null);
+  const current = useRef<"idle" | "run" | null>(null);
   useEffect(() => {
-    const target = reducedMotion || !moving ? "Idle" : "Run";
+    const target = reducedMotion || !moving ? "idle" : "run";
     const next = actions[target];
     if (!next || current.current === target) return;
     const previous = current.current ? actions[current.current] : undefined;
     previous?.fadeOut(.18);
-    next.reset().setEffectiveWeight(1).fadeIn(.18).play();
+    next.reset().setEffectiveWeight(1).setEffectiveTimeScale(target === "run" ? .75 : 1).fadeIn(.18).play();
     current.current = target;
   }, [actions, moving, reducedMotion]);
   useEffect(() => () => { for (const action of Object.values(actions)) action?.stop(); }, [actions]);
