@@ -2,6 +2,8 @@
 import {useRef} from "react";
 import {useFrame} from "@react-three/fiber";
 import * as THREE from "three";
+import {GardenModel} from "./garden-models";
+import {WEATHER_PROFILE,type WeatherMode} from "./weather";
 
 function Wood({position,size,color="#a77a4d"}:{position:[number,number,number];size:[number,number,number];color?:string}){
  return <mesh position={position} castShadow><boxGeometry args={size}/><meshStandardMaterial color={color} roughness={.9}/></mesh>;
@@ -13,9 +15,9 @@ function FlowerCluster({position,amount=8}:{position:[number,number,number];amou
   <mesh position={[.05,.43,.03]}><sphereGeometry args={[.060,7,6]}/><meshStandardMaterial color="#f9e5ab"/></mesh>
   </group>;})}</group>;
 }
-function LeafyTree({position,scale=1,reducedMotion}:{position:[number,number,number];scale?:number;reducedMotion:boolean}){
+function LeafyTree({position,scale=1,reducedMotion,weather}:{position:[number,number,number];scale?:number;reducedMotion:boolean;weather:WeatherMode}){
  const crown=useRef<THREE.Group>(null);
- useFrame(({clock})=>{if(crown.current)crown.current.rotation.z=reducedMotion?0:Math.sin(clock.elapsedTime*.53+position[0])*.025;});
+ useFrame(({clock})=>{if(crown.current)crown.current.rotation.z=reducedMotion?0:Math.sin(clock.elapsedTime*.53+position[0])*.025*WEATHER_PROFILE[weather].wind;});
  return <group position={position} scale={scale}>
    <mesh castShadow position={[0,1.56,0]}><cylinderGeometry args={[.31,.52,3.2,9]}/><meshStandardMaterial color="#8e633e"/></mesh>
    <group ref={crown} position={[0,3.2,0]}>
@@ -31,12 +33,16 @@ function GardenLamp({position,illuminate=false}:{position:[number,number,number]
   {illuminate&&<pointLight color="#ffdb8f" intensity={.55} distance={4.5}/>}
  </group>;
 }
-export function GardenDetails({reducedMotion,lowPower}:{reducedMotion:boolean;lowPower:boolean}){
+export function GardenDetails({reducedMotion,lowPower,weather}:{reducedMotion:boolean;lowPower:boolean;weather:WeatherMode}){
  return <group>
-  <LeafyTree position={[-9,0,5]} scale={1.3} reducedMotion={reducedMotion}/>
-  <LeafyTree position={[9,0,5]} scale={1.18} reducedMotion={reducedMotion}/>
-  <LeafyTree position={[-11,0,-7]} scale={1.6} reducedMotion={reducedMotion}/>
-  <LeafyTree position={[11,0,-8]} scale={1.55} reducedMotion={reducedMotion}/>
+  {/* Actual locally hosted Quaternius CC0 GLB foliage replaces previous blocky tree canopies. */}
+  <GardenModel kind="tree-a" position={[-9,0,5]} height={7.2} weather={weather} reducedMotion={reducedMotion} lowPower={lowPower} phase={.8}/>
+  <GardenModel kind="tree-b" position={[9,0,5]} height={6.8} weather={weather} reducedMotion={reducedMotion} lowPower={lowPower} phase={2.3}/>
+  <GardenModel kind="tree-b" position={[-11,0,-7]} height={9.1} weather={weather} reducedMotion={reducedMotion} lowPower={lowPower} phase={1.8}/>
+  <GardenModel kind="tree-a" position={[11,0,-8]} height={8.8} weather={weather} reducedMotion={reducedMotion} lowPower={lowPower} phase={3.2}/>
+  <GardenModel kind="bush" position={[-7.15,0,7]} height={1.25} weather={weather} reducedMotion={reducedMotion} lowPower={lowPower} phase={.1}/>
+  <GardenModel kind="bush" position={[7.2,0,7.1]} height={1.18} weather={weather} reducedMotion={reducedMotion} lowPower={lowPower} phase={2}/>
+  {!lowPower&&<GardenModel kind="bush" position={[-9.8,0,1]} height={1.4} weather={weather} reducedMotion={reducedMotion} lowPower={lowPower} phase={4}/>}
   {/* Cafe pergola / outdoor seating left of the shop */}
   {[-10,-6.9].map(x=><Wood key={x} position={[x,2.0,1.3]} size={[.19,4,.19]}/>)}
   {[-10,-6.9].map(x=><Wood key={x} position={[x,2.0,5.4]} size={[.19,4,.19]}/>)}
