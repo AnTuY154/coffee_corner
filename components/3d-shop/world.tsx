@@ -8,6 +8,7 @@ import { cameraAnchor, stepMovement } from "./types";
 import { CatBarista, GardenDog } from "./characters";
 import { RiggedPlayer, RiggedCustomer } from "./rigged-characters";
 import { GardenDetails } from "./garden";
+import {QuaterniusProp} from "./quaternius-props";
 import {WeatherSystem} from "./weather-system";
 import {WEATHER_PROFILE,type WeatherMode} from "./weather";
 
@@ -60,19 +61,6 @@ function Crate({ position, fruit="orange", rotation=0 }: {position:[number,numbe
     <Block position={[0,.27,.42]} size={[1.3,.2,.08]} color={COLORS.darkWood}/>
     <Block position={[0,.27,-.42]} size={[1.3,.2,.08]} color={COLORS.darkWood}/>
     {Array.from({length:8},(_,i)=><Fruit key={i} type={fruit} size={fruit==="strawberry"?.13:.19} position={[-.43+(i%4)*.28,.5+(i%2)*.08,-.2+Math.floor(i/4)*.36]}/>)}
-  </group>;
-}
-function Plant({ position, size=1 }: {position:[number,number,number];size?:number}) {
-  return <group position={position} scale={size}>
-    <Cylinder position={[0,.25,0]} args={[.31,.25,.52,8]} color="#c87956"/>
-    <Cylinder position={[0,.52,0]} args={[.31,.31,.05,9]} color="#ae6349"/>
-    <Cylinder position={[0,1,0]} args={[.07,.075,1.13,7]} color="#49683d"/>
-    {Array.from({length:7},(_,i)=>{
-      const a=i*Math.PI*2/7, len=.46+(i%2)*.18;
-      return <group key={i} position={[Math.sin(a)*len*.5,1.12+(i%3)*.15,Math.cos(a)*len*.5]} rotation={[Math.sin(a)*.35,a,Math.cos(a)*-.42]}>
-        <mesh scale={[.18,.45,.1]}><sphereGeometry args={[1,8,8]}/><meshStandardMaterial color={i%3===0?"#97b77d":"#598d59"} side={THREE.DoubleSide}/></mesh>
-      </group>
-    })}
   </group>;
 }
 function Cup({ position, color="#f2a04b", scale=1 }: {position:[number,number,number];color?:string;scale?:number}) {
@@ -156,9 +144,9 @@ function ShopArchitecture({onCounterInteract,lowPower}:{onCounterInteract:()=>vo
     <Block position={[0,1.52,-1.75]} size={[9.8,.2,1.97]} color="#f5deb7" radius={.09}/>
     <Block position={[0,1.63,-2.5]} size={[9.35,.11,.13]} color="#967052" radius={.014}/>
     {/* Display shelves and decor */}
-    {[-5.6,-4.35,-3.1].map((x,i)=><Block key={i} position={[x,2.9,-6.55]} size={[.11,2.5,.2]} color={COLORS.wood}/>)}
-    {[2.55,3.58].map((y,i)=><Block key={i} position={[-4.34,y,-6.39]} size={[3.7,.13,.85]} color={COLORS.wood}/>)}
-    {Array.from({length:5},(_,i)=><Cup key={i} position={[-5.6+i*.55,3.64,-6.35]} color={i%2===0?"#f3b157":"#b2c66e"} scale={.75}/>)}
+    {/* Quaternius CC0 authored GLB cabinet: actual shop display shelving, not intersecting primitive planks. */}
+    <QuaterniusProp kind="shop-bookcase" position={[-4.35,.06,-6.04]} height={3.45} lowPower={lowPower}/>
+    {/* Real countertop utensils remain as gameplay-specific procedural meshes until a matching CC0 GLB exists. */}
     <Blender position={[-3.25,1.67,-2.08]} />
     <Blender position={[-2.38,1.67,-2.08]} variant="orange"/>
     <Juicer position={[-4.27,1.68,-2.06]}/>
@@ -180,10 +168,12 @@ function ShopArchitecture({onCounterInteract,lowPower}:{onCounterInteract:()=>vo
     <Crate position={[5.2,.43,.02]} fruit="apple" rotation={-.12}/>
     <Pineapple position={[5.9,.49,.3]} />
     <Pineapple position={[-5.87,.56,.33]} scale={.9}/>
-    <Plant position={[-6.45,0,-.05]} size={1.8}/>
-    <Plant position={[6.55,0,-.1]} size={1.65}/>
-    <Plant position={[-5.6,0,5.5]} size={1.3}/>
-    <Plant position={[5.75,0,5.2]} size={1.3}/>
+    <QuaterniusProp kind="houseplant" position={[-6.45,0,-.05]} height={1.92} lowPower={lowPower}/>
+    <QuaterniusProp kind="houseplant" position={[6.55,0,-.1]} height={1.86} rotation={.55} lowPower={lowPower}/>
+    <QuaterniusProp kind="houseplant" position={[-5.6,0,5.5]} height={1.35} rotation={-1.1} lowPower={lowPower}/>
+    <QuaterniusProp kind="houseplant" position={[5.75,0,5.2]} height={1.44} rotation={1.1} lowPower={lowPower}/>
+    <QuaterniusProp kind="waste-bin" position={[5.3,.02,2.9]} height={.83} rotation={-.35} lowPower={lowPower}/>
+    {!lowPower&&<QuaterniusProp kind="garden-armchair" position={[7.3,0,3.65]} height={1.1} rotation={-1.45} lowPower={lowPower}/> }
     {/* Chalkboard next to queue */}
     <Block position={[-5.5,1.5,2.1]} size={[1.7,2.6,.18]} color="#93623f" radius={.08}/>
     <ShopSign position={[-5.5,1.56,2.2]} dimensions={[1.53,2.33]} main="FRESH" sub="NƯỚC ÉP MỖI MÙA" color="#214b3c"/>
