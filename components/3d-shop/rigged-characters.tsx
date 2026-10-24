@@ -78,13 +78,13 @@ export function RiggedPlayer({ controls, reducedMotion }: { controls: RefObject<
       setWalking(moving);
     }
   });
-  return <group ref={group} position={[START_POSITION.x, 0, START_POSITION.z]}>
-    <CharacterBoundary fallback={<PlayerAvatar controls={controls} reducedMotion={reducedMotion}/>}>
-      <Suspense fallback={null}>
+  return <CharacterBoundary fallback={<PlayerAvatar controls={controls} reducedMotion={reducedMotion}/>}>
+    <Suspense fallback={<PlayerAvatar controls={controls} reducedMotion={reducedMotion}/>}>
+      <group ref={group} position={[START_POSITION.x, 0, START_POSITION.z]}>
         <RigBody url={PLAYER_URL} moving={walking} reducedMotion={reducedMotion}/>
-      </Suspense>
-    </CharacterBoundary>
-  </group>;
+      </group>
+    </Suspense>
+  </CharacterBoundary>;
 }
 
 /** Sunny walks a loop without contaminating the player's skeleton or animation mixer. */
@@ -98,11 +98,11 @@ export function RiggedCustomer({ reducedMotion, variant = 0 }: { reducedMotion: 
     group.current.position.set((variant ? 3.95 : -4) + Math.sin(t) * .65, 0, 3.6 + Math.cos(t) * 1.3);
     group.current.rotation.y = Math.atan2(dx, dz);
   });
-  return <group ref={group} position={[variant ? 4 : -4, 0, 4]}>
-    <CharacterBoundary fallback={<WalkingCustomer reducedMotion={reducedMotion} variant={variant}/>}>
-      <Suspense fallback={null}>
+  return <CharacterBoundary fallback={<WalkingCustomer reducedMotion={reducedMotion} variant={variant}/>}>
+    <Suspense fallback={<WalkingCustomer reducedMotion={reducedMotion} variant={variant}/>}>
+      <group ref={group} position={[variant ? 4 : -4, 0, 4]}>
         <RigBody url={NPC_URL} moving={!reducedMotion} reducedMotion={reducedMotion} height={2.1}/>
-      </Suspense>
-    </CharacterBoundary>
-  </group>;
+      </group>
+    </Suspense>
+  </CharacterBoundary>;
 }
