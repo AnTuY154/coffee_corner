@@ -28,6 +28,15 @@ assert.match(animals, /useAnimations\(animations,model\)/,'cat and dog require b
 assert.match(animals, /CAT_RIG/,'cat uses existing licensed Kenney GLB armature');
 assert.match(animals, /DOG_CLIPS/,'Shiba Inu has named Idle Walk Eating animation clips');
 assert.match(animals, /CatServeProps/,'barista serving still animates');
+assert.match(animals, /useRiggedAnimal\(scene,2\.72,!lowPower,true\)/,'cat skinned body is shortened and coloured with a cloned fur material');
+assert.match(animals, /fur=material\.clone\(\)/,'cat fur palette must not recolour shared human NPC assets');
+assert.match(animals, /scale=\{\[\.86,\.74,\.72\]\}/,'cat mascot has an oversized rounded head');
+assert.match(animals, /color="#f0b75d"/,'cat eyes are glassy warm amber');
+assert.match(animals, /color="#efa6b0"/,'cat has soft rosy cheeks');
+assert.match(animals, /<RoundedBox args=\{\[\.79,\.82,\.15\]\}/,'cat has softly rounded apron instead of a rectangular block');
+assert.match(animals, /blink\.current\.scale\.y/,'cat blinks naturally');
+assert.match(animals, /tail\.current\.rotation\.y/,'tail sways with reduced-motion support');
+assert.match(animals, /<RiggedGardenDog/,'rigged Shiba remains in this source module');
 assert.match(garden,/rotation=\{\[0,0,Math\.PI\/2\]\}/,'long cable must be horizontal, not a pole');
 assert.doesNotMatch(garden,/rotation=\{\[0,0,-\.03\]\}><cylinderGeometry args=\{\[\.018,\.018,15\.2/,'old vertical cable must be removed');
 assert.match(styles,/\.ve-immersive-fullscreen \.sr-only\{position:absolute!important/,'screen-reader copy must be visually hidden');
