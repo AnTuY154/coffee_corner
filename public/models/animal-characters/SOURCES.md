@@ -25,3 +25,23 @@ Existing playable user avatar, moving visitors, seasonal product catalogue and b
 3. Store UX: cat remains two-legged and behind the service counter with pouring; no blocking camera mesh, use in-world kiosk unchanged.
 4. Motion/performance: SkeletonUtils clones, animation fades, bounded path, no full-scene re-renders per frame, low-power shadow reduction.
 5. Release: run `npm run test:3d`, `npm run test:immersive`, `npm run typecheck`, `npm run build` and Pages export in CI. CI does not prove exact pose alignment or device FPS; manually review at desktop and mobile sizes.
+
+
+## Chibi cat visual pass (2026-10-26)
+Only changes the **cat barista**. The CC0 Kenney skinned rig and Idle animation remain; Shiba Inu, human avatars, menu, weather and checkout are unchanged.
+
+- Rescale the rig from 3.07 to 2.72 world units, and the character group to 0.96; keep the counter position `[0,0,-3.45]`.
+- Refine the mascot face into an oversized round 3D head with short cream muzzle, fuller cheeks, rounded ears, amber clear-coat eyes with catchlights, pink blush, delicate whiskers and a forehead tuft.
+- Add a rounded jade-green apron, fluffy belly, short cream paws and gently swaying tail to reduce the human-body silhouette.
+- Clone the source Kenney rig's material **per cat instance** and use warm fur colours instead of the human NPC texture. This avoids recolouring NPC Sunny's cached shared GLTF asset.
+- Reduce head-bob amplitude; add a brief blink and smooth serving pour. Disable secondary head, tail, blink and pouring motion for reduced-motion users.
+- The fallback remains the original procedural cat if rig/model loading fails.
+
+### Five evidence-based review passes
+1. **Silhouette:** code review verifies round head vs shortened body; this is not yet a visually approved browser screenshot.
+2. **Expression:** inspect amber eyes, eye highlights, rosy cheeks, soft ears and neutral smile; keep individual pieces as 3D meshes instead of billboard sprites.
+3. **Material isolation:** fur palette is copied per skinned mesh, so the separately rigged Kenney NPC's shared materials remain unchanged.
+4. **Gameplay and a11y:** preserve 3D counter interactions, same-page 2D menu + checkout and reduced-motion constraints; do not obstruct the kiosk.
+5. **QA gate:** run gameplay, immersive and typechecking scripts, Next.js build and Pages static-export CI before merging. WebGL/browser/device FPS and subjective cuteness still need live evaluation.
+
+**Limitation:** this is a better-proportioned *hybrid cat mascot*, not a fully custom feline GLB with correctly skin-weighted head/tail. A later Blender art pass would be needed to reach high-end animated-character parity.
