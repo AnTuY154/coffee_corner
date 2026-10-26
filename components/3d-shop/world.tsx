@@ -5,7 +5,8 @@ import { RoundedBox, Float } from "@react-three/drei";
 import * as THREE from "three";
 import type { ShopControls } from "./types";
 import { cameraAnchor, stepMovement } from "./types";
-import { RiggedCatBarista, RiggedGardenDog } from "./animated-animals";
+import { RiggedGardenDog } from "./animated-animals";
+import { ShinBarista } from "./shin-barista";
 import { RiggedPlayer, RiggedCustomer } from "./rigged-characters";
 import { GardenDetails } from "./garden";
 import {QuaterniusProp} from "./quaternius-props";
@@ -235,7 +236,7 @@ function ThirdPersonCamera({controls,menuOpen,onNearChange,onArrive}: {
     const {near,arrived}=stepMovement(c,delta);
     const compact=size.width<680;
     if(menuOpen){
-      // 2D product selection leaves the counter and the cat visible behind the dialog.
+      // 2D product selection leaves the counter and Shin visible behind the dialog.
       dest.set(0,compact?3.05:2.85,compact?7.5:7.1);
       target.set(0,2.1,-3.1);
     }else{
@@ -286,7 +287,7 @@ export function ShopWorld({controls,menuOpen,onNearChange,onArrive,onCounterInte
       <ShopSign position={[0,.27,.02]} dimensions={[2.3,1.02]} main="VÀO QUẦY" sub="CHẠM HOẶC NHẤN E" color="#1b583e"/>
     </group>
     <GardenDetails reducedMotion={reducedMotion} lowPower={lowPower} weather={weather}/>
-    <RiggedCatBarista reducedMotion={reducedMotion} lowPower={lowPower}/>
+    <ShinBarista reducedMotion={reducedMotion}/>
     <RiggedCustomer reducedMotion={reducedMotion}/>
     {!lowPower&&<RiggedCustomer reducedMotion={reducedMotion} variant={1}/>}
     <RiggedGardenDog reducedMotion={reducedMotion} lowPower={lowPower}/>
