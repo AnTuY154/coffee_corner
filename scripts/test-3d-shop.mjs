@@ -69,6 +69,11 @@ assert(animalSrc.includes('AnimalBoundary')&&animalSrc.includes('Suspense'),'ani
 assert(animalSrc.includes('RiggedCatBarista')&&animalSrc.includes('CAT_RIG'),'anthropomorphic feline employee animates with Kenney source rig');
 assert(animalSrc.includes('BaristaCatFace')&&animalSrc.includes('BaristaApron')&&animalSrc.includes('CatServeProps'),'rigged worker retains a feline face, apron and pouring');
 assert(animalSrc.includes('RiggedGardenDog')&&animalSrc.includes('DOG_CLIPS'),'Shiba Inu uses real animal clips');
+assert(animalSrc.includes('useRiggedAnimal(scene,2.72,!lowPower,true)'),'cute cat has smaller, warm fur-coloured GLB body');
+assert(animalSrc.includes('BaristaCatFace head={head} blink={blink}'),'cat features are drawn over the existing rig');
+assert(animalSrc.includes('BaristaApron tail={tail}'),'new rounded uniform and expressive tail are retained');
+assert(animalSrc.includes('fur=material.clone()'),'recolouring cat does not mutate NPC material');
+assert(animalSrc.includes('const closed=!reducedMotion'),'blinks obey reduced motion');
 const dogBytes=readFileSync(resolve(root,'public/models/animal-characters/shiba-inu.glb'));
 assert.equal(dogBytes.toString('ascii',0,4),'glTF','Shiba Inu must be real binary GLB');
 assert.equal(dogBytes.readUInt32LE(8),dogBytes.length,'Shiba Inu binary must not be truncated');
