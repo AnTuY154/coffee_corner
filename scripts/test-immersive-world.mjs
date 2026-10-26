@@ -36,7 +36,7 @@ assert.match(animals, /color="#efa6b0"/,'cat has soft rosy cheeks');
 assert.match(animals, /<RoundedBox args=\{\[\.79,\.82,\.15\]\}/,'cat has softly rounded apron instead of a rectangular block');
 assert.match(animals, /blink\.current\.scale\.y/,'cat blinks naturally');
 assert.match(animals, /tail\.current\.rotation\.y/,'tail sways with reduced-motion support');
-assert.match(animals, /<RiggedGardenDog/,'rigged Shiba remains in this source module');
+assert.match(animals, /export function RiggedGardenDog/,'rigged Shiba remains in this source module');
 assert.match(garden,/rotation=\{\[0,0,Math\.PI\/2\]\}/,'long cable must be horizontal, not a pole');
 assert.doesNotMatch(garden,/rotation=\{\[0,0,-\.03\]\}><cylinderGeometry args=\{\[\.018,\.018,15\.2/,'old vertical cable must be removed');
 assert.match(styles,/\.ve-immersive-fullscreen \.sr-only\{position:absolute!important/,'screen-reader copy must be visually hidden');
