@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useCart } from "@/components/cart-context";
 import { ShopMenu2D } from "@/components/3d-shop/shop-menu-2d";
 import { ShopIllustration } from "./shop-illustration";
+import { PetsWorld, type PetPositions } from "./pets-world";
+import type { CSSProperties } from "react";
 import "./illustrated-shop.css";
 
 type Action = "order" | "intro" | "seats" | "garden" | "dog" | "cat";
@@ -65,6 +67,8 @@ const STORY: Record<StoryAction, { icon: string; title: string; body: string }> 
 export function IllustratedShop() {
   const [artLoaded, setArtLoaded] = useState(false);
   const [spritesReady, setSpritesReady] = useState(false);
+  const [petsReady, setPetsReady] = useState(false);
+  const [petPositions, setPetPositions] = useState<PetPositions>({ dog: { x: 383, y: 903 }, cat: { x: 1346, y: 860 } });
   const [active, setActive] = useState<Key | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [openBasket, setOpenBasket] = useState(false);
@@ -84,6 +88,7 @@ export function IllustratedShop() {
   const compositionSrc = `${artBase}/vuon-e-original-composition.webp`;
   const strippedSrc = `${artBase}/vuon-e-approved-clean.webp`;
   const spots = artLoaded ? HOTSPOTS : LEGACY_HOTSPOTS;
+  const sceneReady = spritesReady && petsReady;
 
   // Two soft pitch glides approximate a small "meo meo". No audio is played
   // until a real user gesture explicitly enables sound (browser autoplay policy).
@@ -159,8 +164,8 @@ export function IllustratedShop() {
       preload(strippedSrc),
       preload(`${artBase}/layers/clerk-body.png`),
       preload(`${artBase}/layers/clerk-arm.png`),
-      preload(`${artBase}/layers/dog-tight.png`),
-      preload(`${artBase}/layers/cat-tight.png`),
+      preload(`${artBase}/pets/dog-walk.png`),
+      preload(`${artBase}/pets/cat-walk.png`),
     ]).then(() => { if (!cancelled) setSpritesReady(true); })
       .catch(() => { if (!cancelled) setSpritesReady(false); });
     return () => { cancelled = true; };
@@ -222,39 +227,44 @@ export function IllustratedShop() {
     }
   }
 
-  return <div className="ve2d-root" aria-label="Vườn É: cửa hàng nước ép minh hoạ 2D" data-approved-art={artLoaded}>
+  return <div className="ve2d-root" aria-label="Vườn É: cửa hàng nước ép minh hoạ 2D"
+    data-approved-art={artLoaded}
+    style={{ "--ve2d-backdrop": `url("${compositionSrc}")` } as CSSProperties}>
     <div className="ve2d-viewport" ref={viewport}>
       <div className="ve2d-stage" data-approved-art={artLoaded}>
         {/* The SVG remains a usable fallback until the approved cleaned image is shipped. */}
         {!artLoaded && <ShopIllustration />}
         <img
           ref={compositionImage}
-          className="ve2d-approved-art" src={spritesReady ? strippedSrc : compositionSrc} width={REF_W} height={REF_H}
+          className="ve2d-approved-art" src={sceneReady ? strippedSrc : compositionSrc} width={REF_W} height={REF_H}
           alt="" aria-hidden="true" decoding="async" draggable={false}
           data-visible={artLoaded}
           onLoad={() => { setArtLoaded(true); setActive(null); }}
           onError={() => { setArtLoaded(false); setSpritesReady(false); }}
         />
-        {spritesReady && <div className="ve2d-motion-sprites" aria-hidden="true">
+        {spritesReady && <PetsWorld artBase={artBase} onReady={() => setPetsReady(true)}
+          onMove={setPetPositions} />}
+        {sceneReady && <div className="ve2d-motion-sprites" aria-hidden="true">
           <div className="ve2d-actor ve2d-actor-clerk">
             <img className="ve2d-sprite ve2d-clerk-body" src={`${artBase}/layers/clerk-body.png`} alt="" draggable={false} />
             <img className="ve2d-sprite ve2d-clerk-arm" src={`${artBase}/layers/clerk-arm.png`} alt="" draggable={false} />
           </div>
-          <div className="ve2d-actor ve2d-actor-dog">
-            <img className="ve2d-sprite ve2d-dog-walk" src={`${artBase}/layers/dog-tight.png`} alt="" draggable={false} />
-            <span className="ve2d-actor-shadow" />
-          </div>
-          <div className="ve2d-actor ve2d-actor-cat">
-            <img className="ve2d-sprite ve2d-cat-walk" src={`${artBase}/layers/cat-tight.png`} alt="" draggable={false} />
-            <span className="ve2d-actor-shadow" />
-            {soundEnabled && <span className="ve2d-meow-mark">♪</span>}
-          </div>
+          {soundEnabled && <span className="ve2d-meow-mark" style={{
+            left: (petPositions.cat.x / REF_W * 100) + "%",
+            top: (petPositions.cat.y / REF_H * 100 - 10) + "%",
+          }}>♪</span>}
         </div>}
         {spots.map(spot => <button
           key={spot.id} type="button" className="ve2d-hotspot"
           data-target={spot.id} data-visible={active === spot.id}
           data-placement={spot.placement ?? "above"}
-          style={{ left: spot.x + "%", top: spot.y + "%", width: spot.w + "%", height: spot.h + "%" }}
+          style={{
+            left: (artLoaded && (spot.id === "dog" || spot.id === "cat")
+              ? (petPositions[spot.id].x / REF_W * 100) : spot.x) + "%",
+            top: (artLoaded && (spot.id === "dog" || spot.id === "cat")
+              ? (petPositions[spot.id].y / REF_H * 100) : spot.y) + "%",
+            width: spot.w + "%", height: spot.h + "%",
+          }}
           aria-label={spot.name + ". " + spot.hint}
           aria-describedby={"ve2d-cloud-" + spot.id}
           onPointerEnter={e => { if (e.pointerType !== "touch") setActive(spot.id); }}
@@ -272,8 +282,14 @@ export function IllustratedShop() {
             <small>{coarsePointer ? "Chạm lần nữa để mở" : "Nhấp để khám phá"} ↗</small>
           </span>
         </button>)}
-        {dogHappy && <span className="ve2d-dog-heart" aria-hidden="true">♡</span>}
-        {catHappy && artLoaded && <span className="ve2d-cat-heart" aria-hidden="true">♡</span>}
+        {dogHappy && <span className="ve2d-dog-heart" style={artLoaded ? {
+          left: (petPositions.dog.x / REF_W * 100) + "%",
+          top: (petPositions.dog.y / REF_H * 100 - 9) + "%",
+        } : undefined} aria-hidden="true">♡</span>}
+        {catHappy && artLoaded && <span className="ve2d-cat-heart" style={{
+          left: (petPositions.cat.x / REF_W * 100) + "%",
+          top: (petPositions.cat.y / REF_H * 100 - 10) + "%",
+        }} aria-hidden="true">♡</span>}
         {artLoaded && <div className="ve2d-ambient" aria-hidden="true"><span className="ve2d-light" /><span className="ve2d-leaf" /></div>}
       </div>
     </div>
