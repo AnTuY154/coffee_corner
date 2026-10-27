@@ -6,6 +6,7 @@ import { expect, test, type Page } from "@playwright/test";
  * Unlike past tests, compare the ACTUAL DOM hit areas to these rectangles,
  * including stage scale, centered contain layout and mobile horizontal scroll.
  */
+test.setTimeout(90_000);
 const W = 1672, H = 941;
 const fixed: Record<string, readonly [number, number, number, number]> = {
   sign: [600, 95, 572, 166],
@@ -27,18 +28,35 @@ async function loaded(page: Page) {
 }
 
 async function auditFixed(page: Page) {
-  // ResizeObserver dispatch happens after the viewport's layout pass; allow
-  // that single frame before asserting pixel-space alignment of all layers.
+  // Take ONE DOM layout snapshot for all 9 hotspots. Playwright's individual
+  // boundingBox calls can take seconds each in software Chromium, causing a
+  // false CI timeout even though every rectangle is positioned correctly.
+  const snapshot = async () => page.evaluate((ids: string[]) => {
+    const rect = (selector: string) => {
+      const node = document.querySelector<HTMLElement>(selector);
+      if (!node) return null;
+      const r = node.getBoundingClientRect();
+      return { x: r.x, y: r.y, width: r.width, height: r.height };
+    };
+    const boxes = Object.fromEntries(ids.map(id => [
+      id, rect(`.ve2d-hotspot[data-target="${id}"]`),
+    ]));
+    return {
+      stage: rect(".ve2d-stage"),
+      image: rect(".ve2d-approved-art"),
+      canvas: rect(".ve2d-pixi-pets canvas"),
+      boxes,
+    };
+  }, Object.keys(fixed));
+  // Allow exactly one ResizeObserver turn after changing the viewport.
   await expect.poll(async () => {
-    const stageRect = await page.locator(".ve2d-stage").boundingBox();
-    const pixiRect = await page.locator(".ve2d-pixi-pets canvas").boundingBox();
-    if (!stageRect || !pixiRect) return Infinity;
-    return Math.abs(stageRect.width - pixiRect.width) +
-      Math.abs(stageRect.height - pixiRect.height);
-  }, { timeout: 6_000, intervals: [100, 100, 200] }).toBeLessThan(2.2);
-  const stage = await page.locator(".ve2d-stage").boundingBox();
-  const image = await page.locator(".ve2d-approved-art").boundingBox();
-  const canvas = await page.locator(".ve2d-pixi-pets canvas").boundingBox();
+    const { stage, canvas } = await snapshot();
+    return stage && canvas
+      ? Math.abs(stage.width - canvas.width) + Math.abs(stage.height - canvas.height)
+      : Infinity;
+  }, { timeout: 8_000, intervals: [100, 150, 300] }).toBeLessThan(2.2);
+
+  const {stage, image, canvas, boxes} = await snapshot();
   if (!stage || !image || !canvas) throw new Error("Scene geometry unavailable");
   close(image.x, stage.x, "image left");
   close(image.y, stage.y, "image top");
@@ -51,7 +69,7 @@ async function auditFixed(page: Page) {
   const sx = stage.width / W, sy = stage.height / H;
   close(sx, sy, "image uniform scale");
   for (const [id, [x, y, w, h]] of Object.entries(fixed)) {
-    const hit = await page.locator(`.ve2d-hotspot[data-target="${id}"]`).boundingBox();
+    const hit = boxes[id];
     if (!hit) throw new Error(`Missing ${id} hotspot`);
     close(hit.x, stage.x + x * sx, id + " left");
     close(hit.y, stage.y + y * sy, id + " top");
