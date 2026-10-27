@@ -34,9 +34,13 @@ export function IllustratedShop(){
  const [touch,setTouch]=useState(false);
  const [dogHappy,setDogHappy]=useState(false);
  const last=useRef<HTMLButtonElement|null>(null);
+ const viewport=useRef<HTMLDivElement|null>(null);
  const closeStoryRef=useRef<HTMLButtonElement|null>(null);
  const {count}=useCart();
- useEffect(()=>{setTouch(window.matchMedia("(hover: none)").matches);},[]);
+ useEffect(()=>{setTouch(window.matchMedia("(hover: none)").matches);
+  const el=viewport.current;
+  if(el && window.innerWidth<760)el.scrollLeft=Math.max(0,(el.scrollWidth-el.clientWidth)/2);
+ },[]);
  useEffect(()=>{if(story)closeStoryRef.current?.focus();},[story]);
  useEffect(()=>{const previous=document.body.style.overflow;document.body.style.overflow="hidden";return()=>{document.body.style.overflow=previous;};},[]);
  const closeStory=()=>{setStory(null);last.current?.focus();};
@@ -49,7 +53,7 @@ export function IllustratedShop(){
   else {setStory(spot.action);if(spot.action==="dog")setDogHappy(true);}
  };
  return <div className="ve2d-root" aria-label="Vườn Ép: cửa hàng minh họa 2D">
-  <div className="ve2d-viewport">
+  <div className="ve2d-viewport" ref={viewport}>
    <div className="ve2d-stage">
     <ShopIllustration/>
     {HOTSPOTS.map(spot=><button key={spot.id} type="button"
