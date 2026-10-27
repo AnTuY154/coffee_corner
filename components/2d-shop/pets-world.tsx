@@ -63,10 +63,16 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
       const world = new Container();
       world.sortableChildren = true;
       app.stage.addChild(world);
-      const onResize = () => world.scale.set(
-        mount.clientWidth / ARTBOARD.width,
-        mount.clientHeight / ARTBOARD.height,
-      );
+      const onResize = () => {
+        // Resize the renderer and world in the SAME ResizeObserver callback.
+        // With only the old scale update, Pixi could temporarily keep its
+        // previous 1536px canvas size after the stage grew to 1920px, so
+        // sprites and pointer hotspots appeared on different screen pixels.
+        const width = mount.clientWidth, height = mount.clientHeight;
+        if (width <= 0 || height <= 0) return;
+        app.renderer.resize(width, height);
+        world.scale.set(width / ARTBOARD.width, height / ARTBOARD.height);
+      };
       const resizeObserver = new ResizeObserver(onResize);
       resizeObserver.observe(mount);
       onResize();
@@ -239,9 +245,11 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               host.current.dataset.catMood = pose.cat.mood;
             }
             onMoveRef.current({
-              dog: { x: pose.dog.x, y: pose.dog.y - 60 },
-              cat: { x: pose.cat.x, y: pose.cat.y - 53 },
-              clerk: { x: person.x, y: person.y - (person.behindCounter ? 128 : 122) },
+              // Hotspot centers match the VISIBLE rendered sprites in the
+              // same pixel artboard, not their feet or an arbitrary offset.
+              dog: { x: pose.dog.x, y: pose.dog.y - 56 },
+              cat: { x: pose.cat.x, y: pose.cat.y - 42 },
+              clerk: { x: person.x, y: person.y - (person.behindCounter ? 104 : 92) },
             });
           }
         };

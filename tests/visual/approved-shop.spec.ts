@@ -31,12 +31,18 @@ test("puppy stays below tabletop cat while their hotspots follow them", async ({
   const initialDog = await dog.boundingBox();
   const initialCat = await cat.boundingBox();
   expect(initialDog && initialCat).toBeTruthy();
-  expect(initialCat!.y).toBeLessThan(initialDog!.y - 30);
+  // Different sprite sizes mean comparing box TOP coordinates is invalid.
+  // Compare vertical actor centres in the canonical artboard coordinate space.
+  const stage = await page.locator(".ve2d-stage").boundingBox();
+  if (!stage) throw new Error("missing stage");
+  const worldScale = stage.height / 941;
+  const yCenter = (r: {y:number;height:number}) => r.y + r.height / 2;
+  expect((yCenter(initialDog!) - yCenter(initialCat!)) / worldScale).toBeGreaterThan(40);
   await page.waitForTimeout(1300);
   const nextDog = await dog.boundingBox();
   const nextCat = await cat.boundingBox();
   expect(nextDog && nextCat).toBeTruthy();
-  expect(nextCat!.y).toBeLessThan(nextDog!.y - 30);
+  expect((yCenter(nextDog!) - yCenter(nextCat!)) / worldScale).toBeGreaterThan(40);
 });
 
 test("shop menu, cart, checkout remain in the same URL", async ({ page }) => {

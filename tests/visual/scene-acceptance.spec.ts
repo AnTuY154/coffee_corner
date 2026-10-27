@@ -64,8 +64,8 @@ async function assertSurfaceCoords(page: Page) {
 async function askForVisit(page: Page, animal: "dog" | "cat") {
   const hotspot = page.locator(`.ve2d-hotspot[data-target="${animal}"]`);
   await hotspot.click();
-  // Touch design: first tap shows the cloud, second activates the action.
-  if (test.info().project.name.startsWith("mobile")) await hotspot.click();
+  // Moving pets respond on the first tap even on touch devices; two taps
+  // were flaky because the actor moved out from under the finger.
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.keyboard.press("Escape");
   await page.mouse.move(3, 3);
