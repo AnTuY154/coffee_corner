@@ -14,6 +14,8 @@ const files = [
   "layers/clerk-arm.png",
   "layers/dog-tight.png",
   "layers/cat-tight.png",
+  "pets/dog-walk.png",
+  "pets/cat-walk.png",
 ];
 const missing = files.filter(f => !existsSync(resolve(art, f)));
 if (missing.length) {
@@ -52,6 +54,8 @@ const expected = {
   "layers/clerk-arm.png": [205, 195],
   "layers/dog-tight.png": [215, 125],
   "layers/cat-tight.png": [180, 130],
+  "pets/dog-walk.png": [1920, 160],
+  "pets/cat-walk.png": [1920, 160],
 };
 for (const f of files) {
   const path = resolve(art, f);
@@ -59,4 +63,4 @@ for (const f of files) {
   assert(statSync(path).size > 5000, "Suspiciously small asset " + f);
   console.log("OK", f, dimensions(path).join("x"), statSync(path).size, "bytes");
 }
-console.log("PASS: nine real approved-art assets present and have correct dimensions.");
+console.log("PASS: eleven approved-art assets, including two genuine frame sheets present and have correct dimensions.");
