@@ -73,6 +73,7 @@ export function IllustratedShop() {
   const [dogHappy, setDogHappy] = useState(false);
   const [catHappy, setCatHappy] = useState(false);
   const trigger = useRef<HTMLButtonElement | null>(null);
+  const compositionImage = useRef<HTMLImageElement | null>(null);
   const viewport = useRef<HTMLDivElement | null>(null);
   const closeStoryButton = useRef<HTMLButtonElement | null>(null);
   const { count } = useCart();
@@ -101,6 +102,15 @@ export function IllustratedShop() {
       .catch(() => { if (!cancelled) setSpritesReady(false); });
     return () => { cancelled = true; };
   }, [artLoaded, artBase, strippedSrc]);
+
+  useEffect(() => {
+    // The browser may load a server-rendered <img> before React hydration
+    // attaches onLoad. Check the already-decoded image on mount as well.
+    const image = compositionImage.current;
+    if (image?.complete && image.naturalWidth === REF_W && image.naturalHeight === REF_H) {
+      setArtLoaded(true);
+    }
+  }, []);
 
   useEffect(() => {
     const media = window.matchMedia("(hover: none)");
@@ -155,6 +165,7 @@ export function IllustratedShop() {
         {/* The SVG remains a usable fallback until the approved cleaned image is shipped. */}
         {!artLoaded && <ShopIllustration />}
         <img
+          ref={compositionImage}
           className="ve2d-approved-art" src={spritesReady ? strippedSrc : compositionSrc} width={REF_W} height={REF_H}
           alt="" aria-hidden="true" decoding="async" draggable={false}
           data-visible={artLoaded}
