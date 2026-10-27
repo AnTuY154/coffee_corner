@@ -102,8 +102,12 @@ test("waving hand and walking pets animate independently, with cat audio opt-in"
     expect(animation).not.toBe("none");
   }
   await expect(page.locator('.ve2d-pixi-pets[data-engine="pixijs-animated-sprite"] canvas')).toBeVisible();
+  const petCanvas = page.locator(".ve2d-pixi-pets canvas");
+  const firstAnimationFrame = await petCanvas.screenshot({ animations: "allow" });
   const animalPositionsBefore = await page.locator('.ve2d-hotspot[data-target="dog"]').getAttribute("style");
   await page.waitForTimeout(4500);
+  const secondAnimationFrame = await petCanvas.screenshot({ animations: "allow" });
+  expect(firstAnimationFrame.equals(secondAnimationFrame)).toBe(false);
   const animalPositionsAfter = await page.locator('.ve2d-hotspot[data-target="dog"]').getAttribute("style");
   // Walk and idle phases may differ; the rig at least publishes world positions.
   expect(animalPositionsBefore).toContain("left:");
