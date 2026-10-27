@@ -75,7 +75,7 @@ export function PetsWorld({ artBase, onReady, onMove }: Props) {
       document.addEventListener("visibilitychange", onVisibility);
 
       const makeFrames = async (path: string) => {
-        const atlas = await Assets.load<Texture>(path);
+        const atlas = await Assets.load(path) as InstanceType<typeof Texture>;
         return Array.from({ length: FRAMES }, (_, i) =>
           new Texture({ source: atlas.source, frame: new Rectangle(i * FRAME_WIDTH, 0, FRAME_WIDTH, FRAME_HEIGHT) })
         );
