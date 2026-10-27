@@ -16,14 +16,14 @@ assert.match(page, /IllustratedShop/);
 assert.doesNotMatch(page, /ImmersiveShop|ShopWorld/);
 assert.doesNotMatch(scene, /<Canvas|useGLTF|WebGLRenderer|router\.push/);
 
-// Both fallback and reference layout exist: shipping this PR alone is not art sign-off.
-assert.match(scene, /<ShopIllustration\s*\/>/);
+// No alternate illustrated fallback may introduce unapproved people or animals.
+assert.doesNotMatch(scene, /<ShopIllustration/);
 assert.match(art, /viewBox="0 0 1440 810"/);
-assert.match(scene, /REF_W = 1536, REF_H = 1024/);
-assert.match(scene, /vuon-e-approved-clean\.webp/);
+assert.match(scene, /REF_W = 1672, REF_H = 941/);
+assert(scene.includes("canonical/shop.webp"));
 assert.match(scene, /onLoad=\{\(\) => \{ setArtLoaded\(true\)/);
 assert.match(scene, /onError=\{\(\) => \{ setArtLoaded\(false\); setSpritesReady\(false\); \}\}/);
-assert.match(style, /aspect-ratio:3\/2/);
+assert(style.includes("aspect-ratio:1672/941"));
 assert.match(style, /object-fit:fill/);
 assert.match(style, /data-approved-art=true/);
 assert.match(scene, /pixel-perfect|Pixel-perfect/);
@@ -59,10 +59,10 @@ assert.match(checkout, /fetch\("\/api\/orders"/);
 assert.match(checkout, /NEXT_PUBLIC_GITHUB_PAGES_DEMO/);
 assert(!scene.includes("router.push"), "navigation must stay on the current scene");
 
-const cleanAsset = resolve(root, "public/art/vuon-e-approved-clean.webp");
+const cleanAsset = resolve(root, "public/art/canonical/shop.webp");
 if (existsSync(cleanAsset)) {
   console.log("Approved cleaned art is present; verify pixels and browser screenshot separately.");
 } else {
-  console.warn("ART NOT INTEGRATED: public/art/vuon-e-approved-clean.webp is missing. The legacy SVG fallback is still active; DO NOT MERGE as visually complete.");
+  console.warn("ART NOT INTEGRATED: public/art/canonical/shop.webp is missing. The legacy SVG fallback is still active; DO NOT MERGE as visually complete.");
 }
-console.log("PASS: 3:2 scene wiring, percentage hit targets, accessible clouds and same-URL menu/checkout.");
+console.log("PASS: 16:9 scene wiring, percentage hit targets, accessible clouds and same-URL menu/checkout.");

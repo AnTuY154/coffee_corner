@@ -1,247 +1,208 @@
-/**
- * One clock and one director for three real, independent 2D actors.
- * Coordinates are in the approved 1536×1024 artboard, never viewport pixels.
- * Pet reactions begin on the SAME frame that the employee starts petting.
- */
+/** All scene and actor coordinates reference canonical shop.webp (1672 × 941). */
+export const ARTBOARD = { width: 1672, height: 941 } as const;
 export type Animal = "dog" | "cat";
-export type Mood = "idle" | "walk" | "happy";
+export type PetMood = "idle" | "walk" | "turn" | "happy";
 export type WorkerAction = "idle" | "wave" | "run" | "pet";
-export type Point = { x: number; y: number };
-export type CharacterPoint = Point & { scale: number };
-export type AnimalPose = Point & { facing: 1 | -1; mood: Mood };
-export type WorkerPose = CharacterPoint & {
-  facing: 1 | -1;
-  action: WorkerAction;
-  stride: number;
-  counterMask: boolean;
+export type Vec = { x: number; y: number };
+export type PetPose = Vec & {
+  mood: PetMood; facing: 1 | -1; speed: number; gait: number;
+};
+export type WorkerPose = Vec & {
+  action: WorkerAction; facing: 1 | -1; scale: number;
+  stride: number; behindCounter: boolean;
 };
 export type WorldPose = {
-  worker: WorkerPose;
-  dog: AnimalPose;
-  cat: AnimalPose;
-  phase: "idle" | "outbound" | "petting" | "returning";
-  target: Animal | null;
+  worker: WorkerPose; dog: PetPose; cat: PetPose;
+  target: Animal | null; phase: "idle" | "outbound" | "petting" | "returning";
   seconds: number;
 };
 
-const HOME: CharacterPoint = { x: 690, y: 648, scale: .80 };
-const DOG_HOME: Point = { x: 383, y: 963 };
-const CAT_HOME: Point = { x: 1352, y: 1006 };
-const PET_BOUNDS: Record<Animal, [number, number]> = {
-  dog: [310, 575],
-  cat: [1255, 1440],
+const HOME = { x: 764, y: 697, scale: .83 };
+const INIT: Record<Animal, Vec> = {
+  dog: { x: 415, y: 875 }, cat: { x: 1420, y: 879 },
 };
-const WALK_SPEED = 192;
+const LIMITS: Record<Animal, readonly [number, number]> = {
+  dog: [330, 650], cat: [1300, 1550],
+};
+const clamp = (value: number, a: number, b: number) => Math.max(a, Math.min(b, value));
+const d = (a: Vec, b: Vec) => Math.hypot(b.x - a.x, b.y - a.y);
+const ease = (t: number) => t * t * (3 - 2 * t);
+const speedFor = (animal: Animal) => animal === "dog" ? 46 : 33;
 
-type PetState = Point & {
-  facing: 1 | -1;
-  mood: Mood;
-  timer: number;
-  direction: 1 | -1;
-};
+type PetState = PetPose & { desired: number; timer: number };
 type Visit = {
-  target: Animal;
-  phase: "outbound" | "petting" | "returning";
-  elapsed: number;
-  route: CharacterPoint[];
-  length: number;
-  duration: number;
+  target: Animal; phase: "outbound" | "petting" | "returning";
+  path: Vec[]; length: number; elapsed: number; duration: number;
 };
 
-const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
-const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
-const smooth = (t: number) => t * t * (3 - 2 * t);
-
-function pathLength(route: CharacterPoint[]) {
-  let length = 0;
-  for (let i = 1; i < route.length; i++) length += distance(route[i - 1], route[i]);
-  return length;
-}
-
-function atDistance(route: CharacterPoint[], travel: number): CharacterPoint {
-  let left = travel;
-  for (let i = 1; i < route.length; i++) {
-    const from = route[i - 1], to = route[i];
-    const segment = distance(from, to);
-    if (left <= segment || i === route.length - 1) {
-      const progress = segment ? clamp(left / segment, 0, 1) : 1;
-      return {
-        x: from.x + (to.x - from.x) * progress,
-        y: from.y + (to.y - from.y) * progress,
-        scale: from.scale + (to.scale - from.scale) * progress,
-      };
+/** Smooth piecewise route; endpoints have zero velocity on departure/arrival. */
+export function interpolateRoute(points: Vec[], progress: number): Vec {
+  const lengths = points.slice(1).map((p, i) => d(points[i], p));
+  const total = lengths.reduce((sum, value) => sum + value, 0);
+  let remain = total * ease(clamp(progress, 0, 1));
+  for (let i = 0; i < lengths.length; i++) {
+    const len = lengths[i];
+    if (remain <= len || i === lengths.length - 1) {
+      const t = len === 0 ? 1 : clamp(remain / len, 0, 1);
+      const x0 = points[i].x, x1 = points[i + 1].x;
+      const y0 = points[i].y, y1 = points[i + 1].y;
+      return { x: x0 + (x1 - x0) * t, y: y0 + (y1 - y0) * t };
     }
-    left -= segment;
+    remain -= len;
   }
-  return route[route.length - 1];
+  return points[points.length - 1];
 }
 
 export class ActorsDirector {
   private time = 0;
-  private nextVisitAt = 14;
+  private random = 0x71E2026;
+  private nextVisitAt = 16;
   private alternate: Animal = "dog";
   private queued: Animal | null = null;
   private visit: Visit | null = null;
   private worker: WorkerPose = {
-    ...HOME, facing: 1, action: "wave", stride: 0, counterMask: true,
+    ...HOME, action: "wave", facing: 1, stride: 0, behindCounter: true,
   };
   private pets: Record<Animal, PetState> = {
-    dog: { ...DOG_HOME, facing: 1, direction: 1, mood: "idle", timer: 3 },
-    cat: { ...CAT_HOME, facing: -1, direction: -1, mood: "idle", timer: 6 },
+    dog: { ...INIT.dog, mood: "idle", facing: 1, gait: 0, speed: 0, desired: 0, timer: 2 },
+    cat: { ...INIT.cat, mood: "idle", facing: -1, gait: 0, speed: 0, desired: 0, timer: 3 },
   };
 
-  get phase(): WorldPose["phase"] {
-    if (!this.visit) return "idle";
-    return this.visit.phase === "petting" ? "petting" :
-      this.visit.phase === "outbound" ? "outbound" : "returning";
+  private rand() {
+    this.random ^= this.random << 13;
+    this.random ^= this.random >>> 17;
+    this.random ^= this.random << 5;
+    return (this.random >>> 0) / 4294967296;
   }
-
+  get phase(): WorldPose["phase"] { return this.visit?.phase ?? "idle"; }
   get target(): Animal | null { return this.visit?.target ?? null; }
 
-  /**
-   * External user clicks take priority. If the employee is occupied, queue
-   * exactly one new visit instead of interrupting the active petting action.
-   */
   request(target: Animal) {
-    if (this.visit) { this.queued = target; return; }
-    this.begin(target);
+    if (this.visit) { if (this.visit.target !== target) this.queued = target; return; }
+    this.startVisit(target);
   }
 
-  private begin(target: Animal) {
+  private startVisit(target: Animal) {
     const pet = this.pets[target];
-    pet.mood = "idle";
+    pet.desired = 0;
     pet.timer = 12;
-    const meetX = target === "dog" ?
-      clamp(pet.x + 130, 445, 710) : clamp(pet.x - 132, 1070, 1300);
-    const destination: CharacterPoint = {
-      x: meetX, y: target === "dog" ? 962 : 986, scale: .93,
-    };
-    // Walk behind the counter first, exit at its right end, then run across
-    // the pavement. Avoid walking straight through the wood counter.
-    const route: CharacterPoint[] = [
-      { ...HOME },
-      { x: 840, y: 654, scale: .81 },
-      { x: 956, y: 729, scale: .88 },
-      { x: 969, y: 851, scale: .98 },
-      ...(target === "dog"
-        ? [{ x: 818, y: 923, scale: .99 }]
-        : [{ x: 1103, y: 929, scale: .96 }]),
-      destination,
+    const targetX = target === "dog"
+      ? clamp(pet.x + 100, 450, 720)
+      : clamp(pet.x - 104, 1160, 1420);
+    // The shop has only one accessible counter exit on the right.
+    const path: Vec[] = [
+      HOME, { x: 905, y: 697 }, { x: 1053, y: 720 },
+      { x: 1058, y: 815 },
+      ...(target === "dog" ? [{ x: 820, y: 855 }] : [{ x: 1192, y: 850 }]),
+      { x: targetX, y: pet.y },
     ];
-    const length = pathLength(route);
-    this.visit = {
-      target, route, length, duration: length / WALK_SPEED,
-      phase: "outbound", elapsed: 0,
-    };
+    const length = path.slice(1).reduce((sum, pt, i) => sum + d(path[i], pt), 0);
+    this.visit = { target, phase: "outbound", path, length, elapsed: 0, duration: length / 210 };
     this.alternate = target === "dog" ? "cat" : "dog";
   }
 
-  step(seconds: number, reduceMotion = false): WorldPose {
-    // Offscreen/hidden tabs should not jump an entire choreographed sequence.
-    const dt = clamp(Number.isFinite(seconds) ? seconds : 0, 0, .05);
-    if (reduceMotion) {
+  step(deltaSeconds: number, reducedMotion = false): WorldPose {
+    const dt = clamp(Number.isFinite(deltaSeconds) ? deltaSeconds : 0, 0, .05);
+    if (reducedMotion) {
       return {
-        worker: { ...HOME, facing: 1, action: "idle", stride: 0, counterMask: true },
-        dog: { ...DOG_HOME, facing: 1, mood: "idle" },
-        cat: { ...CAT_HOME, facing: -1, mood: "idle" },
+        worker: { ...HOME, action: "idle", facing: 1, stride: 0, behindCounter: true },
+        dog: { ...INIT.dog, mood: "idle", facing: 1, gait: 0, speed: 0 },
+        cat: { ...INIT.cat, mood: "idle", facing: -1, gait: 0, speed: 0 },
         phase: "idle", target: null, seconds: this.time,
       };
     }
     this.time += dt;
-    if (!this.visit && this.time >= this.nextVisitAt) this.begin(this.alternate);
+    if (!this.visit && this.time >= this.nextVisitAt) this.startVisit(this.alternate);
     for (const animal of ["dog", "cat"] as const) {
       const pet = this.pets[animal];
-      const participating = this.visit?.target === animal;
-      if (participating) {
-        pet.mood = this.visit?.phase === "petting" ? "happy" : "idle";
+      if (this.visit?.target === animal) {
+        pet.desired = 0;
+        pet.speed += (0 - pet.speed) * Math.min(1, dt * 9);
+        pet.mood = this.visit.phase === "petting" ? "happy" : "idle";
         continue;
       }
       pet.timer -= dt;
-      if (pet.mood === "idle" && pet.timer <= 0) {
-        pet.mood = "walk";
-        pet.timer = 2 + Math.random() * 2.5;
-        const [min, max] = PET_BOUNDS[animal];
-        pet.direction = pet.x > max - 28 ? -1 :
-          pet.x < min + 28 ? 1 : Math.random() < .5 ? -1 : 1;
-        pet.facing = pet.direction;
-      } else if (pet.mood === "walk") {
-        const [min, max] = PET_BOUNDS[animal];
-        pet.x = clamp(pet.x + pet.direction * (animal === "dog" ? 35 : 28) * dt, min, max);
-        if (pet.x === min || pet.x === max || pet.timer <= 0) {
-          pet.mood = "idle";
-          pet.timer = 2.5 + Math.random() * 4;
-        }
+      if (pet.timer <= 0) {
+        pet.timer = 2.8 + this.rand() * 3.5;
+        const [left, right] = LIMITS[animal];
+        const direction: 1 | -1 = pet.x >= right - 42 ? -1 : pet.x <= left + 42 ? 1 : this.rand() < .5 ? -1 : 1;
+        pet.desired = this.rand() < .27 ? 0 : direction * speedFor(animal);
       }
+      const desired = pet.desired;
+      const opposite = pet.speed * desired < 0;
+      // Decelerate before reversing direction; no instant horizontal flip.
+      const accelerating = opposite ? 150 : Math.abs(desired) < .1 ? 95 : 72;
+      const amount = Math.min(Math.abs(desired - pet.speed), accelerating * dt);
+      pet.speed += Math.sign(desired - pet.speed) * amount;
+      if (Math.abs(pet.speed) < .015) pet.speed = 0;
+      const previousX = pet.x;
+      const [left, right] = LIMITS[animal];
+      pet.x = clamp(pet.x + pet.speed * dt, left, right);
+      if (pet.x === left || pet.x === right) {
+        pet.speed = 0; pet.desired = 0; pet.timer = .3;
+      }
+      const traveled = Math.abs(pet.x - previousX);
+      // Drive gait using actual world displacement, not wall-clock time:
+      // feet stop stepping whenever the character stops moving.
+      pet.gait += traveled / (animal === "dog" ? 33 : 29) * Math.PI * 2;
+      if (pet.speed > 4) pet.facing = 1;
+      if (pet.speed < -4) pet.facing = -1;
+      pet.mood = opposite ? "turn" : Math.abs(pet.speed) >= 2 ? "walk" : "idle";
     }
+
     const visit = this.visit;
     if (visit) {
       visit.elapsed += dt;
-      if (visit.phase === "outbound") {
-        const lengthSoFar = Math.min(visit.length, visit.elapsed * WALK_SPEED);
-        const pos = atDistance(visit.route, lengthSoFar);
-        const next = atDistance(visit.route, Math.min(visit.length, lengthSoFar + 4));
+      if (visit.phase === "outbound" || visit.phase === "returning") {
+        const outbound = visit.phase === "outbound";
+        const progress = clamp(visit.elapsed / visit.duration, 0, 1);
+        const position = interpolateRoute(visit.path, outbound ? progress : 1 - progress);
+        const lookAhead = interpolateRoute(visit.path, outbound
+          ? clamp(progress + .005, 0, 1) : clamp(1 - progress - .005, 0, 1));
+        const face = Math.abs(lookAhead.x - position.x) >= 1
+          ? (lookAhead.x < position.x ? -1 : 1) : this.worker.facing;
         this.worker = {
-          ...pos, facing: next.x < pos.x ? -1 : 1,
-          action: "run", stride: Math.sin(this.time * 18),
-          counterMask: lengthSoFar < 255,
+          ...position,
+          scale: .83 + .08 * clamp((position.y - 697) / 175, 0, 1),
+          action: "run", facing: face,
+          stride: Math.sin(this.time * 15),
+          behindCounter: position.x < 1025 && position.y < 730,
         };
-        if (visit.elapsed >= visit.duration) {
-          // Both actors enter the interaction frame together: no mismatch
-          // between the public state and the actual rendered animation pose.
-          visit.phase = "petting"; visit.elapsed = 0;
-          this.worker = {
-            ...visit.route[visit.route.length - 1],
-            facing: visit.target === "dog" ? -1 : 1,
-            action: "pet", stride: 0, counterMask: false,
-          };
-          this.pets[visit.target].mood = "happy";
-        }
-      } else if (visit.phase === "petting") {
-        this.worker = {
-          ...visit.route[visit.route.length - 1],
-          facing: visit.target === "dog" ? -1 : 1,
-          action: "pet", stride: Math.sin(this.time * 7),
-          counterMask: false,
-        };
-        this.pets[visit.target].mood = "happy";
-        if (visit.elapsed >= 3.4) {
-          visit.phase = "returning";
+        if (progress >= 1) {
           visit.elapsed = 0;
-          this.pets[visit.target].mood = "idle";
-          this.pets[visit.target].timer = 2.5;
+          if (outbound) {
+            visit.phase = "petting";
+            this.worker = { ...this.worker, action: "pet", stride: 0, behindCounter: false };
+            this.pets[visit.target].mood = "happy";
+            this.pets[visit.target].speed = 0;
+          } else {
+            this.visit = null;
+            this.worker = { ...HOME, action: "idle", facing: 1, stride: 0, behindCounter: true };
+            this.nextVisitAt = this.time + 22 + this.rand() * 12;
+            if (this.queued) { const target = this.queued; this.queued = null; this.startVisit(target); }
+          }
         }
       } else {
-        const distanceHome = Math.max(0, visit.length - visit.elapsed * WALK_SPEED);
-        const pos = atDistance(visit.route, distanceHome);
-        const next = atDistance(visit.route, Math.max(0, distanceHome - 4));
         this.worker = {
-          ...pos, facing: next.x < pos.x ? -1 : 1,
-          action: "run", stride: Math.sin(this.time * 18),
-          counterMask: distanceHome < 255,
+          ...visit.path[visit.path.length - 1],
+          scale: .9, action: "pet", facing: visit.target === "dog" ? -1 : 1,
+          stride: Math.sin(this.time * 7), behindCounter: false,
         };
-        if (visit.elapsed >= visit.duration) {
-          this.worker = { ...HOME, facing: 1, action: "idle", stride: 0, counterMask: true };
-          this.visit = null;
-          this.nextVisitAt = this.time + 24 + Math.random() * 13;
-          if (this.queued) {
-            const queued = this.queued;
-            this.queued = null;
-            this.begin(queued);
-          }
+        this.pets[visit.target].mood = "happy";
+        if (visit.elapsed >= 3.3) {
+          visit.phase = "returning"; visit.elapsed = 0;
+          this.pets[visit.target].mood = "idle";
+          this.pets[visit.target].timer = 2;
         }
       }
     } else {
-      this.worker = {
-        ...HOME, facing: 1,
-        action: this.time % 6.8 < 1.45 ? "wave" : "idle",
-        stride: 0, counterMask: true,
-      };
+      this.worker = { ...HOME, action: this.time % 7 < 1.6 ? "wave" : "idle", facing: 1, stride: 0, behindCounter: true };
     }
     return {
       worker: { ...this.worker },
-      dog: { x: this.pets.dog.x, y: this.pets.dog.y, facing: this.pets.dog.facing, mood: this.pets.dog.mood },
-      cat: { x: this.pets.cat.x, y: this.pets.cat.y, facing: this.pets.cat.facing, mood: this.pets.cat.mood },
-      phase: this.phase, target: this.target, seconds: this.time,
+      dog: { x: this.pets.dog.x, y: this.pets.dog.y, facing: this.pets.dog.facing, mood: this.pets.dog.mood, gait: this.pets.dog.gait, speed: this.pets.dog.speed },
+      cat: { x: this.pets.cat.x, y: this.pets.cat.y, facing: this.pets.cat.facing, mood: this.pets.cat.mood, gait: this.pets.cat.gait, speed: this.pets.cat.speed },
+      target: this.target, phase: this.phase, seconds: this.time,
     };
   }
 }

@@ -1,0 +1,41 @@
+{
+  "origin": "The four images approved by the user on 2026-10-27. No additional design sources.",
+  "images": {
+    "shop": {
+      "path": "/art/canonical/shop.webp",
+      "pixelsFrom": "wide_detailed_colorful_anime_illustration_style_1_batch_1.png",
+      "originalPNG_SHA256": "593658e9b6a045ef98b40ec5a1751cf45a0f7c1a593c27d6cab7618cdddfdf01",
+      "canonicalWebP_SHA256": "2b72ceaca40e5f4d48e539c4e57a79a384bfd4df74a8fec72ea2145b203ee886",
+      "width": 1672,
+      "height": 941,
+      "format": "WebP quality 95 with alpha preserved where applicable"
+    },
+    "employee": {
+      "path": "/art/canonical/employee.webp",
+      "pixelsFrom": "a_clean_png_illustration_style_cutout_on_a_transpa_2_batch_2.png",
+      "originalPNG_SHA256": "87ecaeda7ab13e1f30b5e4a38fcefb3efdb8bcf60f43a73b7149e85026ed96f4",
+      "canonicalWebP_SHA256": "800b056f4e3a43a2db7c75609f20716003b7a762f3bb473cb74bc3bf0119f3a7",
+      "width": 1086,
+      "height": 1448,
+      "format": "WebP quality 95 with alpha preserved where applicable"
+    },
+    "dog": {
+      "path": "/art/canonical/dog.webp",
+      "pixelsFrom": "a_single_cute_cartoon_illustration_on_a_transparen_3_batch_3.png",
+      "originalPNG_SHA256": "a5575444bc98edbf8850c4da4ecfa78bb22e54ac44220b1a5275e18c66c24559",
+      "canonicalWebP_SHA256": "87e737ac485348fe78ad49efd72ee3c3e8e0f1eb688367d49140545e90dea25d",
+      "width": 1254,
+      "height": 1254,
+      "format": "WebP quality 95 with alpha preserved where applicable"
+    },
+    "cat": {
+      "path": "/art/canonical/cat.webp",
+      "pixelsFrom": "a_cute_clean_digital_illustration_on_a_transparen_4_batch_4.png",
+      "originalPNG_SHA256": "3e4254c9cf7fd048d40142cba999f576d9b5a11d296b561de93c18a9a9d54f31",
+      "canonicalWebP_SHA256": "69c0d133874f616e845dc9fb358b8a6e78613f5dcd83a92979733b9dcae61709",
+      "width": 1254,
+      "height": 1254,
+      "format": "WebP quality 95 with alpha preserved where applicable"
+    }
+  }
+}

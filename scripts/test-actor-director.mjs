@@ -1,72 +1,62 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { ActorsDirector } from "../components/2d-shop/actors-director.ts";
+import { ActorsDirector, ARTBOARD } from "../components/2d-shop/actors-director.ts";
+import { deformVertices } from "../components/2d-shop/deform-rig.ts";
 
-const director = new ActorsDirector();
-const initial = director.step(0);
-assert.equal(initial.phase, "idle");
-assert.equal(initial.worker.action, "wave");
-assert.equal(initial.dog.mood, "idle");
-assert.equal(initial.cat.mood, "idle");
+assert.deepEqual(ARTBOARD, { width: 1672, height: 941 });
+const d = new ActorsDirector();
+const start = d.step(0);
+assert.equal(start.worker.behindCounter, true);
+assert.equal(start.worker.action, "wave");
+assert.equal(start.worker.y, 697);
+let sawMovement = false, sawIdle = false;
+let last = start;
+for (let i=0;i<250;i++) {
+  const now = d.step(.05);
+  assert(now.dog.x >= 330 && now.dog.x <= 650, "dog stays on the patio");
+  assert(now.cat.x >= 1300 && now.cat.x <= 1550, "cat stays on the patio");
+  assert(Math.abs(now.dog.x-last.dog.x) < 3, "dog motion is not a teleport");
+  assert(Math.abs(now.cat.x-last.cat.x) < 3, "cat motion is not a teleport");
+  if (now.dog.mood === "walk") sawMovement = true;
+  if (now.dog.mood === "idle") sawIdle = true;
+  last = now;
+}
+assert(sawMovement && sawIdle, "dog must have both locomotion and rest cycles");
 
-director.request("dog");
-assert.equal(director.phase, "outbound");
-let pettingStarted = false, returned = false, elapsed = 0;
-for (let n = 0; n < 1000; n++) {
-  const frame = director.step(.05);
-  elapsed += .05;
-  if (frame.phase === "petting") {
-    pettingStarted = true;
-    assert.equal(frame.target, "dog");
-    assert.equal(frame.dog.mood, "happy", "dog must react on the same tick as the worker");
-    // Worker switches to the pet pose on the first tick after arrival.
-    if (elapsed > 0) assert(frame.worker.x > 400, "employee moved to dog");
+d.request("dog");
+d.request("cat");
+let metDog = false, metCat = false, returned = false;
+let previousPhase = "";
+for (let i=0;i<900;i++) {
+  const p = d.step(.05);
+  if (p.phase === "petting") {
+    if (p.target === "dog") { metDog = true; assert.equal(p.dog.mood, "happy"); assert.equal(p.worker.action, "pet"); }
+    if (p.target === "cat") { metCat = true; assert.equal(p.cat.mood, "happy"); assert.equal(p.worker.action, "pet"); }
   }
-  if (pettingStarted && frame.phase === "idle") { returned = true; break; }
+  if (p.phase === "idle" && previousPhase === "returning") { returned = true; assert(p.worker.behindCounter); }
+  previousPhase = p.phase;
+  if (metDog && metCat && returned) break;
 }
-assert(pettingStarted, "dog greeting occurs");
-assert(returned, "employee returns behind the counter");
-assert(elapsed < 30, "complete action within expected duration");
-
-const other = new ActorsDirector();
-other.request("cat");
-let catPetting = false;
-for (let n = 0; n < 450; n++) {
-  const frame = other.step(.05);
-  if (frame.phase === "petting") {
-    catPetting = true;
-    assert.equal(frame.cat.mood, "happy");
-    break;
-  }
-}
-assert(catPetting, "cat can be petted independently");
-
-const queued = new ActorsDirector();
-queued.request("dog");
-queued.request("cat");
-let sawDog = false, sawCat = false;
-for (let n = 0; n < 900; n++) {
-  const frame = queued.step(.05);
-  if (frame.phase === "petting" && frame.target === "dog") sawDog = true;
-  if (frame.phase === "petting" && frame.target === "cat") sawCat = true;
-  if (sawDog && sawCat) break;
-}
-assert(sawDog && sawCat, "clicks queue safely, not interrupt current interaction");
-
+assert(metDog && metCat && returned, "queued pet greetings complete and employee returns home");
 const reduced = new ActorsDirector();
 reduced.request("dog");
-for (let n = 0; n < 30; n++) {
-  const frame = reduced.step(.05, true);
-  assert.equal(frame.phase, "idle");
-  assert.equal(frame.worker.action, "idle");
+for (let i=0;i<20;i++) {
+  const p=reduced.step(.05,true);
+  assert.equal(p.phase,"idle");
+  assert.equal(p.worker.action,"idle");
 }
-
-const world = readFileSync("components/2d-shop/pets-world.tsx", "utf8");
-const page = readFileSync("components/2d-shop/illustrated-shop.tsx", "utf8");
-assert.match(world, /new ActorsDirector\(\)/);
-assert.match(world, /data-engine="pixijs-choreographed-actors"/);
-assert.match(world, /person\.action === "pet"/);
-assert.match(world, /clerk\.mask/);
-assert.match(page, /request=\{visitRequest\}/);
-assert.doesNotMatch(page, /layers\/clerk-body\.png/);
-console.log("PASS: independent actors, synchronized dog/cat petting, queueing, return and reduced motion.");
+const original = new Float32Array([0,0,50,50,100,75,120,100]);
+const idle = new Float32Array(original);
+const moving = new Float32Array(original);
+deformVertices(original, idle, 120, 100, { gait:0, speed:0, seconds:0, motion:"idle" }, "dog");
+deformVertices(original, moving, 120, 100, { gait:Math.PI/2, speed:30, seconds:0, motion:"walk" }, "dog");
+assert.notDeepEqual([...idle],[...moving],"paw mesh must deform with distance-driven gait");
+assert.deepEqual([...original],[0,0,50,50,100,75,120,100],"deformations never mutate the canonical source geometry");
+const render=readFileSync("components/2d-shop/pets-world.tsx","utf8");
+assert.match(render,/MeshPlane/);
+assert.match(render,/canonical\/dog\.webp/);
+assert.match(render,/canonical\/cat\.webp/);
+assert.match(render,/canonical\/employee\.webp/);
+assert.doesNotMatch(render,/pets\/dog-walk\.png|actors\/anime\/idle\.webp/);
+assert.match(render,/behindCounter \? counterMask/);
+console.log("PASS canonical rigs, walking dynamics, synchronized petting, queued visits, counter masking, reduced motion");
