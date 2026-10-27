@@ -279,6 +279,7 @@ export function IllustratedShop() {
     </div>
     <header className="ve2d-header">
       {!artLoaded && <span>✿ <strong>VƯỜN É</strong> <small>nước ép tự nhiên</small></span>}
+      {artLoaded && <span className="ve2d-wide-brand">✿ <strong>VƯỜN É</strong> <small>nước ép tự nhiên</small></span>}
       <div className="ve2d-controls">
         <button type="button" className="ve2d-sound" onClick={() => void toggleSound()} aria-pressed={soundEnabled} aria-label={soundEnabled ? "Tắt tiếng mèo" : "Bật tiếng mèo"} title={soundEnabled ? "Tắt tiếng mèo" : "Bật tiếng mèo"}>
           {soundEnabled ? "🔊" : "🔇"}
