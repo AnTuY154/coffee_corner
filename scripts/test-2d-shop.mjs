@@ -36,7 +36,7 @@ for (const id of ["sign", "clerk", "menu", "fruits", "cooler", "seats", "seatsRi
 
 assert.match(scene, /WOODEN_BOARD_IDS/);
 for (const id of ["juiceBoard", "smoothieBoard", "freshFruitBoard", "snackBoard"]) {
-  assert.match(style, new RegExp("data-target=" + id + "\\\\]"));
+  assert(style.includes("data-target=" + id + "]"), "missing clipped geometry for " + id);
 }
 // Cloud hints are not hard-coded into the scene image by React.
 assert.match(scene, /spots\.map\(spot => <button/);
