@@ -61,7 +61,7 @@ export function ShopMenu2D({ onClose }: Props) {
       {view==="checkout" ? <InSceneCheckout onBack={()=>setView("browse")} onCompleted={()=>setCartVisible(false)} onReturnToShop={onClose}/> : <div className="ve-menu-body">
         <section className="ve-menu-catalogue" aria-label="Danh sách nước ép">
           <div className="ve-menu-intro">
-            <div><p className="ve-menu-kicker">MÙA NÀO THỨC ẤY</p><p id="ve-menu-description">Chọn nước ép tươi, xem nguyên liệu và thêm vào giỏ. Bạn vẫn đang ở trong cửa hàng 3D.</p></div>
+            <div><p className="ve-menu-kicker">MÙA NÀO THỨC ẤY</p><p id="ve-menu-description">Chọn nước ép tươi, xem nguyên liệu và thêm vào giỏ. Bạn vẫn đang ở trong cửa hàng minh hoạ 2D.</p></div>
             <label className="ve-menu-search">
               <span className="sr-only">Tìm tên đồ uống hoặc nguyên liệu</span>
               <input ref={firstFocus} type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Tìm nước ép, trái cây..." />
