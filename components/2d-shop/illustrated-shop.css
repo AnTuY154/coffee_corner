@@ -397,3 +397,7 @@ html:has(.ve2d-root),body:has(.ve2d-root){height:100%;overflow:hidden!important}
     pointer-events:none;
   }
 }
+
+@media (min-width:761px) and (min-aspect-ratio:21/10){
+  .ve2d-root[data-approved-art=true] .ve2d-header{justify-content:space-between}
+}
