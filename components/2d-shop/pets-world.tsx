@@ -1,14 +1,20 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { ActorsDirector, type Animal } from "./actors-director";
 
 export type PetPositions = {
   dog: { x: number; y: number };
   cat: { x: number; y: number };
+  clerk: { x: number; y: number };
 };
+
+export type VisitRequest = { id: number; target: Animal } | null;
 
 type Props = {
   artBase: string;
+  visible: boolean;
+  request?: VisitRequest;
   onReady: () => void;
   onMove: (positions: PetPositions) => void;
 };
@@ -20,31 +26,40 @@ const SCENE_WIDTH = 1536;
 const SCENE_HEIGHT = 1024;
 
 /**
- * Characters live on the ORIGINAL 1536x1024 painting's world plane.
- * PixiJS v8 renders actual 8-frame quadruped walk cycles (with independently
- * posed front/hind legs in every frame) rather than CSS-translating a still PNG.
- * No fixed-position actors or duplicated pets in the responsive viewport.
+ * A single PixiJS v8 clock renders all actors on the identical, uncropped
+ * 1536×1024 artboard. The clerk is a separate three-part illustrated 2D
+ * puppet with independently moving legs and hand (NOT a CSS-sliding photo).
+ * Both pets animate real eight-frame walk cycles and react to the employee
+ * during the same state-machine transition.
  */
-export function PetsWorld({ artBase, onReady, onMove }: Props) {
+export function PetsWorld({ artBase, visible, request, onReady, onMove }: Props) {
   const host = useRef<HTMLDivElement>(null);
+  const directorRef = useRef<ActorsDirector | null>(null);
+  const pending = useRef<Animal | null>(null);
+  const seenRequest = useRef(0);
   const onReadyRef = useRef(onReady);
   const onMoveRef = useRef(onMove);
   onReadyRef.current = onReady;
   onMoveRef.current = onMove;
 
   useEffect(() => {
+    if (!request || request.id === seenRequest.current) return;
+    seenRequest.current = request.id;
+    if (directorRef.current) directorRef.current.request(request.target);
+    else pending.current = request.target;
+  }, [request]);
+
+  useEffect(() => {
     let disposed = false;
-    let destroy: (() => void) | undefined;
+    let shutdown: (() => void) | undefined;
     const mount = host.current;
     if (!mount) return;
-
     async function start() {
       const {
-        Application, Assets, AnimatedSprite, Container,
-        Graphics, Texture, Rectangle,
+        Application, Assets, AnimatedSprite, Container, Sprite,
+        Graphics, Texture, Rectangle, Text,
       } = await import("pixi.js");
       if (!mount || disposed) return;
-
       const app = new Application();
       try {
         await app.init({
@@ -56,125 +71,156 @@ export function PetsWorld({ artBase, onReady, onMove }: Props) {
           preference: "webgl",
         });
       } catch (error) {
-        console.warn("PixiJS renderer unavailable; original animals will remain in artwork.", error);
+        console.warn("Vườn É: 2D renderer unavailable", error);
         return;
       }
       if (disposed) { app.destroy(true); return; }
       mount.appendChild(app.canvas);
-
       const world = new Container();
+      world.sortableChildren = true;
       app.stage.addChild(world);
-      const updateScale = () => {
-        if (!mount) return;
-        world.scale.set(mount.clientWidth / SCENE_WIDTH, mount.clientHeight / SCENE_HEIGHT);
+      const rescale = () => world.scale.set(
+        mount.clientWidth / SCENE_WIDTH, mount.clientHeight / SCENE_HEIGHT
+      );
+      const resizeObserver = new ResizeObserver(rescale);
+      resizeObserver.observe(mount);
+      rescale();
+      const onVisibility = () => {
+        if (document.hidden) app.ticker.stop();
+        else app.ticker.start();
       };
-      updateScale();
-      const observer = new ResizeObserver(updateScale);
-      observer.observe(mount);
-      const onVisibility = () => { if (document.hidden) app.ticker.stop(); else app.ticker.start(); };
       document.addEventListener("visibilitychange", onVisibility);
+      let removeTick: (() => void) | undefined;
+      shutdown = () => {
+        removeTick?.();
+        document.removeEventListener("visibilitychange", onVisibility);
+        resizeObserver.disconnect();
+        directorRef.current = null;
+        app.destroy(true, { children: true, texture: false, textureSource: false });
+      };
 
-      const makeFrames = async (path: string) => {
-        const atlas = await Assets.load(path) as InstanceType<typeof Texture>;
+      const loadWalkFrames = async (path: string) => {
+        const sheet = await Assets.load(path) as InstanceType<typeof Texture>;
         return Array.from({ length: FRAMES }, (_, i) =>
-          new Texture({ source: atlas.source, frame: new Rectangle(i * FRAME_WIDTH, 0, FRAME_WIDTH, FRAME_HEIGHT) })
+          new Texture({
+            source: sheet.source,
+            frame: new Rectangle(i * FRAME_WIDTH, 0, FRAME_WIDTH, FRAME_HEIGHT),
+          })
         );
       };
-
-      type Pet = {
-        type: "dog" | "cat";
-        holder: InstanceType<typeof Container>;
-        sprite: InstanceType<typeof AnimatedSprite>;
-        x: number;
-        y: number;
-        startX: number;
-        endX: number;
-        speed: number;
-        facing: 1 | -1;
-        state: "idle" | "walk" | "turn";
-        seconds: number;
-        scale: number;
-      };
-      let pets: Pet[] = [];
-      let removeTick: (() => void) | undefined;
-
       try {
-        const [dogFrames, catFrames] = await Promise.all([
-          makeFrames(`${artBase}/pets/dog-walk.png`),
-          makeFrames(`${artBase}/pets/cat-walk.png`),
+        const [dogFrames, catFrames, clerkBody, clerkLeg, clerkArm] = await Promise.all([
+          loadWalkFrames(`${artBase}/pets/dog-walk.png`),
+          loadWalkFrames(`${artBase}/pets/cat-walk.png`),
+          Assets.load(`${artBase}/actors/clerk-body.svg`) as Promise<InstanceType<typeof Texture>>,
+          Assets.load(`${artBase}/actors/clerk-leg.svg`) as Promise<InstanceType<typeof Texture>>,
+          Assets.load(`${artBase}/actors/clerk-arm.svg`) as Promise<InstanceType<typeof Texture>>,
         ]);
         if (disposed) return;
 
-        const createPet = (
-          type: "dog" | "cat", frames: InstanceType<typeof Texture>[],
-          x: number, y: number, minX: number, maxX: number, scale: number, speed: number,
-        ): Pet => {
+        const buildPet = (type: Animal, frames: InstanceType<typeof Texture>[], scale: number) => {
           const holder = new Container();
-          holder.position.set(x, y);
-
-          const shadow = new Graphics()
-            .ellipse(0, -7, 72 * scale, 9 * scale)
-            .fill({ color: 0x423b2a, alpha: .17 });
-          holder.addChild(shadow);
-
-          const sprite = new AnimatedSprite({ textures: frames, animationSpeed: .15, loop: true, autoPlay: false });
-          sprite.anchor.set(.5, .85);
-          sprite.scale.set(scale);
+          const shadow = new Graphics().ellipse(0, -5, 78 * scale, 9 * scale)
+            .fill({ color: 0x423b2a, alpha: .18 });
+          const sprite = new AnimatedSprite({
+            textures: frames, loop: true, animationSpeed: .15, autoPlay: false,
+          });
+          sprite.anchor.set(.5, .87);
           sprite.gotoAndStop(0);
-          holder.addChild(sprite);
+          const heart = new Text({
+            text: "♡", style: { fill: "#f18493", fontSize: 40, fontWeight: "bold" },
+          });
+          heart.anchor.set(.5, .5);
+          heart.position.set(8, -145 * scale);
+          heart.alpha = 0;
+          holder.addChild(shadow, sprite, heart);
           world.addChild(holder);
-
-          return {
-            type, holder, sprite, x, y, startX: minX, endX: maxX,
-            speed, facing: 1, state: "idle", seconds: type === "dog" ? 2.2 : 5.0, scale,
-          };
+          return { holder, sprite, heart, scale, type };
         };
+        const dog = buildPet("dog", dogFrames, .90);
+        const cat = buildPet("cat", catFrames, .82);
 
-        pets = [
-          createPet("dog", dogFrames, 383, 959, 312, 562, .90, 30),
-          createPet("cat", catFrames, 1352, 1004, 1245, 1430, .82, 25),
-        ];
+        // Independent, transparent limb textures. No scenery pixels inside.
+        const clerk = new Container();
+        const rearLeg = new Sprite(clerkLeg), frontLeg = new Sprite(clerkLeg);
+        for (const leg of [rearLeg, frontLeg]) leg.anchor.set(.5, .12);
+        rearLeg.position.set(-23, -79);
+        frontLeg.position.set(22, -79);
+        const body = new Sprite(clerkBody);
+        body.anchor.set(.5, 1);
+        const waveArm = new Sprite(clerkArm);
+        waveArm.anchor.set(.21, .78);
+        waveArm.position.set(61, -109);
+        clerk.addChild(rearLeg, frontLeg, body, waveArm);
+        world.addChild(clerk);
 
+        // At the counter the lower body is concealed by the wooden counter.
+        // The mask is released only after the employee walks out at the side.
+        const behindCounterMask = new Graphics()
+          .rect(0, 0, SCENE_WIDTH, 637).fill({ color: 0xffffff });
+        world.addChild(behindCounterMask);
+
+        const director = new ActorsDirector();
+        directorRef.current = director;
+        if (pending.current) {
+          director.request(pending.current);
+          pending.current = null;
+        }
         const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-        let elapsedSincePositionUpdate = 0;
+        let movementNotification = 0;
         const ticker = (tick: { deltaMS: number }) => {
-          const dt = Math.min(tick.deltaMS / 1000, .05);
-          const reduced = motionQuery.matches;
-          for (const pet of pets) {
-            if (reduced) {
-              pet.sprite.stop();
-              pet.sprite.gotoAndStop(0);
-              continue;
+          const pose = director.step(tick.deltaMS / 1000, motionQuery.matches);
+          for (const pet of [dog, cat]) {
+            const p = pose[pet.type];
+            pet.holder.position.set(p.x, p.y);
+            pet.holder.zIndex = p.y / 10;
+            pet.sprite.scale.set(pet.scale * p.facing, pet.scale);
+            if (p.mood === "walk") {
+              pet.sprite.animationSpeed = pet.type === "dog" ? .19 : .15;
+              if (!pet.sprite.playing) pet.sprite.play();
+            } else {
+              if (pet.sprite.playing) pet.sprite.stop();
+              if (p.mood === "idle") pet.sprite.gotoAndStop(0);
             }
-            pet.seconds -= dt;
-            if (pet.state === "idle" && pet.seconds <= 0) {
-              pet.facing = pet.x >= pet.endX - 30 ? -1 : pet.x <= pet.startX + 30 ? 1 : (Math.random() < .5 ? -1 : 1);
-              pet.state = "turn";
-              pet.seconds = .32;
-              pet.sprite.stop();
-            } else if (pet.state === "turn" && pet.seconds <= 0) {
-              pet.state = "walk";
-              pet.seconds = 2.5 + Math.random() * 3.4;
-              pet.sprite.play();
-            } else if (pet.state === "walk") {
-              if (pet.x >= pet.endX && pet.facing === 1 || pet.x <= pet.startX && pet.facing === -1 || pet.seconds <= 0) {
-                pet.state = "idle";
-                pet.seconds = 2 + Math.random() * 5;
-                pet.sprite.gotoAndStop(0);
-              } else {
-                pet.x += pet.speed * dt * pet.facing;
-                pet.x = Math.max(pet.startX, Math.min(pet.endX, pet.x));
-              }
+            if (p.mood === "happy") {
+              // Reaction starts exactly when the employee's petting starts.
+              pet.sprite.rotation = Math.sin(pose.seconds * 10) * .045;
+              pet.sprite.y = -Math.abs(Math.sin(pose.seconds * 11)) * (pet.type === "dog" ? 8 : 4);
+              pet.heart.alpha = .65 + .35 * Math.sin(pose.seconds * 7);
+              pet.heart.y = -145 * pet.scale - Math.abs(Math.sin(pose.seconds * 4)) * 13;
+            } else {
+              pet.sprite.rotation = 0;
+              pet.sprite.y = 0;
+              pet.heart.alpha = 0;
             }
-            pet.sprite.scale.x = pet.scale * pet.facing;
-            pet.holder.x = pet.x;
           }
-          elapsedSincePositionUpdate += dt;
-          if (elapsedSincePositionUpdate > .1 && pets.length === 2) {
-            elapsedSincePositionUpdate = 0;
+          const person = pose.worker;
+          clerk.position.set(person.x, person.y);
+          clerk.scale.set(person.scale * person.facing, person.scale);
+          clerk.zIndex = person.y / 10 + .1;
+          clerk.mask = person.counterMask ? behindCounterMask : null;
+          const running = person.action === "run";
+          rearLeg.rotation = running ? -person.stride * .43 : 0;
+          frontLeg.rotation = running ? person.stride * .43 : person.action === "pet" ? -.4 : 0;
+          rearLeg.y = -79 + (running ? Math.max(0, person.stride) * 5 : 0);
+          frontLeg.y = -79 + (running ? Math.max(0, -person.stride) * 5 : 0);
+          body.y = person.action === "pet" ? 74 : running ? -Math.abs(person.stride) * 3 : Math.sin(pose.seconds * 2) * 1.3;
+          body.scale.y = person.action === "pet" ? .69 : 1;
+          body.rotation = person.action === "pet" ? -.19 : running ? Math.sin(pose.seconds * 18) * .024 : 0;
+          waveArm.y = -109 + (person.action === "pet" ? 90 : 0);
+          waveArm.rotation = person.action === "wave"
+            ? Math.sin(pose.seconds * 9) * .24 - .12
+            : person.action === "pet"
+              ? -.94 + Math.sin(pose.seconds * 8) * .15
+              : running ? Math.sin(pose.seconds * 18) * .48 : -.28;
+
+          movementNotification += Math.min(tick.deltaMS / 1000, .05);
+          if (movementNotification >= .12) {
+            movementNotification = 0;
             onMoveRef.current({
-              dog: { x: pets[0].x, y: pets[0].y - 56 },
-              cat: { x: pets[1].x, y: pets[1].y - 54 },
+              dog: { x: pose.dog.x, y: pose.dog.y - 55 },
+              cat: { x: pose.cat.x, y: pose.cat.y - 53 },
+              clerk: { x: person.x, y: person.y - (person.action === "pet" ? 95 : 130) * person.scale },
             });
           }
         };
@@ -182,20 +228,19 @@ export function PetsWorld({ artBase, onReady, onMove }: Props) {
         removeTick = () => app.ticker.remove(ticker);
         onReadyRef.current();
       } catch (error) {
-        console.warn("Unable to initialise frame-animated pets; retaining approved intact painting.", error);
+        // Keep the intact art until all three independent characters load.
+        console.warn("Vườn É: independent actor package incomplete", error);
       }
-
-      destroy = () => {
-        removeTick?.();
-        document.removeEventListener("visibilitychange", onVisibility);
-        observer.disconnect();
-        app.destroy(true, { children: true, texture: false, textureSource: false });
-      };
     }
-
     void start();
-    return () => { disposed = true; destroy?.(); };
+    return () => { disposed = true; shutdown?.(); };
   }, [artBase]);
 
-  return <div className="ve2d-pixi-pets" ref={host} aria-hidden="true" data-engine="pixijs-animated-sprite" />;
+  return <div
+    className="ve2d-pixi-pets"
+    ref={host}
+    aria-hidden="true"
+    data-engine="pixijs-choreographed-actors"
+    data-visible={visible}
+  />;
 }
