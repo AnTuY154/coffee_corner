@@ -119,13 +119,23 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         }
 
         const employee = makeActor(employeeTexture, "employee", 155, 208);
-        const dog = makeActor(dogTexture, "dog", 126, 126);
-        const cat = makeActor(catTexture, "cat", 116, 116);
+        const dog = makeActor(dogTexture, "dog", 118, 118);
+        // The cat occupies the clear left section of the wooden tabletop;
+        // the flower vase and right-hand chair are not a walkable surface.
+        const cat = makeActor(catTexture, "cat", 86, 86);
 
-        // In the service window the counter obscures her lower body.
-        // Remove the clipping as soon as she reaches the exit on the right.
+        // Pixi v8: a Graphics object ceases to be an active stencil mask when
+        // its last masked actor sets `.mask = null`. At that moment it becomes
+        // VISIBLE as a giant opaque rectangle. This was the white 1672x650
+        // panel that covered the storefront every time the clerk left the counter.
+        //
+        // Keep ONE stencil mask assigned throughout the actor's lifetime;
+        // only change its geometry between the counter and full artboard.
+        // Pixi never paints an active mask into the color buffer.
         const counterMask = new Graphics().rect(0, 0, ARTBOARD.width, 650).fill(0xffffff);
+        employee.holder.mask = counterMask;
         world.addChild(counterMask);
+        let maskHeight = 650;
 
         const director = new ActorsDirector();
         directorRef.current = director;
@@ -134,10 +144,36 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         let lastNotification = 0;
         let stepTime = 0;
         let previousDogMood = "idle";
+        // An independent scene-review job can advance the ACTUAL director
+        // and render its output without relying on a CI virtual GPU's FPS.
+        // Only enabled explicitly via ?scene-review=1.
+        const reviewMode = new URLSearchParams(window.location.search).has("scene-review");
         const ticker = (tick: { deltaMS: number }) => {
-          const dt = Math.min(tick.deltaMS / 1000, .05);
-          stepTime += dt;
-          const pose = director.step(dt, reduced.matches);
+          // Catch up in <=50ms physics substeps after a slow WebGL frame.
+          // The former hard 50ms frame cap caused the whole simulation to run
+          // in slow motion at low FPS (and made interaction time out in CI).
+          let remaining = Math.min(Math.max(tick.deltaMS / 1000, 0), .2);
+          stepTime += remaining;
+          let pose = director.step(Math.min(remaining, .05), reduced.matches);
+          remaining = Math.max(0, remaining - .05);
+          for (let i = 0; i < 3 && remaining > .001; i++) {
+            const next = Math.min(remaining, .05);
+            pose = director.step(next, reduced.matches);
+            remaining -= next;
+          }
+          if (reviewMode && host.current?.dataset.reviewAdvanceTo) {
+            const goal = host.current.dataset.reviewAdvanceTo;
+            delete host.current.dataset.reviewAdvanceTo;
+            const startedInVisit = pose.phase !== "idle";
+            // Deterministic visual QA: render exactly the requested action
+            // transition, not 800 separate frames on a software GPU.
+            for (let i = 0; i < 700; i++) {
+              pose = director.step(.05, reduced.matches);
+              if (goal === "off-counter" && !pose.worker.behindCounter) break;
+              if (goal === "petting" && pose.phase === "petting") break;
+              if (goal === "home" && startedInVisit && pose.phase === "idle") break;
+            }
+          }
           for (const p of [dog, cat] as const) {
             const state = pose[p.kind as Animal];
             // Explicit world surfaces: puppy paws on the courtyard tiles,
@@ -166,7 +202,17 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           // Never mirror the employee's apron lettering or reassign mesh scale.
           employee.holder.scale.set(person.scale);
           employee.holder.zIndex = person.y + .1;
-          employee.holder.mask = person.behindCounter ? counterMask : null;
+          // From the patio the clerk reaches the cat BEHIND the tabletop,
+          // never stepping onto the chairs. Keep the upper body visible, but
+          // let the actual painted tabletop occlude the lower legs as in life.
+          const besideCatTable = pose.target === "cat" &&
+            person.x >= 1175 && person.y >= 870;
+          const nextMaskHeight = person.behindCounter ? 650 :
+            besideCatTable ? 852 : ARTBOARD.height;
+          if (nextMaskHeight !== maskHeight) {
+            counterMask.clear().rect(0, 0, ARTBOARD.width, nextMaskHeight).fill(0xffffff);
+            maskHeight = nextMaskHeight;
+          }
           employee.holder.rotation = person.action === "run" ? Math.sin(pose.seconds * 15) * .023 :
             person.action === "pet" ? -.04 + Math.sin(pose.seconds * 7) * .015 : 0;
           deformVertices(employee.original, employee.vertices, employee.texture.width,
@@ -174,9 +220,24 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             { gait: pose.seconds * 13, speed: person.action === "run" ? 65 : 0,
               seconds: pose.seconds, motion: person.action }, "employee");
           employee.buffer.update();
-          lastNotification += dt;
+          lastNotification += Math.min(Math.max(tick.deltaMS / 1000, 0), .2);
           if (lastNotification >= .13) {
             lastNotification = 0;
+            // Public read-only scene diagnostics for independent browser QA.
+            // They contain only coordinates and action labels, no user data.
+            if (host.current) {
+              host.current.dataset.phase = pose.phase;
+              host.current.dataset.employeeX = String(Math.round(person.x));
+              host.current.dataset.employeeY = String(Math.round(person.y));
+              host.current.dataset.employeeAction = person.action;
+              host.current.dataset.counterMaskHeight = String(maskHeight);
+              host.current.dataset.dogX = String(Math.round(pose.dog.x));
+              host.current.dataset.dogY = String(Math.round(pose.dog.y));
+              host.current.dataset.dogMood = pose.dog.mood;
+              host.current.dataset.catX = String(Math.round(pose.cat.x));
+              host.current.dataset.catY = String(Math.round(pose.cat.y));
+              host.current.dataset.catMood = pose.cat.mood;
+            }
             onMoveRef.current({
               dog: { x: pose.dog.x, y: pose.dog.y - 60 },
               cat: { x: pose.cat.x, y: pose.cat.y - 53 },

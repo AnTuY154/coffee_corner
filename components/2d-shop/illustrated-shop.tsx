@@ -67,7 +67,7 @@ export function IllustratedShop() {
   const [artLoaded, setArtLoaded] = useState(false);
   const [spritesReady, setSpritesReady] = useState(false);
   const [petsReady, setPetsReady] = useState(false);
-  const [petPositions, setPetPositions] = useState<PetPositions>({ dog: { x: 403, y: 859 }, cat: { x: 1410, y: 782 }, clerk: { x: 764, y: 566 } });
+  const [petPositions, setPetPositions] = useState<PetPositions>({ dog: { x: 951, y: 858 }, cat: { x: 1330, y: 800 }, clerk: { x: 764, y: 566 } });
   const [visitRequest, setVisitRequest] = useState<VisitRequest>(null);
   const [active, setActive] = useState<Key | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
