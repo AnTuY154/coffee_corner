@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="86" height="112" viewBox="0 0 86 112">
+<!-- Shoulder pivot is at x=18,y=87; separate arm for believable wave / petting -->
+<path d="M13 88 Q3 79 13 66 L34 54 Q40 48 45 38 L53 20 Q55 9 60 16 L58 35 L65 16 Q70 6 74 14 L69 38 Q80 25 83 34 Q84 41 68 54 L59 69 Q51 82 34 92Z" fill="#ffdfbf" stroke="#895f48" stroke-width="3.5" stroke-linejoin="round"/>
+<path d="M9 88 Q11 69 28 65 Q40 70 46 83 L31 101 Q21 102 9 88Z" fill="#fff6da" stroke="#897a5d" stroke-width="3.3"/>
+<path d="M21 76 Q32 79 36 87" stroke="#efb980" stroke-width="3" fill="none"/>
+</svg>
