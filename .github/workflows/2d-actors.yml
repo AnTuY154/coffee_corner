@@ -1,0 +1,24 @@
+name: 2D actor choreography
+on:
+  pull_request:
+    paths:
+      - "components/2d-shop/**"
+      - "public/art/actors/**"
+      - "scripts/test-actor-director.mjs"
+      - ".github/workflows/2d-actors.yml"
+  workflow_dispatch:
+jobs:
+  characters:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Validate independent 2D character actions
+        run: npm run test:actors
+      - name: Type check the complete site
+        run: npm run typecheck
