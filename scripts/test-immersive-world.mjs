@@ -10,7 +10,7 @@ const home=src('app/page.tsx');
 const garden=src('components/3d-shop/garden.tsx');
 const styles=src('app/globals.css');
 const layout=src('app/layout.tsx');
-assert.match(home, /<ImmersiveShop\s*\/>/,'root route must be the 3D shop');
+assert.match(home, /<IllustratedShop\s*\/>/,'root route is the illustrated 2D storefront');
 assert.doesNotMatch(layout, /<SiteHeader|<SiteFooter/,'global 2D chrome must not appear');
 assert.doesNotMatch(immersive, /shop-hud-top|shop-hud-bottom/,'no always-visible HUD');
 assert.match(immersive, /menuOpen&&<ShopMenu2D/,'menu opens as 2D overlay only after counter interaction');
