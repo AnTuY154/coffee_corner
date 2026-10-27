@@ -44,14 +44,69 @@ test("cloud attaches to the actual hovered item, near pointer, never clipped by 
     expect(box.y).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(viewportWidth + 1);
     expect(box.y + box.height).toBeLessThanOrEqual(viewportHeight + 1);
-    expect(Math.abs(box.x - mouseX)).toBeLessThan(245);
-    expect(Math.abs(box.y - mouseY)).toBeLessThan(160);
+    // All static objects are now anchored to a physical edge of their
+    // painted item. Do NOT compare tooltip origin to pointer coordinates.
+    // Large regions (fridge and fruit shelves) had a naturally huge drift.
+    const object = await page.locator(`.ve2d-hotspot[data-target="${item.id}"]`).boundingBox();
+    if (!object) throw new Error("No object rectangle");
+    const side = ["juiceBoard", "smoothieBoard", "freshFruitBoard", "snackBoard", "menu"].includes(item.id)
+      ? "right" : ["sign", "tree"].includes(item.id)
+      ? "below" : ["cooler", "parasol"].includes(item.id) ? "left" : "above";
+    if (side === "right") {
+      expect(box.x, item.id + " should open beside the wooden board")
+        .toBeGreaterThanOrEqual(object.x + object.width + 5);
+      expect(Math.abs((box.y + box.height / 2) - (object.y + object.height / 2)))
+        .toBeLessThan(42);
+    } else if (side === "below") {
+      expect(box.y, item.id + " should open below its object")
+        .toBeGreaterThanOrEqual(object.y + object.height + 5);
+      expect(Math.abs((box.x + box.width / 2) - (object.x + object.width / 2)))
+        .toBeLessThan(20);
+    } else if (side === "left") {
+      expect(box.x + box.width).toBeLessThanOrEqual(object.x - 5);
+    } else {
+      expect(box.y + box.height).toBeLessThanOrEqual(object.y - 5);
+    }
     if (["menu", "fruits", "cooler"].includes(item.id)) {
       await page.screenshot({path:info.outputPath(`pointer-cloud-${item.id}.png`)});
     }
   }
 });
 
+
+test("central three-poster menu tooltip stays RIGHT and never covers the menu or employee", async ({ page }, info) => {
+  test.skip(info.project.name.startsWith("mobile"), "desktop pointer placement");
+  await ready(page);
+  for (const size of [{width:1536,height:1024},{width:1366,height:768},{width:1920,height:1080}]) {
+    await page.setViewportSize(size);
+    const menu = page.locator('.ve2d-hotspot[data-target="menu"]');
+    await menu.hover();
+    const cloud = page.locator('.ve2d-floating-tooltip[data-tooltip-target="menu"]');
+    await expect(cloud).toBeVisible();
+    const rect = await menu.boundingBox(), tip = await cloud.boundingBox();
+    if (!rect || !tip) throw new Error("Menu or tooltip bounds missing");
+    expect(tip.x, "Menu cloud starts just to the right of the three painted boards")
+      .toBeGreaterThanOrEqual(rect.x + rect.width + 8);
+    expect(Math.abs((tip.y + tip.height / 2) - (rect.y + rect.height / 2)),
+      "Menu cloud must be vertically aligned to the hanging menu boards")
+      .toBeLessThan(24);
+    const worker = await page.locator('.ve2d-hotspot[data-target="clerk"]').boundingBox();
+    if (!worker) throw new Error("Employee hit area missing");
+    const overlaps = tip.x < worker.x + worker.width &&
+      tip.x + tip.width > worker.x &&
+      tip.y < worker.y + worker.height &&
+      tip.y + tip.height > worker.y;
+    expect(overlaps, "The menu cloud must not obscure the shop employee").toBe(false);
+    // Prior implementation chased cursor even inside one menu hotspot.
+    const x = rect.x + rect.width * .3, y = rect.y + rect.height * .4;
+    await page.mouse.move(x, y);
+    const second = await cloud.boundingBox();
+    if (!second) throw new Error("Tooltip disappeared while traversing menu");
+    expect(Math.abs(tip.x - second.x)).toBeLessThan(2);
+    expect(Math.abs(tip.y - second.y)).toBeLessThan(2);
+    await page.screenshot({path:info.outputPath(`menu-tooltip-anchored-${size.width}.png`)});
+  }
+});
 
 test("three requested left signs always reveal their own correctly anchored tooltips", async ({page}, info) => {
   test.skip(info.project.name.startsWith("mobile"), "desktop mouse hover");
