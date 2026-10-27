@@ -6,7 +6,7 @@ The homepage remains the single 3:2 illustrative scene. The ordering, basket and
 
 - `pets-world.tsx`: a **single PixiJS 8 canvas/ticker** with three independently animated actors; all positions refer to original 1536×1024 artwork.
 - `actors-director.ts`: one deterministic choreography state machine for visits (`idle → outbound → petting → returning → idle`). The director also handles independently walking pets and queued user interactions.
-- `public/art/actors/clerk-{body,arm,leg}.svg`: transparent, deliberately separated body parts. Legs swing during a run; the upper arm waves while idle and reaches down when petting.
+- `public/art/actors/anime/{idle,wave,run,pet-dog,pet-cat}.webp`: five approved anime-watercolour character poses, preserved with alpha transparency and consistent 540×720 artboards. Pixi swaps pose textures while the director runs the shared world clock; small secondary body bobs and tilts complement each pose.
 - `public/art/pets/{dog,cat}-walk.png`: existing genuine eight-frame walk sprite sheets. PixiJS changes animation frame, facing, speed, scale and response to the employee.
 - An atomic load gate switches from the original complete artwork to the cleaned background + all three independent actors. Incomplete assets cannot render duplicate characters.
 - Both pets have dynamic pointer hotspots; touching one queues the employee to visit it. The employee's hotspot follows her movement as well.
@@ -14,7 +14,7 @@ The homepage remains the single 3:2 illustrative scene. The ordering, basket and
 
 ## Synchronisation invariant
 
-At the `outbound → petting` transition, **the worker's pet pose and the visited animal's happy response become active in the same director step**. The animal stops wandering while being visited. The employee returns through the counter passage instead of sliding a PNG across the café floor.
+At the `outbound → petting` transition, **the worker's pet pose and the visited animal's happy response become active in the same director step**. The animal stops wandering while being visited. The employee returns through the counter passage with an explicit run pose, then switches to idle/wave. These are full-body pose assets (not a fully rigged multi-frame running gait yet); a future true run sprite cycle can replace the single running pose without changing the director.
 
 ## Quality gates
 
@@ -29,7 +29,7 @@ For interactive QA:
 
 ## Visual-art limitation
 
-The existing `vuon-e-approved-clean.webp` removes the original characters **but the inpainted areas are visibly smudged**. This change removes previous scenery-bearing `clerk-body.png` and `clerk-arm.png` from the runtime, but it does **not** claim the cleaned background has passed artistic sign-off. The vector clerk art is a replaceable working rig, rather than a completed hand-painted anime character. A dedicated illustration/rigging pass is still needed before visual acceptance. Pixi and the director will support upgrading only the textures, without rewriting the choreography.
+The existing `vuon-e-approved-clean.webp` removes the original characters **but the inpainted areas are visibly smudged**. This change removes previous scenery-bearing `clerk-body.png` and `clerk-arm.png` from the runtime, but it does **not** claim the cleaned background has passed artistic sign-off. The runtime now renders the user-approved hand-painted anime employee instead of the temporary SVG puppet. Full pose changes are working, but fine-grained limb-by-limb walk/run and stroke animation would still benefit from a dedicated rigged/sprite-sheet animation pass. The cleaned environment needs careful repainting before final visual sign-off.
 
 ## Libraries reviewed
 
@@ -38,3 +38,7 @@ The existing `vuon-e-approved-clean.webp` removes the original characters **but 
 - [XState](https://github.com/statelyai/xstate): appropriate for more complex future narrative behaviours; the current visitor cycle can remain dependency-free and easier to test.
 - [Spine Pixi official runtime](https://github.com/EsotericSoftware/spine-runtimes): supports high-end 2D skeletal animation but requires a licensing and authoring pipeline decision.
 - [Phaser](https://github.com/phaserjs/phaser): credible game engine, not justified for replacing the already integrated Pixi renderer.
+
+## Asset ownership / replacement
+
+The five WebP images originate from the employee appearance explicitly approved for Vườn É, not from the earlier scenery-bearing crops. Each is 540×720 pixels, RIFF/WEBP VP8X with alpha enabled. The environment is a separate WebP, so only one worker and two pets are rendered while interaction logic remains in code.
