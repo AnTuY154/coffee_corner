@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCart } from "@/components/cart-context";
 import { ShopMenu2D } from "@/components/3d-shop/shop-menu-2d";
-import { ShopIllustration } from "./shop-illustration";
 import { PetsWorld, type PetPositions, type VisitRequest } from "./pets-world";
 import type { CSSProperties } from "react";
 import "./illustrated-shop.css";
@@ -231,8 +230,8 @@ export function IllustratedShop() {
     style={{ "--ve2d-backdrop": `url("${compositionSrc}")` } as CSSProperties}>
     <div className="ve2d-viewport" ref={viewport}>
       <div className="ve2d-stage" data-approved-art={artLoaded}>
-        {/* The SVG remains a usable fallback until the approved cleaned image is shipped. */}
-        {!artLoaded && <ShopIllustration />}
+        {/* Do not render the legacy SVG: it contains unapproved characters. */}
+        {!artLoaded && <div className="ve2d-art-loading" role="status">Vườn É đang mở cửa...</div>}
         <img
           ref={compositionImage}
           className="ve2d-approved-art" src={sceneReady ? strippedSrc : compositionSrc} width={REF_W} height={REF_H}
