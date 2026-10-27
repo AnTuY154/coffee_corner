@@ -1,0 +1,42 @@
+name: Approved Vườn É 2D visual QA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["design/approved-2d-art-reference-20261027"]
+    paths:
+      - "public/art/**"
+      - "components/2d-shop/**"
+      - "components/3d-shop/shop-menu-2d.tsx"
+      - "components/3d-shop/shop-menu-2d.css"
+      - "tests/visual/**"
+      - "playwright.config.ts"
+
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Verify ALL approved artwork and sprite assets
+        run: npm run test:art:required
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Build application
+        run: npm run build
+      - name: Check real art and same-route commerce in browser
+        run: npm run test:2d:visual
+      - name: Save visual QA screenshots and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: approved-vuon-e-visual-report
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore

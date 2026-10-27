@@ -6,14 +6,14 @@ import { InSceneCheckout } from "./in-scene-checkout";
 import { currency, currentSeason, products, seasonOrder, seasons, type SeasonKey } from "@/data/catalog";
 
 type Filter = SeasonKey | "all";
-type Props = { onClose: () => void };
+type Props = { onClose: () => void; initialView?: "browse" | "cart" };
 const normalise = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").toLowerCase();
 
 /** The 3D counter opens this accessible 2D commerce layer; the shop behind remains WebGL. */
-export function ShopMenu2D({ onClose }: Props) {
+export function ShopMenu2D({ onClose, initialView = "browse" }: Props) {
   const [season, setSeason] = useState<Filter>(() => currentSeason(new Date().getMonth() + 1));
   const [query, setQuery] = useState("");
-  const [cartVisible, setCartVisible] = useState(false);
+  const [cartVisible, setCartVisible] = useState(initialView === "cart");
   const [view, setView] = useState<"browse"|"checkout">("browse");
   const [recent, setRecent] = useState<string | null>(null);
   const { lines, add, update, remove, count, subtotal } = useCart();
@@ -54,7 +54,7 @@ export function ShopMenu2D({ onClose }: Props) {
       <header className="ve-menu-header">
         <div className="ve-menu-brand">
           <span className="ve-menu-flower" aria-hidden="true">✿</span>
-          <div><p className="ve-menu-kicker">FRESH FROM THE GARDEN</p><h2 id="ve-menu-title">Thực đơn Vườn Ép</h2></div>
+          <div><p className="ve-menu-kicker">FRESH FROM THE GARDEN</p><h2 id="ve-menu-title">Thực đơn Vườn É</h2></div>
         </div>
         <button className="ve-menu-close" type="button" onClick={onClose} aria-label="Đóng thực đơn, quay lại cửa hàng">✕</button>
       </header>

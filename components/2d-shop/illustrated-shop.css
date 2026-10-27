@@ -62,3 +62,136 @@ html:has(.ve2d-root),body:has(.ve2d-root){height:100%;overflow:hidden!important}
 .ve2d-walker{transform-box:fill-box;transform-origin:center bottom;animation:ve2d-stroll 18s linear infinite}
 @keyframes ve2d-stroll{0%{transform:translateX(0)}46%{transform:translateX(260px)}50%{transform:translateX(260px) scaleX(-1)}96%{transform:translateX(0) scaleX(-1)}100%{transform:translateX(0)}}
 @media (prefers-reduced-motion:reduce){.ve2d-walker{animation:none!important}}
+
+/*
+ * Approved Vườn É 3:2 artboard.
+ * The photograph and hotspots live in exactly the same positioned stage:
+ * neither object-fit:cover nor CSS transforms are permitted on the artwork.
+ */
+.ve2d-stage[data-approved-art=true]{
+  width:min(100vw,150svh);
+  aspect-ratio:3/2;
+  background:#f5e6c1;
+  overflow:visible;
+}
+.ve2d-approved-art{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:fill;
+  opacity:0;
+  pointer-events:none;
+  user-select:none;
+}
+.ve2d-approved-art[data-visible=true]{opacity:1}
+.ve2d-stage[data-approved-art=true] .ve2d-hotspot{z-index:4}
+.ve2d-stage .ve2d-hotspot[data-visible=true],
+.ve2d-stage .ve2d-hotspot:hover,
+.ve2d-stage .ve2d-hotspot:focus-visible{z-index:7}
+.ve2d-root[data-approved-art=true] .ve2d-header{justify-content:flex-end}
+.ve2d-root[data-approved-art=true] .ve2d-cart{
+  border:1.5px solid #dfd8b4;
+  background:#fffaf0ed;
+  color:#325a3a;
+  box-shadow:0 6px 21px #4d5b4638;
+}
+.ve2d-root[data-approved-art=true] .ve2d-hotspot:hover,
+.ve2d-root[data-approved-art=true] .ve2d-hotspot[data-visible=true]{
+  background:radial-gradient(ellipse,#fbffd928,transparent 70%);
+}
+.ve2d-root[data-approved-art=true] .ve2d-cloud{
+  width:clamp(148px,15vw,230px);
+  max-width:none;
+  border-color:#718252;
+  border-width:2px;
+  background:#fffdf3;
+  box-shadow:0 6px 0 #b0a976,0 12px 18px #293b282d;
+  border-radius:45% 47% 42% 44% / 43% 41% 49% 45%;
+  font-size:clamp(11px,1vw,14px);
+}
+.ve2d-root[data-approved-art=true] .ve2d-cloud strong{color:#365f32}
+.ve2d-root[data-approved-art=true] [data-target=categories] .ve2d-cloud{
+  bottom:20%;
+  left:calc(100% + 8px);
+  transform:translate(9px,8px) rotate(-1.5deg) scale(.94);
+}
+.ve2d-root[data-approved-art=true] [data-target=categories]:is(:hover,:focus-visible) .ve2d-cloud,
+.ve2d-root[data-approved-art=true] [data-target=categories][data-visible=true] .ve2d-cloud{
+  transform:translate(0,0) rotate(-1.5deg) scale(1);
+}
+.ve2d-root[data-approved-art=true] [data-target=categories] .ve2d-cloud::after{
+  left:-12px;bottom:19%;transform:rotate(133deg);
+}
+.ve2d-ambient{position:absolute;inset:0;z-index:2;overflow:hidden;pointer-events:none}
+.ve2d-light{
+  position:absolute;inset:0;opacity:.18;
+  background:radial-gradient(ellipse 28% 35% at 78% 28%,#fff2b2a1,transparent);
+  animation:ve2d-sunlight 11s ease-in-out infinite alternate;
+}
+.ve2d-leaf{
+  position:absolute;left:12%;top:9%;width:14px;height:8px;
+  background:#9ac14a;opacity:.5;border-radius:85% 0 85% 0;
+  transform:rotate(22deg);animation:ve2d-falling-leaf 18s ease-in-out infinite;
+}
+.ve2d-cat-heart{
+  position:absolute;z-index:5;left:91%;top:72%;
+  pointer-events:none;color:#ee7182;font-size:30px;
+  animation:ve2d-heart 2.8s ease-in-out infinite;
+}
+.ve2d-stage[data-approved-art=true] .ve2d-dog-heart{z-index:5;left:26%;top:83%}
+@keyframes ve2d-sunlight{from{opacity:.08}to{opacity:.22}}
+@keyframes ve2d-falling-leaf{
+  0%,100%{transform:translate(0,0) rotate(25deg);opacity:.18}
+  50%{transform:translate(35px,48px) rotate(100deg);opacity:.58}
+}
+@media (max-width:760px){
+  .ve2d-stage[data-approved-art=true]{
+    width:1050px;
+    min-width:1050px;
+    aspect-ratio:3/2;
+  }
+  .ve2d-root[data-approved-art=true] .ve2d-cloud{width:190px;font-size:12px;padding:12px 13px}
+  .ve2d-root[data-approved-art=true] .ve2d-header{right:10px;top:10px}
+}
+@media (prefers-reduced-motion:reduce){
+  .ve2d-light,.ve2d-leaf,.ve2d-cat-heart{animation:none!important}
+}
+
+/*
+ * Foreground extraction from the approved 1536×1024 illustration.
+ * Canvas background is character-free ONLY if every transparent sprite loads.
+ * All percentages refer to the same uncropped image pixel coordinate system.
+ */
+.ve2d-motion-sprites{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}
+.ve2d-sprite{position:absolute;display:block;height:auto;user-select:none;pointer-events:none}
+.ve2d-sprite-clerk{
+  left:36.1328125%;top:46.875%;width:13.3463541667%;
+  transform-origin:50% 84%;animation:ve2d-sprite-worker 4.4s ease-in-out infinite
+}
+.ve2d-sprite-dog{
+  left:17.2526041667%;top:83.984375%;width:13.9973958333%;
+  transform-origin:50% 87%;animation:ve2d-sprite-dog 4.8s ease-in-out infinite
+}
+.ve2d-sprite-cat{
+  left:85.2864583333%;top:73.73046875%;width:11.71875%;
+  transform-origin:50% 80%;animation:ve2d-sprite-cat 5.9s ease-in-out infinite
+}
+@keyframes ve2d-sprite-worker{
+  0%,21%,35%,100%{transform:rotate(0) translateY(0)}
+  27%{transform:rotate(-1deg) translateY(-1.5px)}
+  31%{transform:rotate(.7deg) translateY(-2px)}
+}
+@keyframes ve2d-sprite-dog{
+  0%,100%{transform:translateY(0) scaleY(1)}
+  50%{transform:translateY(-.5px) scaleY(1.006)}
+}
+@keyframes ve2d-sprite-cat{
+  0%,100%{transform:translateY(0) rotate(0)}
+  50%{transform:translateY(-1px) rotate(.15deg)}
+}
+@media (prefers-reduced-motion:reduce){
+  .ve2d-sprite{animation:none!important}
+}
