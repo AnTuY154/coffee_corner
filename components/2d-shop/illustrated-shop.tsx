@@ -114,27 +114,47 @@ export function IllustratedShop() {
       y: Math.max(10, Math.min(desiredY, window.innerHeight - estimatedHeight - 12)),
     });
   }, []);
-  const placeTooltipAtElement = useCallback((element: HTMLElement, besideBoard = false) => {
+  const placeTooltipAtElement = useCallback((
+    element: HTMLElement, preferred: "above" | "below" | "left" | "right" = "above",
+  ) => {
+    // An anchored cloud must be positioned from the ACTUAL element rectangle
+    // (already scaled with the 1672×941 stage), not pointer coordinates.
+    // Old behaviour made the "Bảng thực đơn" cloud drift left/up over the
+    // fruit counter while hovering the three hanging menu posters.
     const bounds = element.getBoundingClientRect();
-    if (!besideBoard) {
-      placeTooltip(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
-      return;
-    }
-    // Wood signage is slanted. Anchor its bubble to the ACTUAL board's right
-    // edge, at vertical centre, not the oversized group's top-left or mouse
-    // cursor. Clamp to the viewport, including the mobile scroll viewport.
     const width = Math.min(230, window.innerWidth - 24);
-    const height = 125;
-    const right = bounds.right + 12;
-    const left = bounds.left - width - 12;
-    const chosenX = right + width + 12 <= window.innerWidth
-      ? right : left >= 12 ? left : Math.max(12, Math.min(right, window.innerWidth - width - 12));
+    // 130px accommodates the largest Vietnamese hint and extra padding.
+    const height = 130, gap = 14, margin = 12;
+    const clamp = (n: number, min: number, max: number) =>
+      Math.max(min, Math.min(n, Math.max(min, max)));
+    const centeredX = bounds.left + (bounds.width - width) / 2;
+    const centeredY = bounds.top + (bounds.height - height) / 2;
+    let x = centeredX, y = centeredY;
+    if (preferred === "below") {
+      y = bounds.bottom + gap;
+      // If the item touches the bottom of the viewport, place above instead.
+      if (y + height > window.innerHeight - margin) y = bounds.top - height - gap;
+    } else if (preferred === "above") {
+      y = bounds.top - height - gap;
+      if (y < margin) y = bounds.bottom + gap;
+    } else {
+      const right = bounds.right + gap;
+      const left = bounds.left - width - gap;
+      if (preferred === "right") {
+        x = right + width <= window.innerWidth - margin ? right : left;
+      } else {
+        x = left >= margin ? left : right;
+      }
+    }
     setTooltipPosition({
-      x: Math.max(12, Math.min(chosenX, window.innerWidth - width - 12)),
-      y: Math.max(12, Math.min(bounds.top + bounds.height / 2 - height / 2,
-        window.innerHeight - height - 12)),
+      x: clamp(x, margin, window.innerWidth - width - margin),
+      y: clamp(y, margin, window.innerHeight - height - margin),
     });
-  }, [placeTooltip]);
+  }, []);
+
+  const getTooltipSide = useCallback((spot: Hotspot) =>
+    WOODEN_BOARD_IDS.has(spot.id) ? "right" as const : (spot.placement ?? "above"),
+  []);
 
   const artBase = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/art`;
   const compositionSrc = `${artBase}/canonical/shop.webp`;
@@ -354,15 +374,18 @@ export function IllustratedShop() {
           onPointerEnter={e => {
             if (e.pointerType !== "touch") {
               setActive(spot.id);
-              if (WOODEN_BOARD_IDS.has(spot.id)) {
-                placeTooltipAtElement(e.currentTarget, true);
-              } else {
+              if (spot.id === "dog" || spot.id === "cat" || spot.id === "clerk") {
                 placeTooltip(e.clientX, e.clientY);
+              } else {
+                // Static objects stay fixed; in particular, the central menu
+                // tooltip is ALWAYS below the three hanging poster boards.
+                placeTooltipAtElement(e.currentTarget, getTooltipSide(spot));
               }
             }
           }}
           onPointerMove={e => {
-            if (e.pointerType !== "touch" && active === spot.id && !WOODEN_BOARD_IDS.has(spot.id)) {
+            if (e.pointerType !== "touch" && active === spot.id &&
+              (spot.id === "dog" || spot.id === "cat" || spot.id === "clerk")) {
               placeTooltip(e.clientX, e.clientY);
             }
           }}
@@ -372,7 +395,7 @@ export function IllustratedShop() {
           onFocus={e => {
             if (e.currentTarget.matches(":focus-visible")) {
               setActive(spot.id);
-              placeTooltipAtElement(e.currentTarget, WOODEN_BOARD_IDS.has(spot.id));
+              placeTooltipAtElement(e.currentTarget, getTooltipSide(spot));
             }
           }}
           onBlur={() => setActive(v => v === spot.id ? null : v)}
@@ -383,7 +406,7 @@ export function IllustratedShop() {
             const movingPet = spot.id === "dog" || spot.id === "cat";
             if (coarsePointer && !movingPet && e.detail !== 0 && active !== spot.id) {
               setActive(spot.id);
-              placeTooltipAtElement(e.currentTarget, WOODEN_BOARD_IDS.has(spot.id));
+              placeTooltipAtElement(e.currentTarget, getTooltipSide(spot));
               return;
             }
             trigger.current = e.currentTarget;
