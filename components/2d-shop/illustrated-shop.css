@@ -408,3 +408,16 @@ html:has(.ve2d-root),body:has(.ve2d-root){height:100%;overflow:hidden!important}
 }
 .ve2d-root[data-approved-art=true] .ve2d-wide-brand{display:none!important}
 /* No screen-fixed dog/cat duplicates. The PixiJS world keeps feet grounded. */
+
+/*
+ * PixiJS owns ALL 2D character movement. The approved composition is shown
+ * until the clean environment and every character texture have loaded.
+ * This atomic swap prevents the old background people and moving puppets
+ * from being visible together even on a slow connection.
+ */
+.ve2d-pixi-pets[data-visible="false"]{opacity:0;visibility:hidden}
+.ve2d-pixi-pets[data-visible="true"]{opacity:1;visibility:visible}
+.ve2d-pixi-pets canvas{image-rendering:auto}
+@media (prefers-reduced-motion:reduce){
+  .ve2d-pixi-pets{transition:none!important}
+}
