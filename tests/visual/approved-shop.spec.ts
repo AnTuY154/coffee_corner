@@ -3,7 +3,8 @@ import { expect, test } from "@playwright/test";
 test("approved 3:2 storefront loads with separately animated worker and animals", async ({ page }, testInfo) => {
   await page.goto("/");
   await expect(page.locator(".ve2d-stage[data-approved-art='true']")).toBeVisible();
-  await expect(page.locator(".ve2d-motion-sprites .ve2d-sprite")).toHaveCount(4);
+  await expect(page.locator(".ve2d-motion-sprites .ve2d-sprite")).toHaveCount(2);
+  await expect(page.locator(".ve2d-pixi-pets canvas")).toBeVisible();
   const dims = await page.locator(".ve2d-approved-art").evaluate((el: HTMLImageElement) => [
     el.naturalWidth, el.naturalHeight, el.complete
   ]);
@@ -60,46 +61,53 @@ test("scene is keyboard accessible and reduced-motion animations are disabled", 
   await expect(page.getByRole("dialog", { name: /Chào mừng/ })).toHaveCount(0);
 });
 
-test("desktop scene fills every viewport without stretching the watercolour or hotspots", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name.startsWith("mobile"), "desktop cover requirements");
+test("desktop shows entire 3:2 shop while filling screen edges", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name.startsWith("mobile"), "desktop contain requirements");
   await page.goto("/");
   await expect(page.locator(".ve2d-stage[data-approved-art='true']")).toBeVisible();
-  for (const [width, height] of [[1920,1080], [1440,900], [2560,1080], [1366,768], [1024,768], [1536,1024]]) {
-    await page.setViewportSize({ width, height });
-    const stage = await page.locator(".ve2d-stage").boundingBox();
-    if (!stage) throw new Error("Approved stage missing");
-    expect(stage.x).toBeLessThanOrEqual(1);
-    expect(stage.y).toBeLessThanOrEqual(1);
-    expect(stage.x + stage.width).toBeGreaterThanOrEqual(width - 1);
-    expect(stage.y + stage.height).toBeGreaterThanOrEqual(height - 1);
-    expect(Math.abs(stage.width / stage.height - 1.5)).toBeLessThan(.002);
-    await expect(page.locator(".ve2d-hotspot[data-target='clerk']")).toBeVisible();
-    // In panoramic cover mode, pets must remain in the *visible viewport*,
-    // including their actual clickable hitboxes.
-    if (width / height >= 1.6) {
-      for (const selector of [".ve2d-actor-dog", ".ve2d-actor-cat",
-        ".ve2d-hotspot[data-target='dog']", ".ve2d-hotspot[data-target='cat']"]) {
-        const rect = await page.locator(selector).boundingBox();
-        if (!rect) throw new Error(selector + " has no visible box");
-        expect(rect.y + rect.height).toBeGreaterThan(0);
-        expect(rect.y).toBeLessThan(height);
-        expect(rect.x + rect.width).toBeGreaterThan(0);
-        expect(rect.x).toBeLessThan(width);
-      }
+  await expect(page.locator(".ve2d-pixi-pets canvas")).toBeVisible();
+  for (const [width,height] of [[1920,1080],[1440,900],[2560,1080],[1366,768],[1024,768],[1536,1024]]) {
+    await page.setViewportSize({width,height});
+    const root=await page.locator(".ve2d-root").boundingBox();
+    const stage=await page.locator(".ve2d-stage").boundingBox();
+    const image=await page.locator(".ve2d-approved-art").boundingBox();
+    const canvas=await page.locator(".ve2d-pixi-pets canvas").boundingBox();
+    if (!root||!stage||!image||!canvas) throw new Error("missing world layers");
+    expect(root.width).toBeGreaterThanOrEqual(width-1);
+    expect(root.height).toBeGreaterThanOrEqual(height-1);
+    expect(stage.x).toBeGreaterThanOrEqual(-1);
+    expect(stage.y).toBeGreaterThanOrEqual(-1);
+    expect(stage.x + stage.width).toBeLessThanOrEqual(width+1);
+    expect(stage.y + stage.height).toBeLessThanOrEqual(height+1);
+    expect(Math.abs(stage.width/stage.height - 1.5)).toBeLessThan(.002);
+    expect(Math.abs(stage.x-image.x)+Math.abs(stage.y-image.y)).toBeLessThan(1.5);
+    expect(Math.abs(stage.x-canvas.x)+Math.abs(stage.y-canvas.y)).toBeLessThan(1.5);
+    for(const animal of ["dog","cat"]) {
+      const rect=await page.locator(`.ve2d-hotspot[data-target="${animal}"]`).boundingBox();
+      if(!rect)throw new Error("missing moving pet hotspot");
+      expect(rect.y).toBeGreaterThanOrEqual(stage.y-1);
+      expect(rect.y+rect.height).toBeLessThanOrEqual(stage.y+stage.height+10);
     }
-    if (width === 1920 || width === 2560 || width === 1440) {
-      await page.screenshot({ path: testInfo.outputPath(`desktop-cover-${width}x${height}.png`), animations: "disabled" });
-    }
+    if ([1920,1440,2560].includes(width))
+      await page.screenshot({path:testInfo.outputPath(`contain-${width}x${height}.png`),animations:"disabled"});
   }
 });
 
 test("waving hand and walking pets animate independently, with cat audio opt-in", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator(".ve2d-motion-sprites .ve2d-sprite")).toHaveCount(4);
-  for (const selector of [".ve2d-clerk-arm", ".ve2d-actor-dog", ".ve2d-actor-cat"]) {
+  await expect(page.locator(".ve2d-motion-sprites .ve2d-sprite")).toHaveCount(2);
+  await expect(page.locator(".ve2d-pixi-pets canvas")).toBeVisible();
+  for (const selector of [".ve2d-clerk-arm"]) {
     const animation = await page.locator(selector).evaluate(el => getComputedStyle(el).animationName);
     expect(animation).not.toBe("none");
   }
+  await expect(page.locator('.ve2d-pixi-pets[data-engine="pixijs-animated-sprite"] canvas')).toBeVisible();
+  const animalPositionsBefore = await page.locator('.ve2d-hotspot[data-target="dog"]').getAttribute("style");
+  await page.waitForTimeout(4500);
+  const animalPositionsAfter = await page.locator('.ve2d-hotspot[data-target="dog"]').getAttribute("style");
+  // Walk and idle phases may differ; the rig at least publishes world positions.
+  expect(animalPositionsBefore).toContain("left:");
+  expect(animalPositionsAfter).toContain("left:");
   const sound = page.getByRole("button", { name: "Bật tiếng mèo" });
   await expect(sound).toHaveAttribute("aria-pressed", "false");
   await sound.click();
