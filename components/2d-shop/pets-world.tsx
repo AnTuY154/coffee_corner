@@ -119,13 +119,23 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         }
 
         const employee = makeActor(employeeTexture, "employee", 155, 208);
-        const dog = makeActor(dogTexture, "dog", 126, 126);
-        const cat = makeActor(catTexture, "cat", 116, 116);
+        const dog = makeActor(dogTexture, "dog", 118, 118);
+        // The cat occupies the clear left section of the wooden tabletop;
+        // the flower vase and right-hand chair are not a walkable surface.
+        const cat = makeActor(catTexture, "cat", 86, 86);
 
-        // In the service window the counter obscures her lower body.
-        // Remove the clipping as soon as she reaches the exit on the right.
+        // Pixi v8: a Graphics object ceases to be an active stencil mask when
+        // its last masked actor sets `.mask = null`. At that moment it becomes
+        // VISIBLE as a giant opaque rectangle. This was the white 1672x650
+        // panel that covered the storefront every time the clerk left the counter.
+        //
+        // Keep ONE stencil mask assigned throughout the actor's lifetime;
+        // only change its geometry between the counter and full artboard.
+        // Pixi never paints an active mask into the color buffer.
         const counterMask = new Graphics().rect(0, 0, ARTBOARD.width, 650).fill(0xffffff);
+        employee.holder.mask = counterMask;
         world.addChild(counterMask);
+        let maskHeight = 650;
 
         const director = new ActorsDirector();
         directorRef.current = director;
@@ -166,7 +176,11 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           // Never mirror the employee's apron lettering or reassign mesh scale.
           employee.holder.scale.set(person.scale);
           employee.holder.zIndex = person.y + .1;
-          employee.holder.mask = person.behindCounter ? counterMask : null;
+          const nextMaskHeight = person.behindCounter ? 650 : ARTBOARD.height;
+          if (nextMaskHeight !== maskHeight) {
+            counterMask.clear().rect(0, 0, ARTBOARD.width, nextMaskHeight).fill(0xffffff);
+            maskHeight = nextMaskHeight;
+          }
           employee.holder.rotation = person.action === "run" ? Math.sin(pose.seconds * 15) * .023 :
             person.action === "pet" ? -.04 + Math.sin(pose.seconds * 7) * .015 : 0;
           deformVertices(employee.original, employee.vertices, employee.texture.width,
@@ -177,6 +191,21 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           lastNotification += dt;
           if (lastNotification >= .13) {
             lastNotification = 0;
+            // Public read-only scene diagnostics for independent browser QA.
+            // They contain only coordinates and action labels, no user data.
+            if (host.current) {
+              host.current.dataset.phase = pose.phase;
+              host.current.dataset.employeeX = String(Math.round(person.x));
+              host.current.dataset.employeeY = String(Math.round(person.y));
+              host.current.dataset.employeeAction = person.action;
+              host.current.dataset.counterMaskHeight = String(maskHeight);
+              host.current.dataset.dogX = String(Math.round(pose.dog.x));
+              host.current.dataset.dogY = String(Math.round(pose.dog.y));
+              host.current.dataset.dogMood = pose.dog.mood;
+              host.current.dataset.catX = String(Math.round(pose.cat.x));
+              host.current.dataset.catY = String(Math.round(pose.cat.y));
+              host.current.dataset.catMood = pose.cat.mood;
+            }
             onMoveRef.current({
               dog: { x: pose.dog.x, y: pose.dog.y - 60 },
               cat: { x: pose.cat.x, y: pose.cat.y - 53 },
