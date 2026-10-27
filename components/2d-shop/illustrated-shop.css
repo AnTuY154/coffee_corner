@@ -64,13 +64,13 @@ html:has(.ve2d-root),body:has(.ve2d-root){height:100%;overflow:hidden!important}
 @media (prefers-reduced-motion:reduce){.ve2d-walker{animation:none!important}}
 
 /*
- * Approved Vườn É 3:2 artboard.
+ * Approved Vườn É 16:9 artboard.
  * The photograph and hotspots live in exactly the same positioned stage:
  * neither object-fit:cover nor CSS transforms are permitted on the artwork.
  */
 .ve2d-stage[data-approved-art=true]{
-  width:min(100vw,150svh);
-  aspect-ratio:3/2;
+  width:min(100vw,177.68svh);
+  aspect-ratio:1672/941;
   background:#f5e6c1;
   overflow:visible;
 }
@@ -151,7 +151,7 @@ html:has(.ve2d-root),body:has(.ve2d-root){height:100%;overflow:hidden!important}
   .ve2d-stage[data-approved-art=true]{
     width:1050px;
     min-width:1050px;
-    aspect-ratio:3/2;
+    aspect-ratio:1672/941;
   }
   .ve2d-root[data-approved-art=true] .ve2d-cloud{width:190px;font-size:12px;padding:12px 13px}
   .ve2d-root[data-approved-art=true] .ve2d-header{right:10px;top:10px}
@@ -161,7 +161,7 @@ html:has(.ve2d-root),body:has(.ve2d-root){height:100%;overflow:hidden!important}
 }
 
 /*
- * Foreground extraction from the approved 1536×1024 illustration.
+ * Foreground extraction from the approved 1672×941 illustration.
  * Canvas background is character-free ONLY if every transparent sprite loads.
  * All percentages refer to the same uncropped image pixel coordinate system.
  */
@@ -199,7 +199,7 @@ html:has(.ve2d-root),body:has(.ve2d-root){height:100%;overflow:hidden!important}
 
 /* =============================================================
    2D CINEMATIC DESKTOP CAMERA — fill viewport without stretching
-   3:2 artwork is "cover" scaled as a single positioned stage so
+   16:9 artwork is "cover" scaled as a single positioned stage so
    interaction hitboxes, shadows and sprites always remain aligned.
    ============================================================= */
 @media (min-width:761px){
@@ -209,10 +209,10 @@ html:has(.ve2d-root),body:has(.ve2d-root){height:100%;overflow:hidden!important}
     justify-content:center;
   }
   .ve2d-stage[data-approved-art=true]{
-    width:max(100vw,150dvh);
-    min-width:max(100vw,150dvh);
+    width:max(100vw,177.68dvh);
+    min-width:max(100vw,177.68dvh);
     height:auto;
-    aspect-ratio:3/2;
+    aspect-ratio:1672/941;
     flex:0 0 auto;
   }
 }
@@ -230,7 +230,7 @@ html:has(.ve2d-root),body:has(.ve2d-root){height:100%;overflow:hidden!important}
 }
 
 /* Actors are separate alpha-masked puppets, NOT pixels baked into
-   the environmental backdrop. Every pose is local to the 3:2 stage. */
+   the environmental backdrop. Every pose is local to the 16:9 stage. */
 .ve2d-motion-sprites{z-index:3}
 .ve2d-actor{
   position:absolute;
@@ -347,7 +347,7 @@ html:has(.ve2d-root),body:has(.ve2d-root){height:100%;overflow:hidden!important}
 
 
 /*
- * Fullscreen is the VIEWPORT, not forced cropping of a 3:2 picture.
+ * Fullscreen is the VIEWPORT, not forced cropping of a 16:9 picture.
  * A blurred edge extension fills 16:9/21:9 monitors without losing
  * the approved Vườn É sign, pavement, café seats or actor foot anchors.
  * Stage/image/Pixi/click hotspots use one coordinate transform.
@@ -374,11 +374,11 @@ html:has(.ve2d-root),body:has(.ve2d-root){height:100%;overflow:hidden!important}
 @media (min-width:761px){
   .ve2d-viewport{overflow:hidden;justify-content:center;align-items:center}
   .ve2d-stage[data-approved-art=true]{
-    width:min(100vw,150dvh);
+    width:min(100vw,177.68dvh);
     min-width:0;
     max-height:100dvh;
     flex:0 0 auto;
-    aspect-ratio:3/2;
+    aspect-ratio:1672/941;
     overflow:visible;
   }
 }
@@ -420,4 +420,20 @@ html:has(.ve2d-root),body:has(.ve2d-root){height:100%;overflow:hidden!important}
 .ve2d-pixi-pets canvas{image-rendering:auto}
 @media (prefers-reduced-motion:reduce){
   .ve2d-pixi-pets{transition:none!important}
+}
+
+/* Single canonical 16:9 camera. Contain the entire store at laptop full screen;
+   stage, pointer hotspots and Pixi world must always share the same aspect. */
+@media (min-width:761px) {
+  .ve2d-stage[data-approved-art=true]{
+    width:min(100vw,177.68dvh);
+    min-width:0;
+    max-height:100dvh;
+    aspect-ratio:1672/941;
+    overflow:hidden;
+  }
+}
+.ve2d-stage[data-approved-art=true] .ve2d-hotspot[data-target=clerk]{
+  position:absolute;
+  transform:translate(-50%,-50%);
 }
