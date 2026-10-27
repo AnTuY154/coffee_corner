@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useCart } from "@/components/cart-context";
 import { ShopMenu2D } from "@/components/3d-shop/shop-menu-2d";
 import { ShopIllustration } from "./shop-illustration";
-import { PetsWorld, type PetPositions } from "./pets-world";
+import { PetsWorld, type PetPositions, type VisitRequest } from "./pets-world";
 import type { CSSProperties } from "react";
 import "./illustrated-shop.css";
 
@@ -68,7 +68,8 @@ export function IllustratedShop() {
   const [artLoaded, setArtLoaded] = useState(false);
   const [spritesReady, setSpritesReady] = useState(false);
   const [petsReady, setPetsReady] = useState(false);
-  const [petPositions, setPetPositions] = useState<PetPositions>({ dog: { x: 383, y: 903 }, cat: { x: 1346, y: 860 } });
+  const [petPositions, setPetPositions] = useState<PetPositions>({ dog: { x: 383, y: 908 }, cat: { x: 1352, y: 952 }, clerk: { x: 690, y: 540 } });
+  const [visitRequest, setVisitRequest] = useState<VisitRequest>(null);
   const [active, setActive] = useState<Key | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [openBasket, setOpenBasket] = useState(false);
@@ -162,8 +163,11 @@ export function IllustratedShop() {
     });
     Promise.all([
       preload(strippedSrc),
-      preload(`${artBase}/layers/clerk-body.png`),
-      preload(`${artBase}/layers/clerk-arm.png`),
+      preload(`${artBase}/actors/anime/idle.webp`),
+      preload(`${artBase}/actors/anime/wave.webp`),
+      preload(`${artBase}/actors/anime/run.webp`),
+      preload(`${artBase}/actors/anime/pet-dog.webp`),
+      preload(`${artBase}/actors/anime/pet-cat.webp`),
       preload(`${artBase}/pets/dog-walk.png`),
       preload(`${artBase}/pets/cat-walk.png`),
     ]).then(() => { if (!cancelled) setSpritesReady(true); })
@@ -222,8 +226,8 @@ export function IllustratedShop() {
     if (spot.action === "order") { setStory(null); setOpenBasket(false); setMenuOpen(true); }
     else {
       setStory(spot.action);
-      if (spot.action === "dog") setDogHappy(true);
-      if (spot.action === "cat") { setCatHappy(true); if (soundEnabled) playMeow(); }
+      if (spot.action === "dog") { setDogHappy(true); setVisitRequest({ id: Date.now(), target: "dog" }); }
+      if (spot.action === "cat") { setCatHappy(true); setVisitRequest({ id: Date.now(), target: "cat" }); if (soundEnabled) playMeow(); }
     }
   }
 
@@ -242,26 +246,20 @@ export function IllustratedShop() {
           onLoad={() => { setArtLoaded(true); setActive(null); }}
           onError={() => { setArtLoaded(false); setSpritesReady(false); }}
         />
-        {spritesReady && <PetsWorld artBase={artBase} onReady={() => setPetsReady(true)}
-          onMove={setPetPositions} />}
-        {sceneReady && <div className="ve2d-motion-sprites" aria-hidden="true">
-          <div className="ve2d-actor ve2d-actor-clerk">
-            <img className="ve2d-sprite ve2d-clerk-body" src={`${artBase}/layers/clerk-body.png`} alt="" draggable={false} />
-            <img className="ve2d-sprite ve2d-clerk-arm" src={`${artBase}/layers/clerk-arm.png`} alt="" draggable={false} />
-          </div>
-          {soundEnabled && <span className="ve2d-meow-mark" style={{
-            left: (petPositions.cat.x / REF_W * 100) + "%",
-            top: (petPositions.cat.y / REF_H * 100 - 10) + "%",
-          }}>♪</span>}
-        </div>}
+        {spritesReady && <PetsWorld artBase={artBase} visible={sceneReady} request={visitRequest}
+          onReady={() => setPetsReady(true)} onMove={setPetPositions} />}
+        {sceneReady && soundEnabled && <span className="ve2d-meow-mark" aria-hidden="true" style={{
+          left: (petPositions.cat.x / REF_W * 100) + "%",
+          top: (petPositions.cat.y / REF_H * 100 - 10) + "%",
+        }}>♪</span>}
         {spots.map(spot => <button
           key={spot.id} type="button" className="ve2d-hotspot"
           data-target={spot.id} data-visible={active === spot.id}
           data-placement={spot.placement ?? "above"}
           style={{
-            left: (artLoaded && (spot.id === "dog" || spot.id === "cat")
+            left: (artLoaded && (spot.id === "dog" || spot.id === "cat" || spot.id === "clerk")
               ? (petPositions[spot.id].x / REF_W * 100) : spot.x) + "%",
-            top: (artLoaded && (spot.id === "dog" || spot.id === "cat")
+            top: (artLoaded && (spot.id === "dog" || spot.id === "cat" || spot.id === "clerk")
               ? (petPositions[spot.id].y / REF_H * 100) : spot.y) + "%",
             width: spot.w + "%", height: spot.h + "%",
           }}

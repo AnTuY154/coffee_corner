@@ -64,3 +64,41 @@ for (const f of files) {
   console.log("OK", f, dimensions(path).join("x"), statSync(path).size, "bytes");
 }
 console.log("PASS: eleven approved-art assets, including two genuine frame sheets present and have correct dimensions.");
+
+/*
+ * The employee must not be a crop of the painting. The new puppet consists
+ * of three genuinely transparent SVG assets, with separate arms and legs.
+ */
+for (const name of ["clerk-body.svg", "clerk-arm.svg", "clerk-leg.svg"]) {
+  const actorFile = resolve(art, "actors", name);
+  if (!existsSync(actorFile)) {
+    if (required) throw new Error("Missing transparent character part: " + actorFile);
+    console.warn("ART PENDING: " + actorFile);
+    continue;
+  }
+  const xml = readFileSync(actorFile, "utf8");
+  assert.match(xml, /<svg[^>]*viewBox=/, name + " must have a consistent vector artboard");
+  assert.doesNotMatch(xml, /<image|<foreignObject|data:image/i, name + " must not embed background bitmap pixels");
+}
+
+// Signed-off employee design: five distinct transparent 540x720 WebP poses.
+// Keep them separate from the fixed shop painting, and fail strict CI if any
+// file is missing or accidentally swapped for an empty/flattened export.
+for (const pose of ["idle", "wave", "run", "pet-dog", "pet-cat"]) {
+  const name = `actors/anime/${pose}.webp`;
+  const file = resolve(art, name);
+  if (!existsSync(file)) {
+    if (required) throw new Error("Missing approved character pose: " + name);
+    console.warn("ART PENDING: " + name);
+    continue;
+  }
+  const bytes = readFileSync(file);
+  assert.deepEqual(dimensions(file), [540, 720], name + " dimensions must stay consistent");
+  assert(bytes.length >= 25_000, name + " image appears empty/corrupted");
+  // WebP RGBA container normally uses VP8X plus ALPH image chunks.
+  assert.equal(bytes.toString("ascii", 0, 4), "RIFF");
+  assert.equal(bytes.toString("ascii", 8, 12), "WEBP");
+  assert.equal(bytes.toString("ascii", 12, 16), "VP8X", name + " must keep transparency");
+  assert((bytes[20] & 0x10) !== 0, name + " is missing alpha transparency");
+  console.log("OK anime employee", name, bytes.length, "bytes");
+}
