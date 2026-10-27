@@ -38,8 +38,8 @@ The last command needs Playwright Chromium and a built Next.js app. The dedicate
 ### Progress and known imperfections
 
 - All five assets have been produced **locally** and packaged as `vuon-e-complete-asset-pack.zip` in the ChatGPT conversation.
-- The GitHub connector currently handles text/base64, but does not transfer local binary attachments automatically; so the real 5 image assets must still be committed before merging PR #16.
+- **All five files are now committed** as native Git binary blobs in PR #16. Local/remote Git blob hashes have been checked for exact equality.
 - Inpainting of the old top-left welcome label and umbrella instruction cloud has visible painterly artifacts at high zoom; sprite alpha boundaries may include a few background fragments. They require visual review before final approval.
 - Playwright screenshots have been verified against a standalone HTML simulation both at 1536×1024 and 390×844. Browser CI for **the actual Next.js site** runs only after the five assets are present.
 
-Do not merge solely because TypeScript/unit builds are green. The finished storefront is blocked on **real art upload and visual sign-off**.
+Do not merge solely because TypeScript/unit builds are green; browser visual QA must also pass. The approved assets are integrated; merge sign-off now depends on Playwright browser results and visual review of remaining inpainting/segmentation seams.
