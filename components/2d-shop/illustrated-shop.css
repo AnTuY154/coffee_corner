@@ -437,3 +437,11 @@ html:has(.ve2d-root),body:has(.ve2d-root){height:100%;overflow:hidden!important}
   position:absolute;
   transform:translate(-50%,-50%);
 }
+
+.ve2d-art-loading{
+  position:absolute;inset:0;z-index:1;
+  display:grid;place-items:center;
+  font:600 clamp(17px,2vw,27px)/1.4 Georgia,serif;
+  letter-spacing:.02em;color:#476d49;
+  background:linear-gradient(150deg,#fcf7dc,#deeccb);
+}
