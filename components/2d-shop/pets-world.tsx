@@ -16,16 +16,19 @@ type Props = {
   request?: VisitRequest;
   onReady: () => void;
   onMove: (positions: PetPositions) => void;
+  onBark?: () => void;
 };
 
 /** Three meshes, one Pixi clock, three immutable canonical source textures. */
-export function PetsWorld({ artBase, visible, request, onReady, onMove }: Props) {
+export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const directorRef = useRef<ActorsDirector | null>(null);
   const pending = useRef<Animal | null>(null);
   const seen = useRef(0);
   const onMoveRef = useRef(onMove);
   const onReadyRef = useRef(onReady);
+  const onBarkRef = useRef(onBark);
+  onBarkRef.current = onBark;
   onMoveRef.current = onMove;
   onReadyRef.current = onReady;
 
@@ -101,9 +104,18 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove }: Props)
           heart.anchor.set(.5);
           heart.position.set(12, -height - 13);
           heart.alpha = 0;
-          holder.addChild(shadow, mesh, heart);
+          const actionLabel = new Text({ text: kind === "dog" ? "Gâu!" : "Zzz", style: {
+            fill: kind === "dog" ? 0x5c7845 : 0x71908c,
+            fontSize: 25, fontFamily: "sans-serif", fontWeight: "bold",
+            stroke: { color: 0xfff7e5, width: 4 },
+          } });
+          actionLabel.anchor.set(.5);
+          actionLabel.position.set(4, -height - 24);
+          actionLabel.alpha = 0;
+          holder.addChild(shadow, mesh, heart, actionLabel);
           world.addChild(holder);
-          return { holder, mesh, buffer: attr.buffer, vertices, original, width, height, heart, kind, texture };
+          return { holder, shadow, mesh, buffer: attr.buffer, vertices, original,
+            width, height, heart, actionLabel, kind, texture };
         }
 
         const employee = makeActor(employeeTexture, "employee", 155, 208);
@@ -121,27 +133,42 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove }: Props)
         const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
         let lastNotification = 0;
         let stepTime = 0;
+        let previousDogMood = "idle";
         const ticker = (tick: { deltaMS: number }) => {
           const dt = Math.min(tick.deltaMS / 1000, .05);
           stepTime += dt;
           const pose = director.step(dt, reduced.matches);
           for (const p of [dog, cat] as const) {
             const state = pose[p.kind as Animal];
-            p.holder.position.set(state.x, state.y);
+            // Explicit world surfaces: puppy paws on the courtyard tiles,
+            // cat paws ON the wooden outdoor tabletop (not on the ground).
+            const dogJump = p.kind === "dog" && state.mood === "jump";
+            const height = dogJump ? Math.sin(state.actionProgress * Math.PI) * 34 : 0;
+            p.holder.position.set(state.x, state.y - height);
             p.holder.scale.x = state.facing;
             p.holder.zIndex = state.y;
+            p.shadow.y = height;
+            p.shadow.scale.x = dogJump ? 1 - height / 110 : 1;
+            p.shadow.alpha = dogJump ? .16 : 1;
             p.heart.alpha = state.mood === "happy" ? .7 + Math.sin(stepTime * 7) * .25 : 0;
+            p.actionLabel.alpha = state.mood === "bark" || state.mood === "nap"
+              ? state.mood === "bark" ? .8 + Math.sin(stepTime * 18) * .2 : .72 : 0;
+            p.actionLabel.y = -p.height - 24 - (dogJump ? 20 : Math.abs(Math.sin(stepTime * 2)) * 4);
             deformVertices(p.original, p.vertices, p.texture.width, p.texture.height,
-              { gait: state.gait, speed: state.speed, seconds: pose.seconds, motion: state.mood }, p.kind);
+              { gait: state.gait, speed: state.speed, seconds: pose.seconds,
+                motion: state.mood, actionProgress: state.actionProgress }, p.kind);
             p.buffer.update();
           }
+          if (pose.dog.mood === "bark" && previousDogMood !== "bark") onBarkRef.current?.();
+          previousDogMood = pose.dog.mood;
           const person = pose.worker;
           employee.holder.position.set(person.x, person.y);
           // Never mirror the employee's apron lettering or reassign mesh scale.
           employee.holder.scale.set(person.scale);
           employee.holder.zIndex = person.y + .1;
           employee.holder.mask = person.behindCounter ? counterMask : null;
-          employee.holder.rotation = person.action === "run" ? (person.facing < 0 ? -.038 : .038) : 0;
+          employee.holder.rotation = person.action === "run" ? Math.sin(pose.seconds * 15) * .023 :
+            person.action === "pet" ? -.04 + Math.sin(pose.seconds * 7) * .015 : 0;
           deformVertices(employee.original, employee.vertices, employee.texture.width,
             employee.texture.height,
             { gait: pose.seconds * 13, speed: person.action === "run" ? 65 : 0,
@@ -153,7 +180,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove }: Props)
             onMoveRef.current({
               dog: { x: pose.dog.x, y: pose.dog.y - 60 },
               cat: { x: pose.cat.x, y: pose.cat.y - 53 },
-              clerk: { x: person.x, y: person.y - (person.behindCounter ? 130 : 115) },
+              clerk: { x: person.x, y: person.y - (person.behindCounter ? 128 : 122) },
             });
           }
         };

@@ -67,15 +67,13 @@ export function IllustratedShop() {
   const [artLoaded, setArtLoaded] = useState(false);
   const [spritesReady, setSpritesReady] = useState(false);
   const [petsReady, setPetsReady] = useState(false);
-  const [petPositions, setPetPositions] = useState<PetPositions>({ dog: { x: 415, y: 815 }, cat: { x: 1420, y: 826 }, clerk: { x: 764, y: 567 } });
+  const [petPositions, setPetPositions] = useState<PetPositions>({ dog: { x: 403, y: 859 }, cat: { x: 1410, y: 782 }, clerk: { x: 764, y: 566 } });
   const [visitRequest, setVisitRequest] = useState<VisitRequest>(null);
   const [active, setActive] = useState<Key | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [openBasket, setOpenBasket] = useState(false);
   const [story, setStory] = useState<StoryAction | null>(null);
   const [coarsePointer, setCoarsePointer] = useState(false);
-  const [dogHappy, setDogHappy] = useState(false);
-  const [catHappy, setCatHappy] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const audioContext = useRef<AudioContext | null>(null);
   const trigger = useRef<HTMLButtonElement | null>(null);
@@ -125,6 +123,38 @@ export function IllustratedShop() {
       warmth.stop(when + .34);
     });
   }, []);
+  // Bark only when sound has been enabled by a user gesture.
+  const playBark = useCallback(() => {
+    const ctx = audioContext.current;
+    if (!soundEnabled || !ctx || ctx.state !== "running" || document.hidden) return;
+    const when = ctx.currentTime + .008;
+    for (const offset of [0, .17]) {
+      const start = when + offset;
+      const voice = ctx.createOscillator();
+      const rumble = ctx.createOscillator();
+      const lowpass = ctx.createBiquadFilter();
+      const envelope = ctx.createGain();
+      voice.type = "sawtooth";
+      rumble.type = "triangle";
+      lowpass.type = "lowpass";
+      lowpass.frequency.setValueAtTime(1150, start);
+      lowpass.frequency.exponentialRampToValueAtTime(430, start + .15);
+      voice.frequency.setValueAtTime(255, start);
+      voice.frequency.exponentialRampToValueAtTime(120, start + .14);
+      rumble.frequency.setValueAtTime(110, start);
+      rumble.frequency.exponentialRampToValueAtTime(73, start + .14);
+      envelope.gain.setValueAtTime(.0001, start);
+      envelope.gain.exponentialRampToValueAtTime(.037, start + .025);
+      envelope.gain.exponentialRampToValueAtTime(.0001, start + .16);
+      voice.connect(lowpass);
+      rumble.connect(lowpass);
+      lowpass.connect(envelope);
+      envelope.connect(ctx.destination);
+      voice.start(start); rumble.start(start);
+      voice.stop(start + .165); rumble.stop(start + .165);
+    }
+  }, [soundEnabled]);
+
   const toggleSound = useCallback(async () => {
     if (soundEnabled) { setSoundEnabled(false); await audioContext.current?.suspend(); return; }
     try {
@@ -220,8 +250,8 @@ export function IllustratedShop() {
     if (spot.action === "order") { setStory(null); setOpenBasket(false); setMenuOpen(true); }
     else {
       setStory(spot.action);
-      if (spot.action === "dog") { setDogHappy(true); setVisitRequest({ id: Date.now(), target: "dog" }); }
-      if (spot.action === "cat") { setCatHappy(true); setVisitRequest({ id: Date.now(), target: "cat" }); if (soundEnabled) playMeow(); }
+      if (spot.action === "dog") { setVisitRequest({ id: Date.now(), target: "dog" }); }
+      if (spot.action === "cat") { setVisitRequest({ id: Date.now(), target: "cat" }); if (soundEnabled) playMeow(); }
     }
   }
 
@@ -241,7 +271,7 @@ export function IllustratedShop() {
           onError={() => { setArtLoaded(false); setSpritesReady(false); }}
         />
         {spritesReady && <PetsWorld artBase={artBase} visible={sceneReady} request={visitRequest}
-          onReady={() => setPetsReady(true)} onMove={setPetPositions} />}
+          onReady={() => setPetsReady(true)} onMove={setPetPositions} onBark={playBark} />}
         {sceneReady && soundEnabled && <span className="ve2d-meow-mark" aria-hidden="true" style={{
           left: (petPositions.cat.x / REF_W * 100) + "%",
           top: (petPositions.cat.y / REF_H * 100 - 10) + "%",
@@ -274,14 +304,6 @@ export function IllustratedShop() {
             <small>{coarsePointer ? "Chạm lần nữa để mở" : "Nhấp để khám phá"} ↗</small>
           </span>
         </button>)}
-        {dogHappy && <span className="ve2d-dog-heart" style={artLoaded ? {
-          left: (petPositions.dog.x / REF_W * 100) + "%",
-          top: (petPositions.dog.y / REF_H * 100 - 9) + "%",
-        } : undefined} aria-hidden="true">♡</span>}
-        {catHappy && artLoaded && <span className="ve2d-cat-heart" style={{
-          left: (petPositions.cat.x / REF_W * 100) + "%",
-          top: (petPositions.cat.y / REF_H * 100 - 10) + "%",
-        }} aria-hidden="true">♡</span>}
         {artLoaded && <div className="ve2d-ambient" aria-hidden="true"><span className="ve2d-light" /><span className="ve2d-leaf" /></div>}
       </div>
     </div>
@@ -289,7 +311,7 @@ export function IllustratedShop() {
       {!artLoaded && <span>✿ <strong>VƯỜN É</strong> <small>nước ép tự nhiên</small></span>}
       {artLoaded && <span className="ve2d-wide-brand">✿ <strong>VƯỜN É</strong> <small>nước ép tự nhiên</small></span>}
       <div className="ve2d-controls">
-        <button type="button" className="ve2d-sound" onClick={() => void toggleSound()} aria-pressed={soundEnabled} aria-label={soundEnabled ? "Tắt tiếng mèo" : "Bật tiếng mèo"} title={soundEnabled ? "Tắt tiếng mèo" : "Bật tiếng mèo"}>
+        <button type="button" className="ve2d-sound" onClick={() => void toggleSound()} aria-pressed={soundEnabled} aria-label={soundEnabled ? "Tắt âm thanh thú cưng" : "Bật âm thanh thú cưng"} title={soundEnabled ? "Tắt âm thanh thú cưng" : "Bật âm thanh thú cưng"}>
           {soundEnabled ? "🔊" : "🔇"}
         </button>
       <button type="button" className="ve2d-cart" onClick={e => { trigger.current = e.currentTarget; setStory(null); setOpenBasket(true); setMenuOpen(true); }}>
