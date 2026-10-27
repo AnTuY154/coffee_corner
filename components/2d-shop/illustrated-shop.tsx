@@ -30,25 +30,25 @@ const LEGACY_HOTSPOTS: Hotspot[] = [
 ];
 
 /**
- * Pixel-perfect coordinate system: original approved composition 1536×1024.
+ * Pixel-perfect coordinate system: canonical character-free background 1672×941.
  * Hit areas intentionally stop short of neighbouring interactable objects.
- * Keep the source PNG / cleaned WEBP at its un-cropped 3:2 aspect ratio.
+ * The shop and all actor meshes share an un-cropped 16:9 coordinate system.
  */
-const REF_W = 1536, REF_H = 1024;
+const REF_W = 1672, REF_H = 941;
 type PixelHotspot = Omit<Hotspot, "x" | "y" | "w" | "h"> & { box: readonly [number, number, number, number] };
 const ART_HOTSPOTS: PixelHotspot[] = [
-  { id: "sign", name: "Vườn É", hint: "Chào bạn! Khám phá câu chuyện Vườn É nhé!", box: [784, 176, 500, 145], action: "intro", placement: "below" },
-  { id: "categories", name: "Các loại nước ép", hint: "Chọn danh mục nước ép, sinh tố và trái cây!", box: [131, 494, 202, 315], action: "order", placement: "left" },
-  { id: "menu", name: "Bảng thực đơn", hint: "Xem tất cả nước ép theo mùa!", box: [772, 407, 355, 134], action: "order", placement: "below" },
-  { id: "clerk", name: "Nhân viên dễ thương", hint: "Nhấn vào nhân viên để gọi món nhé!", box: [653, 572, 170, 150], action: "order" },
-  { id: "fruits", name: "Quầy trái cây", hint: "Trái cây tươi vừa về quầy!", box: [827, 620, 135, 100], action: "order" },
-  { id: "cooler", name: "Tủ nước ép", hint: "Nước ép mát lành đang chờ bạn!", box: [961, 650, 119, 250], action: "order", placement: "left" },
-  { id: "seats", name: "Bàn ghế bên trái", hint: "Ngồi uống nước dưới tán cây nhé!", box: [579, 867, 225, 176], action: "seats" },
-  { id: "seatsRight", name: "Bàn bên phải", hint: "Một góc ngồi ngắm khu vườn!", box: [1246, 849, 190, 146], action: "seats" },
-  { id: "tree", name: "Tán cây xanh", hint: "Hít thở không khí trong lành!", box: [263, 150, 320, 218], action: "garden", placement: "below" },
-  { id: "parasol", name: "Dù che nắng", hint: "Nhấn để ngắm không gian bên ngoài!", box: [1350, 550, 264, 135], action: "seats", placement: "left" },
-  { id: "dog", name: "Chú chó nhỏ", hint: "Gâu gâu! Chào bạn!", box: [378, 935, 197, 96], action: "dog" },
-  { id: "cat", name: "Chú mèo", hint: "Meo meo! Mình thích nắng sớm!", box: [1399, 813, 153, 98], action: "cat", placement: "left" },
+  { id: "sign", name: "Vườn É", hint: "Chào bạn! Khám phá câu chuyện Vườn É nhé!", box: [600, 95, 572, 166], action: "intro", placement: "below" },
+  { id: "categories", name: "Các loại nước ép", hint: "Chọn danh mục nước ép, sinh tố và trái cây!", box: [33, 332, 225, 314], action: "order", placement: "left" },
+  { id: "menu", name: "Bảng thực đơn", hint: "Xem tất cả nước ép theo mùa!", box: [647, 340, 406, 137], action: "order", placement: "below" },
+  { id: "clerk", name: "Nhân viên dễ thương", hint: "Nhấn vào nhân viên để gọi món nhé!", box: [698, 522, 148, 148], action: "order" },
+  { id: "fruits", name: "Quầy trái cây", hint: "Trái cây tươi vừa về quầy!", box: [775, 565, 149, 98], action: "order" },
+  { id: "cooler", name: "Tủ nước ép", hint: "Nước ép mát lành đang chờ bạn!", box: [990, 551, 130, 230], action: "order", placement: "left" },
+  { id: "seats", name: "Bàn ghế bên trái", hint: "Ngồi uống nước dưới tán cây nhé!", box: [480, 794, 345, 138], action: "seats" },
+  { id: "seatsRight", name: "Bàn bên phải", hint: "Một góc ngồi ngắm khu vườn!", box: [1177, 790, 374, 139], action: "seats" },
+  { id: "tree", name: "Tán cây xanh", hint: "Hít thở không khí trong lành!", box: [0, 1, 434, 253], action: "garden", placement: "below" },
+  { id: "parasol", name: "Dù che nắng", hint: "Nhấn để ngắm không gian bên ngoài!", box: [1370, 472, 290, 158], action: "seats", placement: "left" },
+  { id: "dog", name: "Chú chó nhỏ", hint: "Gâu gâu! Chào bạn!", box: [358, 814, 138, 115], action: "dog" },
+  { id: "cat", name: "Chú mèo", hint: "Meo meo! Mình thích nắng sớm!", box: [1365, 812, 144, 125], action: "cat", placement: "left" },
 ];
 export const HOTSPOTS: Hotspot[] = ART_HOTSPOTS.map(({ box: [x, y, w, h], ...spot }) => ({
   ...spot, x: x / REF_W * 100, y: y / REF_H * 100,
@@ -68,7 +68,7 @@ export function IllustratedShop() {
   const [artLoaded, setArtLoaded] = useState(false);
   const [spritesReady, setSpritesReady] = useState(false);
   const [petsReady, setPetsReady] = useState(false);
-  const [petPositions, setPetPositions] = useState<PetPositions>({ dog: { x: 383, y: 908 }, cat: { x: 1352, y: 952 }, clerk: { x: 690, y: 540 } });
+  const [petPositions, setPetPositions] = useState<PetPositions>({ dog: { x: 415, y: 815 }, cat: { x: 1420, y: 826 }, clerk: { x: 764, y: 567 } });
   const [visitRequest, setVisitRequest] = useState<VisitRequest>(null);
   const [active, setActive] = useState<Key | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -86,8 +86,8 @@ export function IllustratedShop() {
   const { count } = useCart();
 
   const artBase = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/art`;
-  const compositionSrc = `${artBase}/vuon-e-original-composition.webp`;
-  const strippedSrc = `${artBase}/vuon-e-approved-clean.webp`;
+  const compositionSrc = `${artBase}/canonical/shop.webp`;
+  const strippedSrc = compositionSrc;
   const spots = artLoaded ? HOTSPOTS : LEGACY_HOTSPOTS;
   const sceneReady = spritesReady && petsReady;
 
@@ -151,8 +151,7 @@ export function IllustratedShop() {
   useEffect(() => () => { void audioContext.current?.close(); audioContext.current = null; }, []);
 
   useEffect(() => {
-    // Never use the object-removed background until EVERY required actor sprite is ready.
-    // A partially uploaded art package must show the intact approved composition instead.
+    // Load exactly the four canonical source images; no baked-in character is ever displayed.
     if (!artLoaded) return;
     let cancelled = false;
     const preload = (url: string) => new Promise<void>((resolve, reject) => {
@@ -163,13 +162,9 @@ export function IllustratedShop() {
     });
     Promise.all([
       preload(strippedSrc),
-      preload(`${artBase}/actors/anime/idle.webp`),
-      preload(`${artBase}/actors/anime/wave.webp`),
-      preload(`${artBase}/actors/anime/run.webp`),
-      preload(`${artBase}/actors/anime/pet-dog.webp`),
-      preload(`${artBase}/actors/anime/pet-cat.webp`),
-      preload(`${artBase}/pets/dog-walk.png`),
-      preload(`${artBase}/pets/cat-walk.png`),
+      preload(`${artBase}/canonical/employee.webp`),
+      preload(`${artBase}/canonical/dog.webp`),
+      preload(`${artBase}/canonical/cat.webp`),
     ]).then(() => { if (!cancelled) setSpritesReady(true); })
       .catch(() => { if (!cancelled) setSpritesReady(false); });
     return () => { cancelled = true; };
