@@ -12,7 +12,10 @@
     "test:3d": "node --experimental-strip-types scripts/test-3d-shop.mjs",
     "test:immersive": "node scripts/test-immersive-world.mjs && node scripts/test-2d-shop.mjs",
     "build:pages": "node scripts/build-github-pages.mjs",
-    "test:2d": "node scripts/test-2d-shop.mjs"
+    "test:2d": "node scripts/test-2d-shop.mjs",
+    "test:art": "node scripts/check-approved-art.mjs",
+    "test:art:required": "node scripts/check-approved-art.mjs --required",
+    "test:2d:visual": "playwright test --config=playwright.config.ts"
   },
   "dependencies": {
     "next": "^15.5.0",
@@ -28,7 +31,8 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "typescript": "^5.8.0",
-    "@types/three": "^0.180.0"
+    "@types/three": "^0.180.0",
+    "@playwright/test": "^1.56.0"
   },
   "engines": {
     "node": ">=20.9.0"
