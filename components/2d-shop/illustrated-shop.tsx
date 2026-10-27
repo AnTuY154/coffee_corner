@@ -163,9 +163,11 @@ export function IllustratedShop() {
     });
     Promise.all([
       preload(strippedSrc),
-      preload(`${artBase}/actors/clerk-body.svg`),
-      preload(`${artBase}/actors/clerk-leg.svg`),
-      preload(`${artBase}/actors/clerk-arm.svg`),
+      preload(`${artBase}/actors/anime/idle.webp`),
+      preload(`${artBase}/actors/anime/wave.webp`),
+      preload(`${artBase}/actors/anime/run.webp`),
+      preload(`${artBase}/actors/anime/pet-dog.webp`),
+      preload(`${artBase}/actors/anime/pet-cat.webp`),
       preload(`${artBase}/pets/dog-walk.png`),
       preload(`${artBase}/pets/cat-walk.png`),
     ]).then(() => { if (!cancelled) setSpritesReady(true); })
