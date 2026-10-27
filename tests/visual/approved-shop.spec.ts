@@ -27,6 +27,8 @@ test("approved 3:2 storefront loads with separately animated worker and animals"
     await clerk.click();
   }
   await expect(page.getByRole("dialog", { name: /Thực đơn/ })).toBeVisible();
+  await expect(page.locator(".ve-menu-header h2")).toHaveCSS("color", "rgb(255, 249, 229)");
+  await expect(page.locator(".ve-menu-search .sr-only")).toHaveCSS("position", "absolute");
   await page.screenshot({ path: testInfo.outputPath("menu-overlay.png"), animations: "disabled" });
   const pathname = new URL(page.url()).pathname;
   const add = page.getByRole("button", { name: /^Thêm .* vào giỏ$/ }).first();
