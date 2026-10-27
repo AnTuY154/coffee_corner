@@ -43,7 +43,11 @@ test("shop menu, cart, checkout remain in the same URL", async ({ page }) => {
   await sceneReady(page);
   const before = new URL(page.url()).pathname;
   const clerk = page.locator('.ve2d-hotspot[data-target="clerk"]');
+  const fruits = page.locator('.ve2d-hotspot[data-target="fruits"]');
   await expect(clerk).toBeVisible();
+  const employeeLayer = await clerk.evaluate(node => Number(getComputedStyle(node).zIndex));
+  const fruitLayer = await fruits.evaluate(node => Number(getComputedStyle(node).zIndex));
+  expect(employeeLayer).toBeGreaterThan(fruitLayer);
   if (test.info().project.name.startsWith("mobile")) {
     await clerk.click();
     await expect(clerk.locator(".ve2d-cloud")).toBeVisible();

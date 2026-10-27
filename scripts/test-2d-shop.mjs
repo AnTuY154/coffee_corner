@@ -24,6 +24,7 @@ assert(scene.includes("canonical/shop.webp"));
 assert.match(scene, /onLoad=\{\(\) => \{ setArtLoaded\(true\)/);
 assert.match(scene, /onError=\{\(\) => \{ setArtLoaded\(false\); setSpritesReady\(false\); \}\}/);
 assert(style.includes("aspect-ratio:1672/941"));
+assert.match(style, /data-target=clerk\][\s\S]*?z-index:10/, "employee click hotspot must be above overlapping fruit controls");
 assert.match(style, /object-fit:fill/);
 assert.match(style, /data-approved-art=true/);
 assert.match(scene, /pixel-perfect|Pixel-perfect/);
