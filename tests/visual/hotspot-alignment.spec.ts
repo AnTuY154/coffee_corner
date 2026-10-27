@@ -9,15 +9,15 @@ import { expect, test, type Page } from "@playwright/test";
 test.setTimeout(90_000);
 const W = 1672, H = 941;
 const fixed: Record<string, readonly [number, number, number, number]> = {
-  sign: [600, 95, 572, 166],
-  categories: [33, 332, 225, 314],
-  menu: [647, 340, 406, 137],
-  fruits: [775, 565, 149, 98],
-  cooler: [990, 551, 130, 230],
-  seats: [480, 794, 345, 138],
-  seatsRight: [1177, 790, 374, 139],
-  tree: [0, 1, 434, 253],
-  parasol: [1370, 472, 290, 158],
+  sign: [582, 90, 561, 176],
+  categories: [36, 344, 208, 282],
+  menu: [654, 346, 382, 132],
+  fruits: [809, 589, 165, 80],
+  cooler: [985, 541, 148, 251],
+  seats: [487, 810, 345, 124],
+  seatsRight: [1158, 795, 413, 143],
+  tree: [0, 0, 426, 310],
+  parasol: [1351, 487, 319, 154],
 };
 const close = (a: number, b: number, label: string) =>
   expect(Math.abs(a - b), `${label}: expected ${b}, rendered ${a}`).toBeLessThan(2.2);
@@ -91,7 +91,7 @@ test("static hover rectangles align with canonical image on desktop and mobile",
     for (const id of ["sign", "menu", "categories", "cooler"]) {
       const hotspot = page.locator(`.ve2d-hotspot[data-target="${id}"]`);
       await hotspot.hover();
-      await expect(hotspot.locator(".ve2d-cloud")).toBeVisible();
+      await expect(page.locator(`.ve2d-floating-tooltip[data-tooltip-target="${id}"]`)).toBeVisible();
       await page.screenshot({path: info.outputPath(`hover-${id}.png`), animations:"disabled"});
     }
   } else {

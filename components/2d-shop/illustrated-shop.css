@@ -452,3 +452,54 @@ html:has(.ve2d-root),body:has(.ve2d-root){height:100%;overflow:hidden!important}
   letter-spacing:.02em;color:#476d49;
   background:linear-gradient(150deg,#fcf7dc,#deeccb);
 }
+
+/*
+ * Tooltip and sprite-aware object hit regions (October 2026).
+ * Never position a tooltip relative to a giant image-region button: doing
+ * so made the cloud appear hundreds of pixels from the hovered fruit/menu
+ * item, and the stage's overflow hidden clipped it at the edges.
+ * Tooltip is instead a viewport-fixed sibling of the stage.
+ */
+.ve2d-root .ve2d-floating-tooltip,
+.ve2d-root[data-approved-art=true] .ve2d-floating-tooltip{
+  position:fixed;
+  left:0;
+  top:0;
+  right:auto;
+  bottom:auto;
+  z-index:25;
+  width:min(230px,calc(100vw - 24px));
+  max-width:none;
+  min-height:96px;
+  border-radius:28px 30px 26px 29px;
+  padding:13px 15px 11px;
+  transform:none!important;
+  transform-origin:center;
+  opacity:1;
+  visibility:visible;
+  pointer-events:none;
+  transition:none;
+  filter:none;
+}
+.ve2d-floating-tooltip::after{display:none}
+.ve2d-root[data-approved-art=true] .ve2d-hotspot:is(:hover,[data-visible=true]){
+  /* Highlighting the entire giant rectangular object area looks like an
+     offset object. Only the contextual tooltip should be drawn normally. */
+  background:transparent;
+}
+.ve2d-root[data-approved-art=true] .ve2d-dot{display:none}
+.ve2d-root[data-hotspot-debug=true] .ve2d-hotspot{
+  outline:2px solid #cf425e!important;
+  background:#cf425e24!important;
+}
+.ve2d-root[data-hotspot-debug=true] .ve2d-hotspot::before{
+  content:attr(data-target);
+  position:absolute;
+  left:0;top:0;
+  z-index:1;
+  font:700 11px/1.2 monospace;
+  color:#fff;
+  background:#b82b49;
+  padding:2px 4px;
+  pointer-events:none;
+}

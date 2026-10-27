@@ -37,7 +37,9 @@ for (const id of ["sign", "clerk", "menu", "fruits", "cooler", "seats", "seatsRi
 // Cloud hints are not hard-coded into the scene image by React.
 assert.match(scene, /spots\.map\(spot => <button/);
 assert.match(scene, /role="tooltip"/);
-assert.match(scene, /aria-describedby=\{"ve2d-cloud-" \+ spot\.id\}/);
+assert.match(scene, /aria-describedby=\{active === spot\.id \? "ve2d-floating-tooltip"/);
+assert.match(scene, /data-tooltip-target=\{focusedSpot\.id\}/);
+assert.match(scene, /placeTooltip\(e\.clientX, e\.clientY\)/);
 assert.match(scene, /onPointerEnter=\{e =>/);
 assert.match(scene, /onPointerLeave=\{e =>/);
 assert.match(scene, /onFocus=\{e =>/);

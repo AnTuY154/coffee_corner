@@ -56,10 +56,10 @@ test("shop menu, cart, checkout remain in the same URL", async ({ page }) => {
   expect(employeeLayer).toBeGreaterThan(fruitLayer);
   if (test.info().project.name.startsWith("mobile")) {
     await clerk.click();
-    await expect(clerk.locator(".ve2d-cloud")).toBeVisible();
+    await expect(page.locator(".ve2d-floating-tooltip[data-tooltip-target=clerk]")).toBeVisible();
   } else {
     await clerk.hover();
-    await expect(clerk.locator(".ve2d-cloud")).toBeVisible();
+    await expect(page.locator(".ve2d-floating-tooltip[data-tooltip-target=clerk]")).toBeVisible();
   }
   await clerk.click();
   await expect(page.getByRole("dialog", { name: /Thực đơn/ })).toBeVisible();
@@ -86,5 +86,5 @@ test("desktop contains every part of the storefront; reduced motion remains usab
     expect(Math.abs(rect.width / rect.height - WORLD_RATIO)).toBeLessThan(.005);
   }
   await page.locator('.ve2d-hotspot[data-target="sign"]').focus();
-  await expect(page.locator('.ve2d-hotspot[data-target="sign"] .ve2d-cloud')).toBeVisible();
+  await expect(page.locator('.ve2d-floating-tooltip[data-tooltip-target="sign"]')).toBeVisible();
 });

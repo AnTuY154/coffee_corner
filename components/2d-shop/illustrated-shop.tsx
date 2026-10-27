@@ -36,16 +36,16 @@ const LEGACY_HOTSPOTS: Hotspot[] = [
 const REF_W = 1672, REF_H = 941;
 type PixelHotspot = Omit<Hotspot, "x" | "y" | "w" | "h"> & { box: readonly [number, number, number, number] };
 const ART_HOTSPOTS: PixelHotspot[] = [
-  { id: "sign", name: "Vườn É", hint: "Chào bạn! Khám phá câu chuyện Vườn É nhé!", box: [600, 95, 572, 166], action: "intro", placement: "below" },
-  { id: "categories", name: "Các loại nước ép", hint: "Chọn danh mục nước ép, sinh tố và trái cây!", box: [33, 332, 225, 314], action: "order", placement: "left" },
-  { id: "menu", name: "Bảng thực đơn", hint: "Xem tất cả nước ép theo mùa!", box: [647, 340, 406, 137], action: "order", placement: "below" },
+  { id: "sign", name: "Vườn É", hint: "Chào bạn! Khám phá câu chuyện Vườn É nhé!", box: [582, 90, 561, 176], action: "intro", placement: "below" },
+  { id: "categories", name: "Các loại nước ép", hint: "Chọn danh mục nước ép, sinh tố và trái cây!", box: [36, 344, 208, 282], action: "order", placement: "left" },
+  { id: "menu", name: "Bảng thực đơn", hint: "Xem tất cả nước ép theo mùa!", box: [654, 346, 382, 132], action: "order", placement: "below" },
   { id: "clerk", name: "Nhân viên dễ thương", hint: "Nhấn vào nhân viên để gọi món nhé!", box: [705, 524, 118, 132], action: "order" },
-  { id: "fruits", name: "Quầy trái cây", hint: "Trái cây tươi vừa về quầy!", box: [775, 565, 149, 98], action: "order" },
-  { id: "cooler", name: "Tủ nước ép", hint: "Nước ép mát lành đang chờ bạn!", box: [990, 551, 130, 230], action: "order", placement: "left" },
-  { id: "seats", name: "Bàn ghế bên trái", hint: "Ngồi uống nước dưới tán cây nhé!", box: [480, 794, 345, 138], action: "seats" },
-  { id: "seatsRight", name: "Bàn bên phải", hint: "Một góc ngồi ngắm khu vườn!", box: [1177, 790, 374, 139], action: "seats" },
-  { id: "tree", name: "Tán cây xanh", hint: "Hít thở không khí trong lành!", box: [0, 1, 434, 253], action: "garden", placement: "below" },
-  { id: "parasol", name: "Dù che nắng", hint: "Nhấn để ngắm không gian bên ngoài!", box: [1370, 472, 290, 158], action: "seats", placement: "left" },
+  { id: "fruits", name: "Quầy trái cây", hint: "Trái cây tươi vừa về quầy!", box: [809, 589, 165, 80], action: "order" },
+  { id: "cooler", name: "Tủ nước ép", hint: "Nước ép mát lành đang chờ bạn!", box: [985, 541, 148, 251], action: "order", placement: "left" },
+  { id: "seats", name: "Bàn ghế bên trái", hint: "Ngồi uống nước dưới tán cây nhé!", box: [487, 810, 345, 124], action: "seats" },
+  { id: "seatsRight", name: "Bàn bên phải", hint: "Một góc ngồi ngắm khu vườn!", box: [1158, 795, 413, 143], action: "seats" },
+  { id: "tree", name: "Tán cây xanh", hint: "Hít thở không khí trong lành!", box: [0, 0, 426, 310], action: "garden", placement: "below" },
+  { id: "parasol", name: "Dù che nắng", hint: "Nhấn để ngắm không gian bên ngoài!", box: [1351, 487, 319, 154], action: "seats", placement: "left" },
   { id: "dog", name: "Chú chó nhỏ", hint: "Gâu gâu! Chào bạn!", box: [892, 807, 118, 110], action: "dog" },
   { id: "cat", name: "Chú mèo", hint: "Meo meo! Mình thích nắng sớm!", box: [1287, 769, 86, 84], action: "cat", placement: "left" },
 ];
@@ -75,6 +75,8 @@ export function IllustratedShop() {
   const [petPositions, setPetPositions] = useState<PetPositions>({ dog: { x: 951, y: 862 }, cat: { x: 1330, y: 811 }, clerk: { x: 764, y: 590 } });
   const [visitRequest, setVisitRequest] = useState<VisitRequest>(null);
   const [active, setActive] = useState<Key | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 24, y: 24 });
+  const [hotspotDebug, setHotspotDebug] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [openBasket, setOpenBasket] = useState(false);
   const [story, setStory] = useState<StoryAction | null>(null);
@@ -87,11 +89,31 @@ export function IllustratedShop() {
   const closeStoryButton = useRef<HTMLButtonElement | null>(null);
   const { count } = useCart();
 
+  // Tooltip is an independent viewport overlay. Nesting it in a moving
+  // hotspot previously pinned it to the far edge of a large hit rectangle
+  // and clipped it against the 16:9 stage overflow.
+  const placeTooltip = useCallback((clientX: number, clientY: number) => {
+    const estimatedWidth = Math.min(230, window.innerWidth - 24);
+    const estimatedHeight = 125;
+    const above = clientY > estimatedHeight + 30;
+    const desiredX = clientX + 18;
+    const desiredY = above ? clientY - estimatedHeight - 16 : clientY + 18;
+    setTooltipPosition({
+      x: Math.max(12, Math.min(desiredX, window.innerWidth - estimatedWidth - 12)),
+      y: Math.max(10, Math.min(desiredY, window.innerHeight - estimatedHeight - 12)),
+    });
+  }, []);
+  const placeTooltipAtElement = useCallback((element: HTMLElement) => {
+    const bounds = element.getBoundingClientRect();
+    placeTooltip(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+  }, [placeTooltip]);
+
   const artBase = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/art`;
   const compositionSrc = `${artBase}/canonical/shop.webp`;
   const strippedSrc = compositionSrc;
   const spots = artLoaded ? HOTSPOTS : LEGACY_HOTSPOTS;
   const sceneReady = spritesReady && petsReady;
+  const focusedSpot = spots.find(spot => spot.id === active);
 
   // Two soft pitch glides approximate a small "meo meo". No audio is played
   // until a real user gesture explicitly enables sound (browser autoplay policy).
@@ -214,6 +236,10 @@ export function IllustratedShop() {
   }, []);
 
   useEffect(() => {
+    setHotspotDebug(new URLSearchParams(window.location.search).has("hotspot-debug"));
+  }, []);
+
+  useEffect(() => {
     const media = window.matchMedia("(hover: none)");
     const update = () => setCoarsePointer(media.matches);
     update();
@@ -261,7 +287,7 @@ export function IllustratedShop() {
   }
 
   return <div className="ve2d-root" aria-label="Vườn É: cửa hàng nước ép minh hoạ 2D"
-    data-approved-art={artLoaded}
+    data-approved-art={artLoaded} data-hotspot-debug={hotspotDebug}
     style={{ "--ve2d-backdrop": `url("${compositionSrc}")` } as CSSProperties}>
     <div className="ve2d-viewport" ref={viewport}>
       <div className="ve2d-stage" data-approved-art={artLoaded}>
@@ -296,10 +322,27 @@ export function IllustratedShop() {
               ? 170 / REF_H * 100 : spot.h) + "%",
           }}
           aria-label={spot.name + ". " + spot.hint}
-          aria-describedby={"ve2d-cloud-" + spot.id}
-          onPointerEnter={e => { if (e.pointerType !== "touch") setActive(spot.id); }}
-          onPointerLeave={e => { if (e.pointerType !== "touch") setActive(v => v === spot.id ? null : v); }}
-          onFocus={e => { if (e.currentTarget.matches(":focus-visible")) setActive(spot.id); }}
+          aria-describedby={active === spot.id ? "ve2d-floating-tooltip" : undefined}
+          onPointerEnter={e => {
+            if (e.pointerType !== "touch") {
+              setActive(spot.id);
+              placeTooltip(e.clientX, e.clientY);
+            }
+          }}
+          onPointerMove={e => {
+            if (e.pointerType !== "touch" && active === spot.id) {
+              placeTooltip(e.clientX, e.clientY);
+            }
+          }}
+          onPointerLeave={e => {
+            if (e.pointerType !== "touch") setActive(v => v === spot.id ? null : v);
+          }}
+          onFocus={e => {
+            if (e.currentTarget.matches(":focus-visible")) {
+              setActive(spot.id);
+              placeTooltipAtElement(e.currentTarget);
+            }
+          }}
           onBlur={() => setActive(v => v === spot.id ? null : v)}
           onClick={e => {
             // Moving animal hit regions should work on the FIRST touch.
@@ -307,20 +350,27 @@ export function IllustratedShop() {
             // away from the finger between taps, especially on small screens.
             const movingPet = spot.id === "dog" || spot.id === "cat";
             if (coarsePointer && !movingPet && e.detail !== 0 && active !== spot.id) {
-              setActive(spot.id); return;
+              setActive(spot.id);
+              placeTooltipAtElement(e.currentTarget);
+              return;
             }
             trigger.current = e.currentTarget;
             interact(spot);
           }}>
           <span className="ve2d-dot" aria-hidden="true">✦</span>
-          <span id={"ve2d-cloud-" + spot.id} className="ve2d-cloud" role="tooltip" aria-hidden={active !== spot.id}>
-            <strong>{spot.name}</strong><span>{spot.hint}</span>
-            <small>{coarsePointer ? "Chạm lần nữa để mở" : "Nhấp để khám phá"} ↗</small>
-          </span>
         </button>)}
         {artLoaded && <div className="ve2d-ambient" aria-hidden="true"><span className="ve2d-light" /><span className="ve2d-leaf" /></div>}
       </div>
     </div>
+    {focusedSpot && !menuOpen && !story && <div
+      id="ve2d-floating-tooltip" className="ve2d-cloud ve2d-floating-tooltip"
+      data-tooltip-target={focusedSpot.id}
+      role="tooltip" style={{ left: tooltipPosition.x, top: tooltipPosition.y }}>
+      <strong>{focusedSpot.name}</strong>
+      <span>{focusedSpot.hint}</span>
+      <small>{coarsePointer && focusedSpot.id !== "dog" && focusedSpot.id !== "cat"
+        ? "Chạm lần nữa để mở" : "Nhấp để khám phá"}</small>
+    </div>}
     <header className="ve2d-header">
       {!artLoaded && <span>✿ <strong>VƯỜN É</strong> <small>nước ép tự nhiên</small></span>}
       {artLoaded && <span className="ve2d-wide-brand">✿ <strong>VƯỜN É</strong> <small>nước ép tự nhiên</small></span>}
