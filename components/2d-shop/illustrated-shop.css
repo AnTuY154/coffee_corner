@@ -195,3 +195,151 @@ html:has(.ve2d-root),body:has(.ve2d-root){height:100%;overflow:hidden!important}
 @media (prefers-reduced-motion:reduce){
   .ve2d-sprite{animation:none!important}
 }
+
+
+/* =============================================================
+   2D CINEMATIC DESKTOP CAMERA — fill viewport without stretching
+   3:2 artwork is "cover" scaled as a single positioned stage so
+   interaction hitboxes, shadows and sprites always remain aligned.
+   ============================================================= */
+@media (min-width:761px){
+  .ve2d-viewport{
+    overflow:hidden;
+    align-items:center;
+    justify-content:center;
+  }
+  .ve2d-stage[data-approved-art=true]{
+    width:max(100vw,150dvh);
+    min-width:max(100vw,150dvh);
+    height:auto;
+    aspect-ratio:3/2;
+    flex:0 0 auto;
+  }
+}
+.ve2d-controls{display:flex;align-items:center;gap:9px;pointer-events:auto}
+.ve2d-sound{
+  display:grid;place-items:center;flex:0 0 44px;
+  width:44px;height:44px;border-radius:50%;
+  border:1.5px solid #dfd8b4;background:#fffaf0ed;
+  box-shadow:0 6px 21px #4d5b4638;
+  color:#325a3a;font-size:19px;cursor:pointer;
+}
+.ve2d-sound:hover,.ve2d-sound:focus-visible{
+  background:#eff7df;
+  outline-offset:2px;
+}
+
+/* Actors are separate alpha-masked puppets, NOT pixels baked into
+   the environmental backdrop. Every pose is local to the 3:2 stage. */
+.ve2d-motion-sprites{z-index:3}
+.ve2d-actor{
+  position:absolute;
+  pointer-events:none;
+  isolation:isolate;
+  will-change:transform;
+}
+.ve2d-actor .ve2d-sprite{
+  position:absolute;inset:0;
+  display:block;width:100%;height:100%;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+}
+.ve2d-actor-clerk{
+  left:36.1328125%;top:46.875%;
+  width:13.3463541667%;
+  aspect-ratio:205/195;
+  animation:ve2d-clerk-breath 4.5s ease-in-out infinite;
+  transform-origin:50% 94%;
+}
+.ve2d-clerk-body{z-index:1}
+.ve2d-actor .ve2d-clerk-arm{
+  z-index:2;
+  transform-origin:62% 71%;
+  will-change:transform;
+  animation:ve2d-arm-wave 4.25s cubic-bezier(.45,.05,.55,.95) infinite;
+}
+@keyframes ve2d-clerk-breath{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-1.3px)}
+}
+@keyframes ve2d-arm-wave{
+  0%,9%,49%,100%{transform:rotate(0deg)}
+  14%,31%{transform:rotate(-13deg)}
+  21%,40%{transform:rotate(7deg)}
+  26%,45%{transform:rotate(-7deg)}
+}
+.ve2d-actor-dog{
+  left:17.2526041667%;top:83.984375%;
+  width:13.9973958333%;
+  aspect-ratio:215/125;
+  transform-origin:50% 88%;
+  animation:ve2d-dog-stroll 19s ease-in-out infinite;
+}
+.ve2d-actor .ve2d-dog-walk{
+  animation:ve2d-dog-step 0.78s ease-in-out infinite;
+}
+@keyframes ve2d-dog-stroll{
+  0%,12%{transform:translateX(0) scaleX(1)}
+  38%,46%{transform:translateX(48%) scaleX(1)}
+  49%,56%{transform:translateX(48%) scaleX(-1)}
+  83%,90%{transform:translateX(0) scaleX(-1)}
+  94%,100%{transform:translateX(0) scaleX(1)}
+}
+@keyframes ve2d-dog-step{
+  0%,100%{transform:translateY(0) rotate(0deg)}
+  25%{transform:translateY(-1px) rotate(-.28deg)}
+  50%{transform:translateY(-2.8px) rotate(0deg)}
+  75%{transform:translateY(-1px) rotate(.28deg)}
+}
+.ve2d-actor-cat{
+  left:85.2864583333%;top:73.73046875%;
+  width:11.71875%;
+  aspect-ratio:180/130;
+  transform-origin:50% 89%;
+  animation:ve2d-cat-stroll 24s ease-in-out infinite;
+}
+.ve2d-actor .ve2d-cat-walk{
+  animation:ve2d-cat-step 1.2s ease-in-out infinite;
+}
+@keyframes ve2d-cat-stroll{
+  0%,20%{transform:translateX(0) scaleX(1)}
+  42%,49%{transform:translateX(-34%) scaleX(1)}
+  51%,59%{transform:translateX(-34%) scaleX(-1)}
+  80%,87%{transform:translateX(0) scaleX(-1)}
+  90%,100%{transform:translateX(0) scaleX(1)}
+}
+@keyframes ve2d-cat-step{
+  0%,100%{transform:translateY(0) rotate(0deg)}
+  45%{transform:translateY(-2.1px) rotate(.45deg)}
+}
+.ve2d-actor-shadow{
+  position:absolute;z-index:0;
+  left:18%;bottom:8%;width:63%;height:8%;
+  border-radius:50%;opacity:.18;
+  background:radial-gradient(ellipse,#272d1eae,transparent 75%);
+  filter:blur(3px);
+}
+.ve2d-actor-cat .ve2d-actor-shadow{left:22%;bottom:19%;width:60%}
+.ve2d-meow-mark{
+  position:absolute;
+  top:4%;right:-5%;
+  font:bold clamp(16px,2.7vw,28px) Georgia,serif;
+  color:#d76e7d;opacity:.6;
+  animation:ve2d-music-note 2.1s ease-in-out infinite;
+}
+@keyframes ve2d-music-note{
+  0%,100%{transform:translateY(3px) rotate(-8deg);opacity:.1}
+  40%{transform:translateY(-7px) rotate(7deg);opacity:.75}
+}
+@media (max-width:760px){
+  .ve2d-sound{width:36px;height:36px;flex-basis:36px;font-size:17px}
+  .ve2d-controls{gap:5px}
+}
+/* Motion and sound are independent accessibility settings. */
+@media (prefers-reduced-motion:reduce){
+  .ve2d-actor,.ve2d-clerk-arm,.ve2d-dog-walk,.ve2d-cat-walk,.ve2d-meow-mark{
+    animation:none!important;
+    transform:none!important;
+  }
+}
