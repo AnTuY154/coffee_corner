@@ -436,6 +436,13 @@ html:has(.ve2d-root),body:has(.ve2d-root){height:100%;overflow:hidden!important}
 .ve2d-stage[data-approved-art=true] .ve2d-hotspot[data-target=clerk]{
   position:absolute;
   transform:translate(-50%,-50%);
+  /* The employee walks across the overlapping fruit/counter click regions.
+     Her hit target must remain on top so customers can always order. */
+  z-index:10;
+}
+.ve2d-stage[data-approved-art=true] .ve2d-hotspot[data-target=clerk]:focus-visible,
+.ve2d-stage[data-approved-art=true] .ve2d-hotspot[data-target=clerk]:hover{
+  z-index:11;
 }
 
 .ve2d-art-loading{
