@@ -164,7 +164,7 @@ assert(quaternius.includes('useGLTF(PATHS[kind],false,true)'),'Meshopt stays ena
 assert(world.includes('<QuaterniusProp kind="shop-bookcase"'),'service shelves are now Quaternius GLB');
 assert(world.includes('<QuaterniusProp kind="houseplant"'),'shop displays GLB planters');
 assert(file('components/3d-shop/garden.tsx').includes('<QuaterniusProp kind="garden-couch"'),'outdoor seating uses Quaternius GLB');
-assert(file('app/page.tsx').includes('<ImmersiveShop/>'));
-assert(file('app/menu/page.tsx').includes('<ImmersiveShop/>'));
+assert(file('app/page.tsx').includes('<IllustratedShop/>'),'home renders illustrated shop');
+assert(file('app/menu/page.tsx').includes('<IllustratedShop/>'),'menu alias renders illustrated shop');
 assert(existsSync(resolve(root,'app/api/orders/route.ts')),'production order API must remain');
 console.log('3D game movement, rigged GLB avatars, 2D seasonal menu and checkout invariants passed.');
