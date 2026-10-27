@@ -41,13 +41,16 @@ const make=()=>({keys:new Set(),x:START_POSITION.x,z:START_POSITION.z,yaw:0,pitc
 }
 const file=(p)=>readFileSync(resolve(root,p),'utf8');
 const page=file('app/3d-shop/page.tsx');
+const home=file('app/page.tsx');
 const wrapper=file('components/3d-shop/immersive-shop.tsx');
 const world=file('components/3d-shop/world.tsx');
 const menu=file('components/3d-shop/shop-menu-2d.tsx');
 const rig=file('components/3d-shop/rigged-characters.tsx');
 const inlineCheckout=file('components/3d-shop/in-scene-checkout.tsx');
 const weatherSystem=file('components/3d-shop/weather-system.tsx');
-assert(page.includes('ImmersiveShop'));
+assert(home.includes('IllustratedShop'),'main home now presents the illustrated point-and-click shop');
+assert(!home.includes('ImmersiveShop'),'home must not boot a WebGL canvas');
+assert(page.includes('ImmersiveShop'),'legacy 3D route stays available for regression testing');
 assert(wrapper.includes('KeyE')&&wrapper.includes('openMenu()')&&wrapper.includes('goToCounter()'));
 assert(menu.includes('useCart()') && menu.includes('add(product.id)'),'2D menu owns shared cart integration');
 assert(wrapper.includes('webglAvailable===false'));
@@ -161,7 +164,7 @@ assert(quaternius.includes('useGLTF(PATHS[kind],false,true)'),'Meshopt stays ena
 assert(world.includes('<QuaterniusProp kind="shop-bookcase"'),'service shelves are now Quaternius GLB');
 assert(world.includes('<QuaterniusProp kind="houseplant"'),'shop displays GLB planters');
 assert(file('components/3d-shop/garden.tsx').includes('<QuaterniusProp kind="garden-couch"'),'outdoor seating uses Quaternius GLB');
-assert(file('app/page.tsx').includes('<ImmersiveShop/>'));
-assert(file('app/menu/page.tsx').includes('<ImmersiveShop/>'));
+assert(file('app/page.tsx').includes('<IllustratedShop/>'),'home renders illustrated shop');
+assert(file('app/menu/page.tsx').includes('<IllustratedShop/>'),'menu alias renders illustrated shop');
 assert(existsSync(resolve(root,'app/api/orders/route.ts')),'production order API must remain');
 console.log('3D game movement, rigged GLB avatars, 2D seasonal menu and checkout invariants passed.');

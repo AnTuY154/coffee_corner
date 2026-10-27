@@ -1,0 +1,64 @@
+/* Vườn Ép illustrated open-front juice shop — no WebGL and no 3D canvas. */
+.ve2d-root{position:fixed;inset:0;background:#eee5c9;color:#365441;font-family:var(--body),sans-serif;overflow:hidden}
+html:has(.ve2d-root),body:has(.ve2d-root){height:100%;overflow:hidden!important}
+.ve2d-viewport{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:auto;scrollbar-width:thin;overscroll-behavior:contain}
+.ve2d-stage{position:relative;flex:0 0 auto;width:min(100vw,177.7778svh);aspect-ratio:16/9;overflow:visible;isolation:isolate}
+.ve2d-art{display:block;width:100%;height:100%;filter:saturate(.95) contrast(.985)}
+.ve2d-hotspot{position:absolute;z-index:3;transform:translate(-50%,-50%);border:0;padding:0;background:transparent;cursor:pointer;border-radius:24px;touch-action:manipulation;outline-offset:-4px}
+.ve2d-hotspot:focus-visible{outline:3px dashed #507a59;outline-offset:-3px;background:#d6e4b726}
+.ve2d-hotspot:hover,.ve2d-hotspot[data-visible=true]{background:radial-gradient(ellipse,#faffda2e,transparent 72%)}
+.ve2d-dot{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.7);display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#fff9dfa8;border:1.5px solid #7f9e7c88;color:#669665;font-size:16px;box-shadow:0 2px 9px #3a5f3422;opacity:0;transition:opacity .18s,transform .18s;pointer-events:none}
+.ve2d-hotspot:hover .ve2d-dot,.ve2d-hotspot:focus-visible .ve2d-dot,.ve2d-hotspot[data-visible=true] .ve2d-dot{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.ve2d-cloud{position:absolute;z-index:8;left:50%;bottom:calc(100% + 9px);transform:translate(-50%,8px) rotate(-1.5deg) scale(.94);transform-origin:50% 100%;width:clamp(155px,17vw,263px);max-width:min(40vw,280px);padding:17px 18px 15px;border:2.5px solid #72795e;background:#fffdf3;color:#3b4e3a;border-radius:47% 43% 41% 40% / 42% 48% 38% 45%;box-shadow:0 8px 0 #dddec6,0 14px 19px #3c513229;display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:center;font-size:clamp(11px,1.06vw,15px);line-height:1.36;text-align:center;white-space:normal;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s,transform .2s,visibility .18s}
+.ve2d-cloud::after{content:"";position:absolute;left:47%;bottom:-17px;width:18px;height:18px;transform:rotate(41deg);background:#fffdf3;border-right:2.5px solid #72795e;border-bottom:2.5px solid #72795e;border-bottom-right-radius:5px}
+.ve2d-cloud strong{color:#2a6147;font-size:1.08em;letter-spacing:-.02em}
+.ve2d-cloud small{color:#8a9e67;font-weight:700;margin-top:3px;font-size:.77em}
+.ve2d-hotspot:hover .ve2d-cloud,.ve2d-hotspot:focus-visible .ve2d-cloud,.ve2d-hotspot[data-visible=true] .ve2d-cloud{opacity:1;visibility:visible;transform:translate(-50%,0) rotate(-1.5deg) scale(1)}
+.ve2d-hotspot[data-placement=below] .ve2d-cloud{top:calc(100% + 8px);bottom:auto;transform-origin:50% 0}
+.ve2d-hotspot[data-placement=below] .ve2d-cloud::after{bottom:auto;top:-17px;border:0;border-left:2.5px solid #72795e;border-top:2.5px solid #72795e;border-top-left-radius:5px}
+.ve2d-hotspot[data-placement=left] .ve2d-cloud{left:auto;right:calc(100% + 8px);bottom:25%;transform:translate(8px,8px) rotate(-1.5deg)}
+.ve2d-hotspot[data-placement=left]:hover .ve2d-cloud,.ve2d-hotspot[data-placement=left]:focus-visible .ve2d-cloud,.ve2d-hotspot[data-placement=left][data-visible=true] .ve2d-cloud{transform:translate(0,0) rotate(-1.5deg)}
+.ve2d-header{position:fixed;left:clamp(12px,2vw,28px);right:clamp(12px,2vw,28px);top:clamp(9px,1.7vh,24px);z-index:9;display:flex;justify-content:space-between;align-items:center;gap:8px;pointer-events:none}
+.ve2d-header>span{font-size:15px;display:flex;align-items:center;gap:7px;background:#fffdf3ea;border:1.5px solid #c4d1ac;border-radius:30px;padding:8px 15px;box-shadow:0 5px 13px #615c4730;color:#50764f;pointer-events:auto}
+.ve2d-header small{font-size:10px;font-weight:500;color:#819078}
+.ve2d-cart{border-radius:30px;background:#fffdf1;box-shadow:0 5px 15px #4d564a28;border:2px solid #8aa77b;color:#346245;font-size:13px;font-weight:700;padding:10px 17px;display:flex;align-items:center;gap:9px;pointer-events:auto}
+.ve2d-cart strong{display:grid;place-items:center;min-width:25px;height:25px;border-radius:50%;background:#53835e;color:white}
+.ve2d-cart:hover,.ve2d-cart:focus-visible{background:#eff6e2;transform:translateY(-2px)}
+.ve2d-instruction,.ve2d-touch-guide{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:5;background:#fff9e2e9;color:#45664a;border:1.5px solid #adc0a0;box-shadow:0 5px 16px #59534030;border-radius:50px;padding:8px 15px;font-size:12px;text-align:center;white-space:nowrap;margin:0;pointer-events:none}
+.ve2d-touch-guide{display:none}
+.ve2d-story-shade{position:fixed;z-index:30;inset:0;background:#26382367;display:grid;place-items:center;padding:18px;backdrop-filter:blur(4px)}
+.ve2d-story{position:relative;max-width:min(430px,95vw);width:100%;border:3px solid #7e906d;border-radius:43% 41% 38% 35% / 22% 23% 21% 21%;background:#fffaf0;box-shadow:0 17px 0 #d2d5ae,0 24px 40px #1d342e52;padding:52px 33px 38px;text-align:center}
+.ve2d-story h2{font-size:29px;line-height:1.22;letter-spacing:-.035em;color:#386044;margin:0 0 12px}
+.ve2d-story p{font-size:14px;line-height:1.8;color:#657459}
+.ve2d-story-icon{display:block;font-size:35px;margin-bottom:9px;color:#79a371}
+.ve2d-story-close{position:absolute;top:16px;right:29px;width:37px;height:37px;border-radius:50%;border:1.5px solid #a3b595;background:#fffdf5;color:#4e7657}
+.ve2d-story-order{border:none;border-radius:40px;background:#3d7553;color:white;padding:13px 19px;font-weight:700;font-size:13px}
+.ve2d-story-order:hover{background:#295b3d}
+.ve2d-dog-heart{position:absolute;left:66%;top:76%;color:#e68d9a;font-family:Georgia,serif;font-size:34px;animation:ve2d-heart 1.6s ease-in-out infinite;pointer-events:none}
+.ve2d-clerk-wave{transform-box:fill-box;transform-origin:85% 80%;animation:ve2d-wave 4.6s ease-in-out infinite}
+.ve2d-clerk{transform-box:fill-box;transform-origin:center bottom;animation:ve2d-breathe 3.7s ease-in-out infinite}
+.ve2d-dog{transform-box:fill-box;transform-origin:center bottom;animation:ve2d-breathe 4.9s ease-in-out infinite}
+.ve2d-treetop{transform-box:fill-box;transform-origin:bottom center;animation:ve2d-leaves 8s ease-in-out infinite}
+@keyframes ve2d-wave{0%,22%,37%,100%{transform:rotate(0)}27%,32%{transform:rotate(-17deg)}}
+@keyframes ve2d-breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes ve2d-leaves{0%,100%{transform:rotate(-.35deg)}50%{transform:rotate(.5deg)}}
+@keyframes ve2d-heart{0%,100%{transform:translateY(0);opacity:.2}40%{transform:translateY(-14px);opacity:1}}
+@media (max-width:760px){
+ .ve2d-viewport{justify-content:flex-start;align-items:center;-webkit-overflow-scrolling:touch}
+ .ve2d-stage{width:1050px;min-width:1050px}
+ .ve2d-cloud{width:205px;max-width:none;padding:12px 14px;font-size:13px}
+ .ve2d-header small{display:none}
+ .ve2d-header>span{font-size:12px;padding:8px 10px}
+ .ve2d-cart{font-size:12px;padding:7px 10px}
+ .ve2d-instruction{display:none}
+ .ve2d-touch-guide{display:block;bottom:8px;font-size:10px;padding:7px 12px;max-width:calc(100vw - 14px);white-space:normal}
+}
+@media (prefers-reduced-motion:reduce){
+ .ve2d-clerk-wave,.ve2d-clerk,.ve2d-dog,.ve2d-treetop,.ve2d-dog-heart{animation:none!important}
+ .ve2d-cloud,.ve2d-dot{transition:none}
+}
+
+/* A passing customer remains a lightweight SVG layer: no sprite downloads. */
+.ve2d-walker{transform-box:fill-box;transform-origin:center bottom;animation:ve2d-stroll 18s linear infinite}
+@keyframes ve2d-stroll{0%{transform:translateX(0)}46%{transform:translateX(260px)}50%{transform:translateX(260px) scaleX(-1)}96%{transform:translateX(0) scaleX(-1)}100%{transform:translateX(0)}}
+@media (prefers-reduced-motion:reduce){.ve2d-walker{animation:none!important}}
