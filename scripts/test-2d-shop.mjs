@@ -16,8 +16,8 @@ assert.match(page, /IllustratedShop/);
 assert.doesNotMatch(page, /ImmersiveShop|ShopWorld/);
 assert.doesNotMatch(scene, /<Canvas|useGLTF|WebGLRenderer|router\.push/);
 
-// Both fallback and reference layout exist: shipping this PR alone is not art sign-off.
-assert.match(scene, /<ShopIllustration\s*\/>/);
+// No alternate illustrated fallback may introduce unapproved people or animals.
+assert.doesNotMatch(scene, /<ShopIllustration/);
 assert.match(art, /viewBox="0 0 1440 810"/);
 assert.match(scene, /REF_W = 1672, REF_H = 941/);
 assert(scene.includes("canonical/shop.webp"));
