@@ -302,7 +302,13 @@ export function IllustratedShop() {
           onFocus={e => { if (e.currentTarget.matches(":focus-visible")) setActive(spot.id); }}
           onBlur={() => setActive(v => v === spot.id ? null : v)}
           onClick={e => {
-            if (coarsePointer && e.detail !== 0 && active !== spot.id) { setActive(spot.id); return; }
+            // Moving animal hit regions should work on the FIRST touch.
+            // Requiring two taps on a walking sprite makes the target move
+            // away from the finger between taps, especially on small screens.
+            const movingPet = spot.id === "dog" || spot.id === "cat";
+            if (coarsePointer && !movingPet && e.detail !== 0 && active !== spot.id) {
+              setActive(spot.id); return;
+            }
             trigger.current = e.currentTarget;
             interact(spot);
           }}>
