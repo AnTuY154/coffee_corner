@@ -33,6 +33,9 @@ test("approved 3:2 storefront loads with separately animated worker and animals"
   await expect(add).toBeVisible();
   await add.click();
   expect(new URL(page.url()).pathname).toBe(pathname);
+  if (testInfo.project.name.startsWith("mobile")) {
+    await page.locator(".ve-menu-cart-fab").click();
+  }
   await page.getByRole("button", { name: /Tiếp tục đặt hàng/ }).click();
   await expect(page.getByText(/thông tin|đặt hàng|thanh toán/i).first()).toBeVisible();
   expect(new URL(page.url()).pathname).toBe(pathname);
