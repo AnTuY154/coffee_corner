@@ -1,12 +1,12 @@
 # Vườn É — approved 2D storefront reference (27 October 2026)
 
-## Status: **visual specification approved; production asset NOT integrated**
+## Status: **Approved 3:2 art integrated on PR #16; awaiting final browser visual QA**
 
 **Sole approved visual reference:** user-supplied file `Quán nước ép Vườn É đáng yêu(2).png`.
 **Asset verification:** 1536 × 1024 pixels (3:2), RGBA PNG, SHA-256
 `6b7bed377b935a74fe09be76e36077f87cb51da6732ad5176adeb37958bd1525`.
 
-**Important:** This document records the image's identity and placement specification; it does not contain the image itself. The original is a conversation upload, not yet a committed repository asset. Do **not** report that the production site matches it until the real approved artwork and the visual regressions have been integrated.
+**Update:** The original full-resolution source remains in the conversation, and two retouched 1536×1024 WEBP derivatives plus clerk/dog/cat transparent sprites have now been committed as real Git binary blobs on PR #16. Review the browser screenshots for remaining inpainting seams before design sign-off.
 
 ### Non-negotiable visual design
 
@@ -19,8 +19,8 @@
 
 ### Production assets (to be created)
 
-1. `public/art/vuon-e-approved-clean.webp`: loss-minimising, colour-checked clean background from the reference with baked-on interactive UI removed. Preserve 3:2 exact framing.
-2. `public/art/layers/*.webp` or transparent PNGs: isolated clerk/head/arm/eyes, dog/tail, cat, selected foreground leaves and optionally loose foliage. Paint the hidden backgrounds where extracted parts were.
+1. `public/art/vuon-e-original-composition.webp`: clean UI-free 3:2 artwork with characters retained, serving as fail-safe fallback. `public/art/vuon-e-approved-clean.webp`: painted-out character-free backdrop for independently animated sprites.
+2. `public/art/layers/clerk.png`, `dog.png`, and `cat.png`: initial transparent actor layers are committed and animated. Leaf is currently procedural CSS; finer face/arm/tail rigging remains potential polish beyond the initial pass.
 3. Store original high-resolution image in the art-production source archive with its SHA-256. Do not overwrite or downsample the original master.
 4. Do not claim SAM 2 can reconstruct occluded areas: segmentation and inpainting are separate operations. Krita/manual retouch needed for consistent edges.
 
@@ -64,10 +64,10 @@ At commit `af23fdb76b1839c0459811b91a66cb2a7dddd715` the homepage renders `compo
 - Hover cloud stays near every target; no baked instruction is visible before hover.
 - Clickable menu, add/remove cart, checkout overlay and `location.pathname` persistence verified in a running browser.
 - Test reduced motion, keyboard/tab, touch and GH Pages `/coffee_corner` base path.
-- Do not merge or deploy if actual image is missing or tests/screenshots were not run.
+- The image files are present; merge only after image-dependent CI and screenshots have been reviewed.
 
 ## Implementation order
 
 **1.** Original image → retouched *clean background*; **2.** isolate foreground motion sprites; **3.** bind approved coordinate map to relative image artboard; **4.** reuse existing React menu/cart/checkout overlays; **5.** browser screenshots and 3–5 focused feedback rounds; **6.** merge only after visual and functional verification.
 
-The existing SVG is a legacy placeholder, **not the approved art**.
+The existing SVG is now an emergency fallback; the committed approved-art WEBP scene is loaded by default when assets are available. The deployed main site changes only after PR merge.
