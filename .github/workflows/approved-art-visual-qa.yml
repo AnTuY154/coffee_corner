@@ -7,6 +7,8 @@ on:
     paths:
       - "public/art/**"
       - "components/2d-shop/**"
+      - "components/3d-shop/shop-menu-2d.tsx"
+      - "components/3d-shop/shop-menu-2d.css"
       - "tests/visual/**"
       - "playwright.config.ts"
 
