@@ -144,10 +144,36 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         let lastNotification = 0;
         let stepTime = 0;
         let previousDogMood = "idle";
+        // An independent scene-review job can advance the ACTUAL director
+        // and render its output without relying on a CI virtual GPU's FPS.
+        // Only enabled explicitly via ?scene-review=1.
+        const reviewMode = new URLSearchParams(window.location.search).has("scene-review");
         const ticker = (tick: { deltaMS: number }) => {
-          const dt = Math.min(tick.deltaMS / 1000, .05);
-          stepTime += dt;
-          const pose = director.step(dt, reduced.matches);
+          // Catch up in <=50ms physics substeps after a slow WebGL frame.
+          // The former hard 50ms frame cap caused the whole simulation to run
+          // in slow motion at low FPS (and made interaction time out in CI).
+          let remaining = Math.min(Math.max(tick.deltaMS / 1000, 0), .2);
+          stepTime += remaining;
+          let pose = director.step(Math.min(remaining, .05), reduced.matches);
+          remaining = Math.max(0, remaining - .05);
+          for (let i = 0; i < 3 && remaining > .001; i++) {
+            const next = Math.min(remaining, .05);
+            pose = director.step(next, reduced.matches);
+            remaining -= next;
+          }
+          if (reviewMode && host.current?.dataset.reviewAdvanceTo) {
+            const goal = host.current.dataset.reviewAdvanceTo;
+            delete host.current.dataset.reviewAdvanceTo;
+            const startedInVisit = pose.phase !== "idle";
+            // Deterministic visual QA: render exactly the requested action
+            // transition, not 800 separate frames on a software GPU.
+            for (let i = 0; i < 700; i++) {
+              pose = director.step(.05, reduced.matches);
+              if (goal === "off-counter" && !pose.worker.behindCounter) break;
+              if (goal === "petting" && pose.phase === "petting") break;
+              if (goal === "home" && startedInVisit && pose.phase === "idle") break;
+            }
+          }
           for (const p of [dog, cat] as const) {
             const state = pose[p.kind as Animal];
             // Explicit world surfaces: puppy paws on the courtyard tiles,
@@ -188,7 +214,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             { gait: pose.seconds * 13, speed: person.action === "run" ? 65 : 0,
               seconds: pose.seconds, motion: person.action }, "employee");
           employee.buffer.update();
-          lastNotification += dt;
+          lastNotification += Math.min(Math.max(tick.deltaMS / 1000, 0), .2);
           if (lastNotification >= .13) {
             lastNotification = 0;
             // Public read-only scene diagnostics for independent browser QA.
