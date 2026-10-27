@@ -64,3 +64,19 @@ for (const f of files) {
   console.log("OK", f, dimensions(path).join("x"), statSync(path).size, "bytes");
 }
 console.log("PASS: eleven approved-art assets, including two genuine frame sheets present and have correct dimensions.");
+
+/*
+ * The employee must not be a crop of the painting. The new puppet consists
+ * of three genuinely transparent SVG assets, with separate arms and legs.
+ */
+for (const name of ["clerk-body.svg", "clerk-arm.svg", "clerk-leg.svg"]) {
+  const actorFile = resolve(art, "actors", name);
+  if (!existsSync(actorFile)) {
+    if (required) throw new Error("Missing transparent character part: " + actorFile);
+    console.warn("ART PENDING: " + actorFile);
+    continue;
+  }
+  const xml = readFileSync(actorFile, "utf8");
+  assert.match(xml, /<svg[^>]*viewBox=/, name + " must have a consistent vector artboard");
+  assert.doesNotMatch(xml, /<image|<foreignObject|data:image/i, name + " must not embed background bitmap pixels");
+}
