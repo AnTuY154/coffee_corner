@@ -1,3 +1,3 @@
-import {ImmersiveShop} from "@/components/3d-shop/immersive-shop";
-export const metadata={title:"Vườn Ép — Cửa hàng nước ép 3D"};
-export default function Home(){return <ImmersiveShop/>;}
+import {IllustratedShop} from "@/components/2d-shop/illustrated-shop";
+export const metadata={title:"Vườn Ép — Cửa hàng nước ép minh hoạ 2D"};
+export default function Home(){return <IllustratedShop/>;}
