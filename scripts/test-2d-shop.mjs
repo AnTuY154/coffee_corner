@@ -18,11 +18,11 @@ assert.match(scene,/<ShopIllustration\s*\/>/,'scene uses local vector shop art')
 assert.match(art,/viewBox="0 0 1440 810"/,'art and clickable zones use the same fixed coordinates');
 for(const visible of [
  'VƯỜN ÉP','ve2d-clerk','ve2d-clerk-wave','ve2d-dog','ve2d-treetop',
- 've2d-walker','Outdoor customer seating','30m²','Left fence'
+ 've2d-walker','Outdoor customer seating','30 m²','Left fence'
 ]){
  // The architecture-specific 30m² constraint is documented by the scene story,
  // while the SVG establishes proportions rather than literal construction drawings.
- const haystack=visible==='30m²'?scene:art;
+ const haystack=visible==='30 m²'?scene:art;
  assert(haystack.includes(visible),visible+' needs to be present in the 2D scene');
 }
 assert.match(art,/Crates, baskets and fresh produce/,'fruit display supports shopping');
