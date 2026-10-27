@@ -239,9 +239,11 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               host.current.dataset.catMood = pose.cat.mood;
             }
             onMoveRef.current({
-              dog: { x: pose.dog.x, y: pose.dog.y - 60 },
-              cat: { x: pose.cat.x, y: pose.cat.y - 53 },
-              clerk: { x: person.x, y: person.y - (person.behindCounter ? 128 : 122) },
+              // Hotspot centers match the VISIBLE rendered sprites in the
+              // same pixel artboard, not their feet or an arbitrary offset.
+              dog: { x: pose.dog.x, y: pose.dog.y - 56 },
+              cat: { x: pose.cat.x, y: pose.cat.y - 42 },
+              clerk: { x: person.x, y: person.y - (person.behindCounter ? 104 : 92) },
             });
           }
         };
