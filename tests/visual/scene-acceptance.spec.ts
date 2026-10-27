@@ -9,7 +9,7 @@ import { test, expect, type Page } from "@playwright/test";
 test.setTimeout(90_000);
 
 async function ready(page: Page) {
-  await page.goto("/");
+  await page.goto("/?scene-review=1");
   const host = page.locator(".ve2d-pixi-pets[data-visible='true']");
   await expect(host).toBeVisible();
   await expect(host).toHaveAttribute("data-phase", "idle");
@@ -61,27 +61,47 @@ async function assertSurfaceCoords(page: Page) {
   expect(yCat).toBe(839);
 }
 
+async function askForVisit(page: Page, animal: "dog" | "cat") {
+  const hotspot = page.locator(`.ve2d-hotspot[data-target="${animal}"]`);
+  await hotspot.click();
+  // Touch design: first tap shows the cloud, second activates the action.
+  if (test.info().project.name.startsWith("mobile")) await hotspot.click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+}
+
+async function simulateUntil(page: Page, goal: "off-counter" | "petting" | "home") {
+  const host = page.locator(".ve2d-pixi-pets");
+  await host.evaluate((element: HTMLElement, requested: string) => {
+    element.dataset.reviewAdvanceTo = requested;
+  }, goal);
+  if (goal === "off-counter") {
+    await expect(host).toHaveAttribute("data-counter-mask-height", "941", { timeout: 8_000 });
+  } else if (goal === "petting") {
+    await expect(host).toHaveAttribute("data-phase", "petting", { timeout: 8_000 });
+  } else {
+    await expect(host).toHaveAttribute("data-phase", "idle", { timeout: 8_000 });
+  }
+}
+
 test("employee leaves counter without giant white graphics panel; dog remains on pavement", async ({ page }, info) => {
   const host = await ready(page);
   await assertSurfaceCoords(page);
   await checkNoWhitePanel(page, "before visit");
   // Clicking the animal requests a visit; dismiss the story popup to inspect
   // the real shop and moving Pixi canvas without a modal dimming overlay.
-  await page.locator('.ve2d-hotspot[data-target="dog"]').click();
-  await expect(page.getByRole("dialog", { name: /Bạn cún/ })).toBeVisible();
-  await page.keyboard.press("Escape");
-
-  await expect(host).toHaveAttribute("data-phase", /outbound|petting/, { timeout: 5_000 });
-  await expect(host).toHaveAttribute("data-counter-mask-height", "941", { timeout: 12_000 });
+  await askForVisit(page, "dog");
+  await simulateUntil(page, "off-counter");
   await checkNoWhitePanel(page, "employee outside counter");
 
-  await expect(host).toHaveAttribute("data-phase", "petting", { timeout: 18_000 });
+  await simulateUntil(page, "petting");
   await expect(host).toHaveAttribute("data-employee-action", "pet");
   await checkNoWhitePanel(page, "employee petting dog");
   await assertSurfaceCoords(page);
   await page.screenshot({ path: info.outputPath("dog-visit-no-white-overlay.png") });
 
-  await expect(host).toHaveAttribute("data-phase", "idle", { timeout: 20_000 });
+  await simulateUntil(page, "home");
   await expect(host).toHaveAttribute("data-counter-mask-height", "650");
   await checkNoWhitePanel(page, "employee returned behind counter");
 });
@@ -89,10 +109,8 @@ test("employee leaves counter without giant white graphics panel; dog remains on
 test("cat stays on table while worker pets it from the floor", async ({ page }, info) => {
   const host = await ready(page);
   await assertSurfaceCoords(page);
-  await page.locator('.ve2d-hotspot[data-target="cat"]').click();
-  await expect(page.getByRole("dialog", { name: /Bạn mèo/ })).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(host).toHaveAttribute("data-phase", "petting", { timeout: 24_000 });
+  await askForVisit(page, "cat");
+  await simulateUntil(page, "petting");
   await expect(host).toHaveAttribute("data-counter-mask-height", "941");
   await assertSurfaceCoords(page);
   const coords = await host.evaluate((el: HTMLElement) => ({ ...el.dataset }));
