@@ -64,6 +64,7 @@ const STORY: Record<StoryAction, { icon: string; title: string; body: string }> 
 /** One URL for the scene, ordering, basket and checkout. */
 export function IllustratedShop() {
   const [artLoaded, setArtLoaded] = useState(false);
+  const [spritesReady, setSpritesReady] = useState(false);
   const [active, setActive] = useState<Key | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [openBasket, setOpenBasket] = useState(false);
@@ -76,8 +77,30 @@ export function IllustratedShop() {
   const closeStoryButton = useRef<HTMLButtonElement | null>(null);
   const { count } = useCart();
 
-  const artSrc = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/art/vuon-e-approved-clean.webp`;
+  const artBase = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/art`;
+  const compositionSrc = `${artBase}/vuon-e-original-composition.webp`;
+  const strippedSrc = `${artBase}/vuon-e-approved-clean.webp`;
   const spots = artLoaded ? HOTSPOTS : LEGACY_HOTSPOTS;
+  useEffect(() => {
+    // Never use the object-removed background until EVERY required actor sprite is ready.
+    // A partially uploaded art package must show the intact approved composition instead.
+    if (!artLoaded) return;
+    let cancelled = false;
+    const preload = (url: string) => new Promise<void>((resolve, reject) => {
+      const image = new window.Image();
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error(`Could not load ${url}`));
+      image.src = url;
+    });
+    Promise.all([
+      preload(strippedSrc),
+      preload(`${artBase}/layers/clerk.png`),
+      preload(`${artBase}/layers/dog.png`),
+      preload(`${artBase}/layers/cat.png`),
+    ]).then(() => { if (!cancelled) setSpritesReady(true); })
+      .catch(() => { if (!cancelled) setSpritesReady(false); });
+    return () => { cancelled = true; };
+  }, [artLoaded, artBase, strippedSrc]);
 
   useEffect(() => {
     const media = window.matchMedia("(hover: none)");
@@ -132,12 +155,17 @@ export function IllustratedShop() {
         {/* The SVG remains a usable fallback until the approved cleaned image is shipped. */}
         {!artLoaded && <ShopIllustration />}
         <img
-          className="ve2d-approved-art" src={artSrc} width={REF_W} height={REF_H}
+          className="ve2d-approved-art" src={spritesReady ? strippedSrc : compositionSrc} width={REF_W} height={REF_H}
           alt="" aria-hidden="true" decoding="async" draggable={false}
           data-visible={artLoaded}
           onLoad={() => { setArtLoaded(true); setActive(null); }}
-          onError={() => setArtLoaded(false)}
+          onError={() => { setArtLoaded(false); setSpritesReady(false); }}
         />
+        {spritesReady && <div className="ve2d-motion-sprites" aria-hidden="true">
+          <img className="ve2d-sprite ve2d-sprite-clerk" src={`${artBase}/layers/clerk.png`} alt="" draggable={false} />
+          <img className="ve2d-sprite ve2d-sprite-dog" src={`${artBase}/layers/dog.png`} alt="" draggable={false} />
+          <img className="ve2d-sprite ve2d-sprite-cat" src={`${artBase}/layers/cat.png`} alt="" draggable={false} />
+        </div>}
         {spots.map(spot => <button
           key={spot.id} type="button" className="ve2d-hotspot"
           data-target={spot.id} data-visible={active === spot.id}
