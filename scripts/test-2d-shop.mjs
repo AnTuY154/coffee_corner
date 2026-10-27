@@ -22,7 +22,7 @@ assert.match(art, /viewBox="0 0 1440 810"/);
 assert.match(scene, /REF_W = 1536, REF_H = 1024/);
 assert.match(scene, /vuon-e-approved-clean\.webp/);
 assert.match(scene, /onLoad=\{\(\) => \{ setArtLoaded\(true\)/);
-assert.match(scene, /onError=\{\(\) => setArtLoaded\(false\)\}/);
+assert.match(scene, /onError=\{\(\) => \{ setArtLoaded\(false\); setSpritesReady\(false\); \}\}/);
 assert.match(style, /aspect-ratio:3\/2/);
 assert.match(style, /object-fit:fill/);
 assert.match(style, /data-approved-art=true/);
