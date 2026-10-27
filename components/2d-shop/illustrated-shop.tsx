@@ -39,15 +39,15 @@ const ART_HOTSPOTS: PixelHotspot[] = [
   { id: "sign", name: "Vườn É", hint: "Chào bạn! Khám phá câu chuyện Vườn É nhé!", box: [600, 95, 572, 166], action: "intro", placement: "below" },
   { id: "categories", name: "Các loại nước ép", hint: "Chọn danh mục nước ép, sinh tố và trái cây!", box: [33, 332, 225, 314], action: "order", placement: "left" },
   { id: "menu", name: "Bảng thực đơn", hint: "Xem tất cả nước ép theo mùa!", box: [647, 340, 406, 137], action: "order", placement: "below" },
-  { id: "clerk", name: "Nhân viên dễ thương", hint: "Nhấn vào nhân viên để gọi món nhé!", box: [698, 522, 148, 148], action: "order" },
+  { id: "clerk", name: "Nhân viên dễ thương", hint: "Nhấn vào nhân viên để gọi món nhé!", box: [705, 524, 118, 132], action: "order" },
   { id: "fruits", name: "Quầy trái cây", hint: "Trái cây tươi vừa về quầy!", box: [775, 565, 149, 98], action: "order" },
   { id: "cooler", name: "Tủ nước ép", hint: "Nước ép mát lành đang chờ bạn!", box: [990, 551, 130, 230], action: "order", placement: "left" },
   { id: "seats", name: "Bàn ghế bên trái", hint: "Ngồi uống nước dưới tán cây nhé!", box: [480, 794, 345, 138], action: "seats" },
   { id: "seatsRight", name: "Bàn bên phải", hint: "Một góc ngồi ngắm khu vườn!", box: [1177, 790, 374, 139], action: "seats" },
   { id: "tree", name: "Tán cây xanh", hint: "Hít thở không khí trong lành!", box: [0, 1, 434, 253], action: "garden", placement: "below" },
   { id: "parasol", name: "Dù che nắng", hint: "Nhấn để ngắm không gian bên ngoài!", box: [1370, 472, 290, 158], action: "seats", placement: "left" },
-  { id: "dog", name: "Chú chó nhỏ", hint: "Gâu gâu! Chào bạn!", box: [358, 814, 138, 115], action: "dog" },
-  { id: "cat", name: "Chú mèo", hint: "Meo meo! Mình thích nắng sớm!", box: [1365, 812, 144, 125], action: "cat", placement: "left" },
+  { id: "dog", name: "Chú chó nhỏ", hint: "Gâu gâu! Chào bạn!", box: [892, 807, 118, 110], action: "dog" },
+  { id: "cat", name: "Chú mèo", hint: "Meo meo! Mình thích nắng sớm!", box: [1287, 769, 86, 84], action: "cat", placement: "left" },
 ];
 // Approved art rectangles are [LEFT, TOP, WIDTH, HEIGHT] in pixel units.
 // CSS hotspots are centered by translate(-50%, -50%), so the CSS left/top
@@ -72,7 +72,7 @@ export function IllustratedShop() {
   const [artLoaded, setArtLoaded] = useState(false);
   const [spritesReady, setSpritesReady] = useState(false);
   const [petsReady, setPetsReady] = useState(false);
-  const [petPositions, setPetPositions] = useState<PetPositions>({ dog: { x: 951, y: 858 }, cat: { x: 1330, y: 800 }, clerk: { x: 764, y: 566 } });
+  const [petPositions, setPetPositions] = useState<PetPositions>({ dog: { x: 951, y: 862 }, cat: { x: 1330, y: 811 }, clerk: { x: 764, y: 590 } });
   const [visitRequest, setVisitRequest] = useState<VisitRequest>(null);
   const [active, setActive] = useState<Key | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -290,7 +290,10 @@ export function IllustratedShop() {
               ? (petPositions[spot.id].x / REF_W * 100) : spot.x) + "%",
             top: (artLoaded && (spot.id === "dog" || spot.id === "cat" || spot.id === "clerk")
               ? (petPositions[spot.id].y / REF_H * 100) : spot.y) + "%",
-            width: spot.w + "%", height: spot.h + "%",
+            width: (sceneReady && spot.id === "clerk" && petPositions.clerk.y > 625
+              ? 116 / REF_W * 100 : spot.w) + "%",
+            height: (sceneReady && spot.id === "clerk" && petPositions.clerk.y > 625
+              ? 170 / REF_H * 100 : spot.h) + "%",
           }}
           aria-label={spot.name + ". " + spot.hint}
           aria-describedby={"ve2d-cloud-" + spot.id}
