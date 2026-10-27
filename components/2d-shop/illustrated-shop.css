@@ -159,3 +159,39 @@ html:has(.ve2d-root),body:has(.ve2d-root){height:100%;overflow:hidden!important}
 @media (prefers-reduced-motion:reduce){
   .ve2d-light,.ve2d-leaf,.ve2d-cat-heart{animation:none!important}
 }
+
+/*
+ * Foreground extraction from the approved 1536×1024 illustration.
+ * Canvas background is character-free ONLY if every transparent sprite loads.
+ * All percentages refer to the same uncropped image pixel coordinate system.
+ */
+.ve2d-motion-sprites{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}
+.ve2d-sprite{position:absolute;display:block;height:auto;user-select:none;pointer-events:none}
+.ve2d-sprite-clerk{
+  left:36.1328125%;top:46.875%;width:13.3463541667%;
+  transform-origin:50% 84%;animation:ve2d-sprite-worker 4.4s ease-in-out infinite
+}
+.ve2d-sprite-dog{
+  left:17.2526041667%;top:83.984375%;width:13.9973958333%;
+  transform-origin:50% 87%;animation:ve2d-sprite-dog 4.8s ease-in-out infinite
+}
+.ve2d-sprite-cat{
+  left:85.2864583333%;top:73.73046875%;width:11.71875%;
+  transform-origin:50% 80%;animation:ve2d-sprite-cat 5.9s ease-in-out infinite
+}
+@keyframes ve2d-sprite-worker{
+  0%,21%,35%,100%{transform:rotate(0) translateY(0)}
+  27%{transform:rotate(-1deg) translateY(-1.5px)}
+  31%{transform:rotate(.7deg) translateY(-2px)}
+}
+@keyframes ve2d-sprite-dog{
+  0%,100%{transform:translateY(0) scaleY(1)}
+  50%{transform:translateY(-.5px) scaleY(1.006)}
+}
+@keyframes ve2d-sprite-cat{
+  0%,100%{transform:translateY(0) rotate(0)}
+  50%{transform:translateY(-1px) rotate(.15deg)}
+}
+@media (prefers-reduced-motion:reduce){
+  .ve2d-sprite{animation:none!important}
+}
