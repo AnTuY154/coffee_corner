@@ -44,14 +44,61 @@ test("cloud attaches to the actual hovered item, near pointer, never clipped by 
     expect(box.y).toBeGreaterThanOrEqual(0);
     expect(box.x + box.width).toBeLessThanOrEqual(viewportWidth + 1);
     expect(box.y + box.height).toBeLessThanOrEqual(viewportHeight + 1);
-    expect(Math.abs(box.x - mouseX)).toBeLessThan(245);
-    expect(Math.abs(box.y - mouseY)).toBeLessThan(160);
+    // All static objects are now anchored to a physical edge of their
+    // painted item. Do NOT compare tooltip origin to pointer coordinates.
+    // Large regions (fridge and fruit shelves) had a naturally huge drift.
+    const object = await page.locator(`.ve2d-hotspot[data-target="${item.id}"]`).boundingBox();
+    if (!object) throw new Error("No object rectangle");
+    const side = ["juiceBoard", "smoothieBoard", "freshFruitBoard", "snackBoard"].includes(item.id)
+      ? "right" : ["menu", "sign", "tree"].includes(item.id)
+      ? "below" : ["cooler", "parasol"].includes(item.id) ? "left" : "above";
+    if (side === "right") {
+      expect(box.x, item.id + " should open beside the wooden board")
+        .toBeGreaterThanOrEqual(object.x + object.width + 5);
+      expect(Math.abs((box.y + box.height / 2) - (object.y + object.height / 2)))
+        .toBeLessThan(42);
+    } else if (side === "below") {
+      expect(box.y, item.id + " should open below its object")
+        .toBeGreaterThanOrEqual(object.y + object.height + 5);
+      expect(Math.abs((box.x + box.width / 2) - (object.x + object.width / 2)))
+        .toBeLessThan(20);
+    } else if (side === "left") {
+      expect(box.x + box.width).toBeLessThanOrEqual(object.x - 5);
+    } else {
+      expect(box.y + box.height).toBeLessThanOrEqual(object.y - 5);
+    }
     if (["menu", "fruits", "cooler"].includes(item.id)) {
       await page.screenshot({path:info.outputPath(`pointer-cloud-${item.id}.png`)});
     }
   }
 });
 
+
+test("the central three-poster menu tooltip stays BELOW and centered, never floating left", async ({ page }, info) => {
+  test.skip(info.project.name.startsWith("mobile"), "desktop pointer placement");
+  await ready(page);
+  for (const size of [{width:1536,height:1024},{width:1366,height:768},{width:1920,height:1080}]) {
+    await page.setViewportSize(size);
+    const menu = page.locator('.ve2d-hotspot[data-target="menu"]');
+    await menu.hover();
+    const cloud = page.locator('.ve2d-floating-tooltip[data-tooltip-target="menu"]');
+    await expect(cloud).toBeVisible();
+    const rect = await menu.boundingBox(), tip = await cloud.boundingBox();
+    if (!rect || !tip) throw new Error("Menu or tooltip bounds missing");
+    expect(tip.y, "Menu cloud must start beneath the physical 3-panel sign")
+      .toBeGreaterThanOrEqual(rect.y + rect.height + 8);
+    expect(Math.abs((tip.x + tip.width / 2) - (rect.x + rect.width / 2)),
+      "Menu cloud should be horizontally centered on hanging boards").toBeLessThan(20);
+    // Prior implementation chased cursor even inside one menu hotspot.
+    const x = rect.x + rect.width * .3, y = rect.y + rect.height * .4;
+    await page.mouse.move(x, y);
+    const second = await cloud.boundingBox();
+    if (!second) throw new Error("Tooltip disappeared while traversing menu");
+    expect(Math.abs(tip.x - second.x)).toBeLessThan(2);
+    expect(Math.abs(tip.y - second.y)).toBeLessThan(2);
+    await page.screenshot({path:info.outputPath(`menu-tooltip-anchored-${size.width}.png`)});
+  }
+});
 
 test("three requested left signs always reveal their own correctly anchored tooltips", async ({page}, info) => {
   test.skip(info.project.name.startsWith("mobile"), "desktop mouse hover");
