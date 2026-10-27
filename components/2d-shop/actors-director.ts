@@ -186,8 +186,15 @@ export class ActorsDirector {
           counterMask: lengthSoFar < 255,
         };
         if (visit.elapsed >= visit.duration) {
-          // Both actors enter the interaction frame together.
+          // Both actors enter the interaction frame together: no mismatch
+          // between the public state and the actual rendered animation pose.
           visit.phase = "petting"; visit.elapsed = 0;
+          this.worker = {
+            ...visit.route[visit.route.length - 1],
+            facing: visit.target === "dog" ? -1 : 1,
+            action: "pet", stride: 0, counterMask: false,
+          };
+          this.pets[visit.target].mood = "happy";
         }
       } else if (visit.phase === "petting") {
         this.worker = {
