@@ -74,6 +74,19 @@ test("desktop scene fills every viewport without stretching the watercolour or h
     expect(stage.y + stage.height).toBeGreaterThanOrEqual(height - 1);
     expect(Math.abs(stage.width / stage.height - 1.5)).toBeLessThan(.002);
     await expect(page.locator(".ve2d-hotspot[data-target='clerk']")).toBeVisible();
+    // In panoramic cover mode, pets must remain in the *visible viewport*,
+    // including their actual clickable hitboxes.
+    if (width / height >= 1.6) {
+      for (const selector of [".ve2d-actor-dog", ".ve2d-actor-cat",
+        ".ve2d-hotspot[data-target='dog']", ".ve2d-hotspot[data-target='cat']"]) {
+        const rect = await page.locator(selector).boundingBox();
+        if (!rect) throw new Error(selector + " has no visible box");
+        expect(rect.y + rect.height).toBeGreaterThan(0);
+        expect(rect.y).toBeLessThan(height);
+        expect(rect.x + rect.width).toBeGreaterThan(0);
+        expect(rect.x).toBeLessThan(width);
+      }
+    }
     if (width === 1920 || width === 2560 || width === 1440) {
       await page.screenshot({ path: testInfo.outputPath(`desktop-cover-${width}x${height}.png`), animations: "disabled" });
     }
