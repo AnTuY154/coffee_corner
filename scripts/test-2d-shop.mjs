@@ -42,7 +42,7 @@ assert.match(scene,/if\(touch&&e\.detail!==0&&active!==spot\.id\)/,'first touch 
 assert.match(scene,/e\.detail!==0/,'keyboard button activation is immediate');
 assert.match(scene,/window\.innerWidth<760/,'small devices start centred on counter');
 assert.match(scene,/last\.current\?\.focus\(\)/,'closing a tooltip action restores focus');
-assert.match(scene,/prefers-reduced-motion:|reduced-motion/,'motion accessibility token');
+assert.match(styles,/prefers-reduced-motion:reduce/,'motion accessibility token');
 assert.match(styles,/\.ve2d-cloud\s*\{/,'styled popover balloon');
 assert.match(styles,/\.ve2d-cloud::after/,'tooltip cloud includes a pointer tail');
 assert.match(styles,/data-placement=below/,'tooltip flips above/below the shop artwork');
