@@ -49,8 +49,13 @@ const ART_HOTSPOTS: PixelHotspot[] = [
   { id: "dog", name: "Chú chó nhỏ", hint: "Gâu gâu! Chào bạn!", box: [358, 814, 138, 115], action: "dog" },
   { id: "cat", name: "Chú mèo", hint: "Meo meo! Mình thích nắng sớm!", box: [1365, 812, 144, 125], action: "cat", placement: "left" },
 ];
+// Approved art rectangles are [LEFT, TOP, WIDTH, HEIGHT] in pixel units.
+// CSS hotspots are centered by translate(-50%, -50%), so the CSS left/top
+// MUST point to the rectangle's CENTER, never its top-left corner.
 export const HOTSPOTS: Hotspot[] = ART_HOTSPOTS.map(({ box: [x, y, w, h], ...spot }) => ({
-  ...spot, x: x / REF_W * 100, y: y / REF_H * 100,
+  ...spot,
+  x: (x + w / 2) / REF_W * 100,
+  y: (y + h / 2) / REF_H * 100,
   w: w / REF_W * 100, h: h / REF_H * 100,
 }));
 
