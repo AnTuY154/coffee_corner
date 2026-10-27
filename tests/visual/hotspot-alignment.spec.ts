@@ -10,7 +10,10 @@ test.setTimeout(90_000);
 const W = 1672, H = 941;
 const fixed: Record<string, readonly [number, number, number, number]> = {
   sign: [582, 90, 561, 176],
-  categories: [36, 344, 208, 282],
+  juiceBoard: [45, 339, 199, 94],
+  smoothieBoard: [38, 410, 204, 90],
+  freshFruitBoard: [32, 480, 214, 90],
+  snackBoard: [26, 550, 221, 93],
   menu: [654, 346, 382, 132],
   fruits: [809, 589, 165, 80],
   cooler: [985, 541, 148, 251],
@@ -88,7 +91,7 @@ test("static hover rectangles align with canonical image on desktop and mobile",
       await auditFixed(page);
     }
     await page.setViewportSize({width:1536, height:1024});
-    for (const id of ["sign", "menu", "categories", "cooler"]) {
+    for (const id of ["sign", "menu", "juiceBoard", "smoothieBoard", "freshFruitBoard", "snackBoard", "cooler"]) {
       const hotspot = page.locator(`.ve2d-hotspot[data-target="${id}"]`);
       await hotspot.hover();
       await expect(page.locator(`.ve2d-floating-tooltip[data-tooltip-target="${id}"]`)).toBeVisible();
