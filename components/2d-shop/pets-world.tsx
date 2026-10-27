@@ -132,7 +132,7 @@ export function PetsWorld({ artBase, onReady, onMove }: Props) {
 
         pets = [
           createPet("dog", dogFrames, 383, 959, 312, 562, .90, 30),
-          createPet("cat", catFrames, 1346, 914, 1190, 1445, .82, 25),
+          createPet("cat", catFrames, 1352, 1004, 1245, 1430, .82, 25),
         ];
 
         const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
