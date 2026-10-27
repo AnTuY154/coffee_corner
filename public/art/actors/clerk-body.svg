@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="270" viewBox="0 0 180 270">
+<defs>
+ <linearGradient id="hair" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#66472c"/><stop offset="1" stop-color="#302925"/></linearGradient>
+ <linearGradient id="hat" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#8ba65b"/><stop offset=".55" stop-color="#5b8240"/><stop offset="1" stop-color="#38693d"/></linearGradient>
+ <linearGradient id="skin" x1="0" y1="0" x2="1" y2=".5"><stop stop-color="#ffe6c5"/><stop offset="1" stop-color="#ffcfae"/></linearGradient>
+ <linearGradient id="apron" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#94b56d"/><stop offset="1" stop-color="#557c48"/></linearGradient>
+</defs>
+<!-- Black-brown skirt of hair -->
+<path d="M42 95 Q22 117 29 154 Q27 168 39 177 L53 167 Q41 156 49 132 L131 129 Q139 153 129 169 L145 174 Q162 148 143 97Z" fill="url(#hair)" stroke="#5b4032" stroke-width="4"/>
+<!-- Legs live in separate rigged SVGs; dress/shorts remain behind apron -->
+<path d="M65 205 H119 L130 234 Q91 247 52 233Z" fill="#55794d" stroke="#68503e" stroke-width="4"/>
+<!-- White puff sleeves -->
+<path d="M59 159 Q38 152 29 174 L39 201 L59 197Z" fill="#fff8e1" stroke="#8f795d" stroke-width="3.2"/>
+<path d="M118 161 Q137 153 149 174 L139 203 L119 195Z" fill="#fff8e1" stroke="#8f795d" stroke-width="3.2"/>
+<path d="M33 180 Q42 177 47 187 M132 178 Q142 180 146 186" stroke="#edbe86" stroke-width="3" fill="none" stroke-linecap="round"/>
+<!-- Clothes and apron -->
+<path d="M57 158 Q86 145 119 158 Q140 188 128 231 L54 231 Q43 185 57 158Z" fill="#fff7dd" stroke="#796249" stroke-width="4"/>
+<path d="M66 161 Q76 175 89 178 Q108 177 116 158 L128 226 Q88 236 53 227Z" fill="url(#apron)" stroke="#617c4f" stroke-width="3.5"/>
+<path d="M74 161 L70 191 M106 161 L111 190" stroke="#e6e3ba" stroke-width="7" stroke-linecap="round"/>
+<path d="M64 205 Q90 212 116 205 L114 222 Q90 230 66 222Z" fill="#719653" stroke="#416946" stroke-width="2.5"/>
+<path d="M81 190 Q87 182 91 190 Q95 182 101 190 Q91 200 91 200Z" fill="#f9f4cc"/>
+<circle cx="77" cy="211" r="2.5" fill="#eed4a0"/><circle cx="106" cy="211" r="2.5" fill="#eed4a0"/>
+<!-- Hair framing -->
+<path d="M48 73 Q35 85 40 124 Q45 143 63 143 L60 107 L119 103 L124 141 Q144 128 144 99 Q137 59 90 56 Q59 52 48 73Z" fill="url(#hair)" stroke="#5d4230" stroke-width="4"/>
+<!-- Neck, face -->
+<path d="M81 136 H101 L104 159 Q91 169 78 157Z" fill="#ffd4b4" stroke="#92644b" stroke-width="3"/>
+<ellipse cx="90" cy="105" rx="53" ry="52" fill="url(#skin)" stroke="#684735" stroke-width="4"/>
+<ellipse cx="39" cy="112" rx="10" ry="14" fill="#ffdbb8" stroke="#80553d" stroke-width="3"/>
+<ellipse cx="143" cy="110" rx="10" ry="14" fill="#ffdbb8" stroke="#80553d" stroke-width="3"/>
+<!-- Bangs and side hair -->
+<path d="M40 91 Q38 58 70 58 Q92 49 118 64 Q142 68 146 93 Q123 91 115 83 Q103 96 93 83 Q71 101 65 86 Q54 97 40 91Z" fill="url(#hair)" stroke="#5f4333" stroke-width="3.7"/>
+<path d="M39 105 Q39 126 48 143" fill="none" stroke="#5c4132" stroke-width="8" stroke-linecap="round"/>
+<path d="M140 103 Q141 128 133 142" fill="none" stroke="#5c4132" stroke-width="8" stroke-linecap="round"/>
+<!-- Eyes and thin-rim glasses -->
+<path d="M58 105 Q67 94 76 105 M103 105 Q113 94 122 104" stroke="#413830" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+<circle cx="69" cy="105" r="18" fill="none" stroke="#6a5540" stroke-width="2.6" opacity=".86"/>
+<circle cx="112" cy="105" r="18" fill="none" stroke="#6a5540" stroke-width="2.6" opacity=".86"/>
+<path d="M87 103 Q91 100 95 104" fill="none" stroke="#6a5540" stroke-width="2.4"/>
+<ellipse cx="56" cy="120" rx="14" ry="7" fill="#f49c9a" opacity=".7"/>
+<ellipse cx="126" cy="120" rx="14" ry="7" fill="#f49c9a" opacity=".7"/>
+<path d="M84 119 Q91 130 100 119" fill="none" stroke="#9c5947" stroke-width="3.3" stroke-linecap="round"/>
+<!-- Beret -->
+<path d="M38 79 Q35 43 74 33 Q112 20 134 50 Q149 65 140 78 Q95 59 38 79Z" fill="url(#hat)" stroke="#415a34" stroke-width="4.2"/>
+<path d="M33 78 Q85 61 146 78 Q150 86 137 91 Q86 76 40 88 Q28 88 33 78Z" fill="#698a48" stroke="#415a34" stroke-width="3.5"/>
+<path d="M77 48 Q88 44 90 56 Q96 45 106 49 Q100 59 90 65 Q82 60 77 48Z" fill="none" stroke="#f2edce" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<!-- Hair flower -->
+<path d="M137 95 Q142 80 151 91 Q165 84 163 99 Q174 107 159 113 Q155 129 143 117 Q129 125 132 109 Q125 100 137 95Z" fill="#eec45e" stroke="#ad813c" stroke-width="2"/>
+<circle cx="148" cy="105" r="5" fill="#fff5cf"/>
+</svg>
