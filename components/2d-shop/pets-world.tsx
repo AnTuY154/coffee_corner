@@ -202,7 +202,13 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           // Never mirror the employee's apron lettering or reassign mesh scale.
           employee.holder.scale.set(person.scale);
           employee.holder.zIndex = person.y + .1;
-          const nextMaskHeight = person.behindCounter ? 650 : ARTBOARD.height;
+          // From the patio the clerk reaches the cat BEHIND the tabletop,
+          // never stepping onto the chairs. Keep the upper body visible, but
+          // let the actual painted tabletop occlude the lower legs as in life.
+          const besideCatTable = pose.target === "cat" &&
+            person.x >= 1175 && person.y >= 870;
+          const nextMaskHeight = person.behindCounter ? 650 :
+            besideCatTable ? 852 : ARTBOARD.height;
           if (nextMaskHeight !== maskHeight) {
             counterMask.clear().rect(0, 0, ARTBOARD.width, nextMaskHeight).fill(0xffffff);
             maskHeight = nextMaskHeight;
