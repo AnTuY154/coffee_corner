@@ -66,6 +66,7 @@ export function IllustratedShop() {
   const [artLoaded, setArtLoaded] = useState(false);
   const [active, setActive] = useState<Key | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [openBasket, setOpenBasket] = useState(false);
   const [story, setStory] = useState<StoryAction | null>(null);
   const [coarsePointer, setCoarsePointer] = useState(false);
   const [dogHappy, setDogHappy] = useState(false);
@@ -117,7 +118,7 @@ export function IllustratedShop() {
 
   function interact(spot: Hotspot) {
     setActive(null);
-    if (spot.action === "order") { setStory(null); setMenuOpen(true); }
+    if (spot.action === "order") { setStory(null); setOpenBasket(false); setMenuOpen(true); }
     else {
       setStory(spot.action);
       if (spot.action === "dog") setDogHappy(true);
@@ -166,7 +167,7 @@ export function IllustratedShop() {
     </div>
     <header className="ve2d-header">
       {!artLoaded && <span>✿ <strong>VƯỜN É</strong> <small>nước ép tự nhiên</small></span>}
-      <button type="button" className="ve2d-cart" onClick={e => { trigger.current = e.currentTarget; setStory(null); setMenuOpen(true); }}>
+      <button type="button" className="ve2d-cart" onClick={e => { trigger.current = e.currentTarget; setStory(null); setOpenBasket(true); setMenuOpen(true); }}>
         🛒 Giỏ hàng <strong>{count}</strong>
       </button>
     </header>
@@ -178,11 +179,11 @@ export function IllustratedShop() {
         <button type="button" ref={closeStoryButton} className="ve2d-story-close" onClick={closeStory} aria-label="Đóng">✕</button>
         <h2 id="ve2d-story-title">{STORY[story].title}</h2>
         <p>{STORY[story].body}</p>
-        <button type="button" className="ve2d-story-order" onClick={() => { setStory(null); setMenuOpen(true); }}>
+        <button type="button" className="ve2d-story-order" onClick={() => { setStory(null); setOpenBasket(false); setMenuOpen(true); }}>
           Xem thực đơn nước ép ↗
         </button>
       </section>
     </div>}
-    {menuOpen && <ShopMenu2D onClose={() => { setMenuOpen(false); trigger.current?.focus(); }} />}
+    {menuOpen && <ShopMenu2D initialView={openBasket ? "cart" : "browse"} onClose={() => { setMenuOpen(false); trigger.current?.focus(); }} />}
   </div>;
 }
