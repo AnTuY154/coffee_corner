@@ -8,7 +8,8 @@ import type { CSSProperties } from "react";
 import "./illustrated-shop.css";
 
 type Action = "order" | "intro" | "seats" | "garden" | "dog" | "cat";
-type Key = "sign" | "clerk" | "menu" | "fruits" | "cooler" | "seats" | "seatsRight" | "tree" | "parasol" | "dog" | "cat" | "categories";
+type Key = "sign" | "clerk" | "menu" | "fruits" | "cooler" | "seats" | "seatsRight" | "tree" | "parasol" | "dog" | "cat" | "categories"
+  | "juiceBoard" | "smoothieBoard" | "freshFruitBoard" | "snackBoard";
 type Hotspot = {
   id: Key; name: string; hint: string;
   x: number; y: number; w: number; h: number;
@@ -37,7 +38,13 @@ const REF_W = 1672, REF_H = 941;
 type PixelHotspot = Omit<Hotspot, "x" | "y" | "w" | "h"> & { box: readonly [number, number, number, number] };
 const ART_HOTSPOTS: PixelHotspot[] = [
   { id: "sign", name: "Vườn É", hint: "Chào bạn! Khám phá câu chuyện Vườn É nhé!", box: [582, 90, 561, 176], action: "intro", placement: "below" },
-  { id: "categories", name: "Các loại nước ép", hint: "Chọn danh mục nước ép, sinh tố và trái cây!", box: [36, 344, 208, 282], action: "order", placement: "left" },
+  // The four diagonal wooden boards are four separate objects, NOT one large
+  // categories rectangle. Pixel bounds measured on immutable shop.webp
+  // 1672×941. Each polygon's top/bottom tracks the slanted painted wood.
+  { id: "juiceBoard", name: "Nước Ép", hint: "Nước ép trái cây tươi, chọn món yêu thích nhé!", box: [45, 339, 199, 94], action: "order" },
+  { id: "smoothieBoard", name: "Sinh Tố", hint: "Sinh tố thơm mịn đang chờ bạn!", box: [38, 410, 204, 90], action: "order" },
+  { id: "freshFruitBoard", name: "Trái Cây Tươi", hint: "Khám phá trái cây tươi mỗi ngày!", box: [32, 480, 214, 90], action: "order" },
+  { id: "snackBoard", name: "Đồ Ăn Nhẹ", hint: "Chọn một món ăn nhẹ cùng ly nước nhé!", box: [26, 550, 221, 93], action: "order" },
   { id: "menu", name: "Bảng thực đơn", hint: "Xem tất cả nước ép theo mùa!", box: [654, 346, 382, 132], action: "order", placement: "below" },
   { id: "clerk", name: "Nhân viên dễ thương", hint: "Nhấn vào nhân viên để gọi món nhé!", box: [705, 524, 118, 132], action: "order" },
   { id: "fruits", name: "Quầy trái cây", hint: "Trái cây tươi vừa về quầy!", box: [809, 589, 165, 80], action: "order" },
@@ -52,6 +59,10 @@ const ART_HOTSPOTS: PixelHotspot[] = [
 // Approved art rectangles are [LEFT, TOP, WIDTH, HEIGHT] in pixel units.
 // CSS hotspots are centered by translate(-50%, -50%), so the CSS left/top
 // MUST point to the rectangle's CENTER, never its top-left corner.
+export const WOODEN_BOARD_IDS: ReadonlySet<Key> = new Set([
+  "juiceBoard", "smoothieBoard", "freshFruitBoard", "snackBoard",
+]);
+
 export const HOTSPOTS: Hotspot[] = ART_HOTSPOTS.map(({ box: [x, y, w, h], ...spot }) => ({
   ...spot,
   x: (x + w / 2) / REF_W * 100,
@@ -103,9 +114,26 @@ export function IllustratedShop() {
       y: Math.max(10, Math.min(desiredY, window.innerHeight - estimatedHeight - 12)),
     });
   }, []);
-  const placeTooltipAtElement = useCallback((element: HTMLElement) => {
+  const placeTooltipAtElement = useCallback((element: HTMLElement, besideBoard = false) => {
     const bounds = element.getBoundingClientRect();
-    placeTooltip(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+    if (!besideBoard) {
+      placeTooltip(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+      return;
+    }
+    // Wood signage is slanted. Anchor its bubble to the ACTUAL board's right
+    // edge, at vertical centre, not the oversized group's top-left or mouse
+    // cursor. Clamp to the viewport, including the mobile scroll viewport.
+    const width = Math.min(230, window.innerWidth - 24);
+    const height = 125;
+    const right = bounds.right + 12;
+    const left = bounds.left - width - 12;
+    const chosenX = right + width + 12 <= window.innerWidth
+      ? right : left >= 12 ? left : Math.max(12, Math.min(right, window.innerWidth - width - 12));
+    setTooltipPosition({
+      x: Math.max(12, Math.min(chosenX, window.innerWidth - width - 12)),
+      y: Math.max(12, Math.min(bounds.top + bounds.height / 2 - height / 2,
+        window.innerHeight - height - 12)),
+    });
   }, [placeTooltip]);
 
   const artBase = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/art`;
@@ -326,11 +354,15 @@ export function IllustratedShop() {
           onPointerEnter={e => {
             if (e.pointerType !== "touch") {
               setActive(spot.id);
-              placeTooltip(e.clientX, e.clientY);
+              if (WOODEN_BOARD_IDS.has(spot.id)) {
+                placeTooltipAtElement(e.currentTarget, true);
+              } else {
+                placeTooltip(e.clientX, e.clientY);
+              }
             }
           }}
           onPointerMove={e => {
-            if (e.pointerType !== "touch" && active === spot.id) {
+            if (e.pointerType !== "touch" && active === spot.id && !WOODEN_BOARD_IDS.has(spot.id)) {
               placeTooltip(e.clientX, e.clientY);
             }
           }}
@@ -340,7 +372,7 @@ export function IllustratedShop() {
           onFocus={e => {
             if (e.currentTarget.matches(":focus-visible")) {
               setActive(spot.id);
-              placeTooltipAtElement(e.currentTarget);
+              placeTooltipAtElement(e.currentTarget, WOODEN_BOARD_IDS.has(spot.id));
             }
           }}
           onBlur={() => setActive(v => v === spot.id ? null : v)}
@@ -351,7 +383,7 @@ export function IllustratedShop() {
             const movingPet = spot.id === "dog" || spot.id === "cat";
             if (coarsePointer && !movingPet && e.detail !== 0 && active !== spot.id) {
               setActive(spot.id);
-              placeTooltipAtElement(e.currentTarget);
+              placeTooltipAtElement(e.currentTarget, WOODEN_BOARD_IDS.has(spot.id));
               return;
             }
             trigger.current = e.currentTarget;

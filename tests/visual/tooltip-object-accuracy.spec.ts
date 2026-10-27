@@ -7,7 +7,10 @@ const WORLD_WIDTH = 1672, WORLD_HEIGHT = 941;
 // tests where a button matches its own wrong coordinates.
 const OBJECT_SAMPLES = [
   { id: "sign", x: 880, y: 183 },
-  { id: "categories", x: 129, y: 394 },
+  { id: "juiceBoard", x: 130, y: 376 },
+  { id: "smoothieBoard", x: 130, y: 447 },
+  { id: "freshFruitBoard", x: 130, y: 519 },
+  { id: "snackBoard", x: 130, y: 589 },
   { id: "menu", x: 718, y: 388 },
   { id: "fruits", x: 875, y: 625 },
   { id: "cooler", x: 1061, y: 612 },
@@ -46,6 +49,34 @@ test("cloud attaches to the actual hovered item, near pointer, never clipped by 
     if (["menu", "fruits", "cooler"].includes(item.id)) {
       await page.screenshot({path:info.outputPath(`pointer-cloud-${item.id}.png`)});
     }
+  }
+});
+
+
+test("three requested left signs always reveal their own correctly anchored tooltips", async ({page}, info) => {
+  test.skip(info.project.name.startsWith("mobile"), "desktop mouse hover");
+  await ready(page);
+  const stage = await page.locator(".ve2d-stage").boundingBox();
+  if (!stage) throw new Error("Missing stage");
+  const sample = [
+    {id:"juiceBoard", x:130, y:376},
+    {id:"smoothieBoard", x:130, y:447},
+    {id:"freshFruitBoard", x:130, y:519},
+    {id:"snackBoard", x:130, y:589},
+  ] as const;
+  for (const item of sample) {
+    await page.mouse.move(stage.x + item.x * stage.width / WORLD_WIDTH,
+      stage.y + item.y * stage.height / WORLD_HEIGHT);
+    const tooltip = page.locator(`.ve2d-floating-tooltip[data-tooltip-target="${item.id}"]`);
+    await expect(tooltip).toBeVisible();
+    const board = await page.locator(`.ve2d-hotspot[data-target="${item.id}"]`).boundingBox();
+    const cloud = await tooltip.boundingBox();
+    if (!board || !cloud) throw new Error("Missing board or tooltip");
+    // Cloud on the RIGHT side of each separate wooden board, at its level,
+    // rather than centred on the whole four-board stack.
+    expect(cloud.x).toBeGreaterThanOrEqual(board.x + board.width - 8);
+    expect(Math.abs((cloud.y + cloud.height / 2) - (board.y + board.height / 2)))
+      .toBeLessThan(70);
   }
 });
 

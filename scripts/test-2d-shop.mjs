@@ -30,10 +30,14 @@ assert.match(style, /data-approved-art=true/);
 assert.match(scene, /pixel-perfect|Pixel-perfect/);
 assert.match(scene, /ART_HOTSPOTS\.map/);
 for (const id of ["sign", "clerk", "menu", "fruits", "cooler", "seats", "seatsRight",
-  "tree", "parasol", "dog", "cat", "categories"]) {
+  "tree", "parasol", "dog", "cat", "juiceBoard", "smoothieBoard", "freshFruitBoard", "snackBoard"]) {
   assert(scene.includes('id: "' + id + '"'), "missing art interaction target " + id);
 }
 
+assert.match(scene, /WOODEN_BOARD_IDS/);
+for (const id of ["juiceBoard", "smoothieBoard", "freshFruitBoard", "snackBoard"]) {
+  assert(style.includes("data-target=" + id + "]"), "missing clipped geometry for " + id);
+}
 // Cloud hints are not hard-coded into the scene image by React.
 assert.match(scene, /spots\.map\(spot => <button/);
 assert.match(scene, /role="tooltip"/);
