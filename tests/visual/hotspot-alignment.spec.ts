@@ -27,6 +27,15 @@ async function loaded(page: Page) {
 }
 
 async function auditFixed(page: Page) {
+  // ResizeObserver dispatch happens after the viewport's layout pass; allow
+  // that single frame before asserting pixel-space alignment of all layers.
+  await expect.poll(async () => {
+    const stageRect = await page.locator(".ve2d-stage").boundingBox();
+    const pixiRect = await page.locator(".ve2d-pixi-pets canvas").boundingBox();
+    if (!stageRect || !pixiRect) return Infinity;
+    return Math.abs(stageRect.width - pixiRect.width) +
+      Math.abs(stageRect.height - pixiRect.height);
+  }, { timeout: 6_000, intervals: [100, 100, 200] }).toBeLessThan(2.2);
   const stage = await page.locator(".ve2d-stage").boundingBox();
   const image = await page.locator(".ve2d-approved-art").boundingBox();
   const canvas = await page.locator(".ve2d-pixi-pets canvas").boundingBox();
