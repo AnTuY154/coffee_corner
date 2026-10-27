@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { ActorsDirector, ARTBOARD, DOG_GROUND_Y, CAT_TABLE_Y,
-  interpolateRoute } from "../components/2d-shop/actors-director.ts";
+  DOG_WALKABLE_X, CAT_WALKABLE_X, interpolateRoute } from "../components/2d-shop/actors-director.ts";
 import { deformVertices } from "../components/2d-shop/deform-rig.ts";
 
 assert.deepEqual(ARTBOARD, { width: 1672, height: 941 });
 assert(DOG_GROUND_Y > CAT_TABLE_Y + 60, "dog is on patio, cat is on table");
+assert.deepEqual(DOG_WALKABLE_X, [870, 1080], "puppy uses clear middle pavement corridor");
+assert.deepEqual(CAT_WALKABLE_X, [1308, 1353], "cat stays left of flower vase on outdoor tabletop");
 for (const [t,expected] of [[0,0],[1,3]]) {
   const pos = interpolateRoute([{x:0,y:0},{x:1,y:1},{x:3,y:4}],t);
   assert.equal(pos.x,expected);
@@ -21,8 +23,10 @@ let sawCatGroom = false, sawCatNap = false, sawCatWalk = false;
 let last = start;
 for (let i = 0; i < 1600; i++) {
   const now = d.step(.05);
-  assert(now.dog.x >= 310 && now.dog.x <= 1010, "dog stays on patio path");
-  assert(now.cat.x >= 1350 && now.cat.x <= 1475, "cat stays on outdoor tabletop");
+  assert(now.dog.x >= DOG_WALKABLE_X[0] && now.dog.x <= DOG_WALKABLE_X[1],
+    "dog stays on open paving, never on chair/table");
+  assert(now.cat.x >= CAT_WALKABLE_X[0] && now.cat.x <= CAT_WALKABLE_X[1],
+    "cat stays on tabletop, away from right-hand chair");
   assert.equal(now.dog.y,DOG_GROUND_Y);
   assert.equal(now.cat.y,CAT_TABLE_Y);
   assert(Math.abs(now.dog.x-last.dog.x) < 7, "dog never teleports");
@@ -96,7 +100,12 @@ for(const [kind,motion] of [["dog","walk"],["dog","bark"],["dog","jump"],
 assert.deepEqual([...original],[0,0,50,50,100,75,120,100],"canonical geometry is immutable");
 const renderer=readFileSync("components/2d-shop/pets-world.tsx","utf8");
 for(const p of ["MeshPlane","canonical/dog.webp","canonical/cat.webp","canonical/employee.webp",
-  "state.mood === \"jump\"","state.mood === \"bark\"","state.mood === \"nap\"","onBarkRef","behindCounter ? counterMask"])
+  "state.mood === \"jump\"","state.mood === \"bark\"","state.mood === \"nap\"","onBarkRef",
+  "nextMaskHeight","employee.holder.mask = counterMask"])
   assert(renderer.includes(p),"renderer missing behavior: "+p);
 assert.doesNotMatch(renderer,/pets\/dog-walk\.png|actors\/anime\/idle\.webp/);
+assert.doesNotMatch(renderer,/employee\.holder\.mask\s*=\s*person\.behindCounter\s*\?/,
+  "releasing the Pixi stencil reveals a giant white rectangle");
+assert.doesNotMatch(renderer,/employee\.holder\.mask\s*=\s*null/,
+  "employee mask must remain active throughout visits");
 console.log("PASS: canonical art, ground/table paths, no teleport, employee visits, bark/jump/tail, groom/nap, accessible reduced motion");
