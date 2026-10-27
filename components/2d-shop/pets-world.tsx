@@ -28,7 +28,7 @@ const SCENE_HEIGHT = 1024;
 /**
  * A single PixiJS v8 clock renders all actors on the identical, uncropped
  * 1536×1024 artboard. The clerk is a separate three-part illustrated 2D
- * puppet with independently moving legs and hand (NOT a CSS-sliding photo).
+ * character using five original transparent anime-watercolour pose textures.
  * Both pets animate real eight-frame walk cycles and react to the employee
  * during the same state-machine transition.
  */
@@ -109,12 +109,14 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove }: Props)
         );
       };
       try {
-        const [dogFrames, catFrames, clerkBody, clerkLeg, clerkArm] = await Promise.all([
+        const [dogFrames, catFrames, idlePose, wavePose, runPose, petDogPose, petCatPose] = await Promise.all([
           loadWalkFrames(`${artBase}/pets/dog-walk.png`),
           loadWalkFrames(`${artBase}/pets/cat-walk.png`),
-          Assets.load(`${artBase}/actors/clerk-body.svg`) as Promise<InstanceType<typeof Texture>>,
-          Assets.load(`${artBase}/actors/clerk-leg.svg`) as Promise<InstanceType<typeof Texture>>,
-          Assets.load(`${artBase}/actors/clerk-arm.svg`) as Promise<InstanceType<typeof Texture>>,
+          Assets.load(`${artBase}/actors/anime/idle.webp`) as Promise<InstanceType<typeof Texture>>,
+          Assets.load(`${artBase}/actors/anime/wave.webp`) as Promise<InstanceType<typeof Texture>>,
+          Assets.load(`${artBase}/actors/anime/run.webp`) as Promise<InstanceType<typeof Texture>>,
+          Assets.load(`${artBase}/actors/anime/pet-dog.webp`) as Promise<InstanceType<typeof Texture>>,
+          Assets.load(`${artBase}/actors/anime/pet-cat.webp`) as Promise<InstanceType<typeof Texture>>,
         ]);
         if (disposed) return;
 
@@ -140,18 +142,18 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove }: Props)
         const dog = buildPet("dog", dogFrames, .90);
         const cat = buildPet("cat", catFrames, .82);
 
-        // Independent, transparent limb textures. No scenery pixels inside.
+        // Real high-resolution, character-only poses rendered independently
+        // of the shop artwork. Reuse a single Sprite to avoid texture flicker.
         const clerk = new Container();
-        const rearLeg = new Sprite(clerkLeg), frontLeg = new Sprite(clerkLeg);
-        for (const leg of [rearLeg, frontLeg]) leg.anchor.set(.5, .12);
-        rearLeg.position.set(-23, -79);
-        frontLeg.position.set(22, -79);
-        const body = new Sprite(clerkBody);
-        body.anchor.set(.5, 1);
-        const waveArm = new Sprite(clerkArm);
-        waveArm.anchor.set(.21, .78);
-        waveArm.position.set(61, -109);
-        clerk.addChild(rearLeg, frontLeg, body, waveArm);
+        const clerkSprite = new Sprite(idlePose);
+        clerkSprite.anchor.set(.5, 1);
+        // Artboard 540 x 720 is scaled into the 1536 x 1024 world plane.
+        // Same box size for every pose keeps the feet aligned during transitions.
+        const CHARACTER_WIDTH = 177;
+        const CHARACTER_HEIGHT = 236;
+        clerkSprite.width = CHARACTER_WIDTH;
+        clerkSprite.height = CHARACTER_HEIGHT;
+        clerk.addChild(clerkSprite);
         world.addChild(clerk);
 
         // At the counter the lower body is concealed by the wooden counter.
@@ -195,24 +197,31 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove }: Props)
             }
           }
           const person = pose.worker;
+          const poseTexture = person.action === "pet"
+            ? (pose.target === "cat" ? petCatPose : petDogPose)
+            : person.action === "wave" ? wavePose
+            : person.action === "run" ? runPose : idlePose;
+          if (clerkSprite.texture !== poseTexture) clerkSprite.texture = poseTexture;
+          // Pet poses were painted for their own target direction. Do not
+          // mirror the apron lettering when crouching, greeting or idling.
+          const runFacing = person.action === "run" ? person.facing : 1;
           clerk.position.set(person.x, person.y);
-          clerk.scale.set(person.scale * person.facing, person.scale);
+          clerk.scale.set(person.scale * runFacing, person.scale);
           clerk.zIndex = person.y / 10 + .1;
           clerk.mask = person.counterMask ? behindCounterMask : null;
+          // Body/cloth secondary movement is restrained. The individual
+          // illustrated poses communicate the actual actions.
           const running = person.action === "run";
-          rearLeg.rotation = running ? -person.stride * .43 : 0;
-          frontLeg.rotation = running ? person.stride * .43 : person.action === "pet" ? -.4 : 0;
-          rearLeg.y = -79 + (running ? Math.max(0, person.stride) * 5 : 0);
-          frontLeg.y = -79 + (running ? Math.max(0, -person.stride) * 5 : 0);
-          body.y = person.action === "pet" ? 74 : running ? -Math.abs(person.stride) * 3 : Math.sin(pose.seconds * 2) * 1.3;
-          body.scale.y = person.action === "pet" ? .69 : 1;
-          body.rotation = person.action === "pet" ? -.19 : running ? Math.sin(pose.seconds * 18) * .024 : 0;
-          waveArm.y = -109 + (person.action === "pet" ? 90 : 0);
-          waveArm.rotation = person.action === "wave"
-            ? Math.sin(pose.seconds * 9) * .24 - .12
-            : person.action === "pet"
-              ? -.94 + Math.sin(pose.seconds * 8) * .15
-              : running ? Math.sin(pose.seconds * 18) * .48 : -.28;
+          const petting = person.action === "pet";
+          const wave = person.action === "wave";
+          clerkSprite.rotation = running ? Math.sin(pose.seconds * 18) * .023
+            : petting ? Math.sin(pose.seconds * 8) * .012
+            : wave ? Math.sin(pose.seconds * 6) * .015 : 0;
+          clerkSprite.y = running ? -Math.abs(person.stride) * 4
+            : petting ? Math.sin(pose.seconds * 8) * 1.4
+            : Math.sin(pose.seconds * 2) * 1;
+          clerkSprite.scale.y = running ? 1 - Math.abs(person.stride) * .012 : 1;
+          clerkSprite.scale.x = 1;
 
           movementNotification += Math.min(tick.deltaMS / 1000, .05);
           if (movementNotification >= .12) {
