@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useCart } from "@/components/cart-context";
 import { ShopMenu2D } from "@/components/3d-shop/shop-menu-2d";
 import { ShopIllustration } from "./shop-illustration";
@@ -72,6 +72,8 @@ export function IllustratedShop() {
   const [coarsePointer, setCoarsePointer] = useState(false);
   const [dogHappy, setDogHappy] = useState(false);
   const [catHappy, setCatHappy] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const audioContext = useRef<AudioContext | null>(null);
   const trigger = useRef<HTMLButtonElement | null>(null);
   const compositionImage = useRef<HTMLImageElement | null>(null);
   const viewport = useRef<HTMLDivElement | null>(null);
@@ -82,6 +84,66 @@ export function IllustratedShop() {
   const compositionSrc = `${artBase}/vuon-e-original-composition.webp`;
   const strippedSrc = `${artBase}/vuon-e-approved-clean.webp`;
   const spots = artLoaded ? HOTSPOTS : LEGACY_HOTSPOTS;
+
+  // Two soft pitch glides approximate a small "meo meo". No audio is played
+  // until a real user gesture explicitly enables sound (browser autoplay policy).
+  const playMeow = useCallback(() => {
+    const ctx = audioContext.current;
+    if (!ctx || ctx.state !== "running" || document.hidden) return;
+    const start = ctx.currentTime + .015;
+    [0, .38].forEach((delay, index) => {
+      const when = start + delay;
+      const wave = ctx.createOscillator();
+      const warmth = ctx.createOscillator();
+      const filter = ctx.createBiquadFilter();
+      const volume = ctx.createGain();
+      wave.type = "triangle";
+      warmth.type = "sine";
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(1500, when);
+      filter.frequency.exponentialRampToValueAtTime(760, when + .31);
+      wave.frequency.setValueAtTime(index ? 550 : 640, when);
+      wave.frequency.exponentialRampToValueAtTime(index ? 810 : 930, when + .11);
+      wave.frequency.exponentialRampToValueAtTime(385, when + .31);
+      warmth.frequency.setValueAtTime(1150, when);
+      warmth.frequency.exponentialRampToValueAtTime(680, when + .30);
+      volume.gain.setValueAtTime(0.0001, when);
+      volume.gain.exponentialRampToValueAtTime(.055, when + .045);
+      volume.gain.exponentialRampToValueAtTime(.0001, when + .32);
+      wave.connect(filter);
+      warmth.connect(filter);
+      filter.connect(volume);
+      volume.connect(ctx.destination);
+      wave.start(when);
+      warmth.start(when);
+      wave.stop(when + .34);
+      warmth.stop(when + .34);
+    });
+  }, []);
+  const toggleSound = useCallback(async () => {
+    if (soundEnabled) { setSoundEnabled(false); await audioContext.current?.suspend(); return; }
+    try {
+      const AudioCtor = window.AudioContext;
+      if (!AudioCtor) return;
+      const ctx = audioContext.current ?? new AudioCtor();
+      audioContext.current = ctx;
+      await ctx.resume();
+      setSoundEnabled(true);
+    } catch {
+      setSoundEnabled(false);
+    }
+  }, [soundEnabled]);
+  useEffect(() => {
+    if (!soundEnabled) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      timer = setTimeout(() => { playMeow(); schedule(); }, 13000 + Math.random() * 14000);
+    };
+    schedule();
+    return () => clearTimeout(timer);
+  }, [soundEnabled, playMeow]);
+  useEffect(() => () => { void audioContext.current?.close(); audioContext.current = null; }, []);
+
   useEffect(() => {
     // Never use the object-removed background until EVERY required actor sprite is ready.
     // A partially uploaded art package must show the intact approved composition instead.
@@ -95,9 +157,10 @@ export function IllustratedShop() {
     });
     Promise.all([
       preload(strippedSrc),
-      preload(`${artBase}/layers/clerk.png`),
-      preload(`${artBase}/layers/dog.png`),
-      preload(`${artBase}/layers/cat.png`),
+      preload(`${artBase}/layers/clerk-body.png`),
+      preload(`${artBase}/layers/clerk-arm.png`),
+      preload(`${artBase}/layers/dog-tight.png`),
+      preload(`${artBase}/layers/cat-tight.png`),
     ]).then(() => { if (!cancelled) setSpritesReady(true); })
       .catch(() => { if (!cancelled) setSpritesReady(false); });
     return () => { cancelled = true; };
@@ -155,7 +218,7 @@ export function IllustratedShop() {
     else {
       setStory(spot.action);
       if (spot.action === "dog") setDogHappy(true);
-      if (spot.action === "cat") setCatHappy(true);
+      if (spot.action === "cat") { setCatHappy(true); if (soundEnabled) playMeow(); }
     }
   }
 
@@ -173,9 +236,19 @@ export function IllustratedShop() {
           onError={() => { setArtLoaded(false); setSpritesReady(false); }}
         />
         {spritesReady && <div className="ve2d-motion-sprites" aria-hidden="true">
-          <img className="ve2d-sprite ve2d-sprite-clerk" src={`${artBase}/layers/clerk.png`} alt="" draggable={false} />
-          <img className="ve2d-sprite ve2d-sprite-dog" src={`${artBase}/layers/dog.png`} alt="" draggable={false} />
-          <img className="ve2d-sprite ve2d-sprite-cat" src={`${artBase}/layers/cat.png`} alt="" draggable={false} />
+          <div className="ve2d-actor ve2d-actor-clerk">
+            <img className="ve2d-sprite ve2d-clerk-body" src={`${artBase}/layers/clerk-body.png`} alt="" draggable={false} />
+            <img className="ve2d-sprite ve2d-clerk-arm" src={`${artBase}/layers/clerk-arm.png`} alt="" draggable={false} />
+          </div>
+          <div className="ve2d-actor ve2d-actor-dog">
+            <img className="ve2d-sprite ve2d-dog-walk" src={`${artBase}/layers/dog-tight.png`} alt="" draggable={false} />
+            <span className="ve2d-actor-shadow" />
+          </div>
+          <div className="ve2d-actor ve2d-actor-cat">
+            <img className="ve2d-sprite ve2d-cat-walk" src={`${artBase}/layers/cat-tight.png`} alt="" draggable={false} />
+            <span className="ve2d-actor-shadow" />
+            {soundEnabled && <span className="ve2d-meow-mark">♪</span>}
+          </div>
         </div>}
         {spots.map(spot => <button
           key={spot.id} type="button" className="ve2d-hotspot"
@@ -206,9 +279,13 @@ export function IllustratedShop() {
     </div>
     <header className="ve2d-header">
       {!artLoaded && <span>✿ <strong>VƯỜN É</strong> <small>nước ép tự nhiên</small></span>}
+      <div className="ve2d-controls">
+        <button type="button" className="ve2d-sound" onClick={() => void toggleSound()} aria-pressed={soundEnabled} aria-label={soundEnabled ? "Tắt tiếng mèo" : "Bật tiếng mèo"} title={soundEnabled ? "Tắt tiếng mèo" : "Bật tiếng mèo"}>
+          {soundEnabled ? "🔊" : "🔇"}
+        </button>
       <button type="button" className="ve2d-cart" onClick={e => { trigger.current = e.currentTarget; setStory(null); setOpenBasket(true); setMenuOpen(true); }}>
         🛒 Giỏ hàng <strong>{count}</strong>
-      </button>
+      </button></div>
     </header>
     {!artLoaded && <p className="ve2d-instruction">✦ Rê chuột vào vật phẩm để xem gợi ý · Nhấp để tương tác</p>}
     {coarsePointer && <p className="ve2d-touch-guide">Vuốt ngang để khám phá · Chạm 1 lần để xem hướng dẫn, 2 lần để mở</p>}
