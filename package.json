@@ -15,7 +15,8 @@
     "test:2d": "node scripts/test-2d-shop.mjs",
     "test:art": "node scripts/check-approved-art.mjs",
     "test:art:required": "node scripts/check-approved-art.mjs --required",
-    "test:2d:visual": "playwright test --config=playwright.config.ts"
+    "test:2d:visual": "playwright test --config=playwright.config.ts",
+    "test:actors": "node --experimental-strip-types scripts/test-actor-director.mjs"
   },
   "dependencies": {
     "next": "^15.5.0",
