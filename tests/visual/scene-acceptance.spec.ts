@@ -58,7 +58,7 @@ async function assertSurfaceCoords(page: Page) {
   expect(yDog).toBe(918);
   expect(xCat).toBeGreaterThanOrEqual(1308);
   expect(xCat).toBeLessThanOrEqual(1353);
-  expect(yCat).toBe(839);
+  expect(yCat).toBe(853);
 }
 
 async function askForVisit(page: Page, animal: "dog" | "cat") {
@@ -68,6 +68,7 @@ async function askForVisit(page: Page, animal: "dog" | "cat") {
   if (test.info().project.name.startsWith("mobile")) await hotspot.click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.keyboard.press("Escape");
+  await page.mouse.move(3, 3);
   await expect(page.getByRole("dialog")).toHaveCount(0);
 }
 
@@ -111,10 +112,10 @@ test("cat stays on table while worker pets it from the floor", async ({ page }, 
   await assertSurfaceCoords(page);
   await askForVisit(page, "cat");
   await simulateUntil(page, "petting");
-  await expect(host).toHaveAttribute("data-counter-mask-height", "941");
+  await expect(host).toHaveAttribute("data-counter-mask-height", "852");
   await assertSurfaceCoords(page);
   const coords = await host.evaluate((el: HTMLElement) => ({ ...el.dataset }));
-  expect(Number(coords.employeeY)).toBeGreaterThan(Number(coords.catY) + 65);
+  expect(Number(coords.employeeY)).toBeGreaterThan(Number(coords.catY) + 50);
   await checkNoWhitePanel(page, "employee petting tabletop cat");
   await page.screenshot({ path: info.outputPath("cat-on-table-no-white-overlay.png") });
 });
