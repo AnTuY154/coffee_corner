@@ -23,14 +23,19 @@ export type WorldPose = {
 
 // Feet are anchored behind the wood countertop when greeting visitors.
 const HOME = { x: 764, y: 694, scale: .84 };
-export const DOG_GROUND_Y = 919;
-export const CAT_TABLE_Y = 835;
+// Verified against the pixel-space geometry of the approved 1672x941 shop:
+// pavement corridor between the two foreground seating areas is x=855..1100,
+// while the clear LEFT half of the right tabletop is x=1255..1375, y≈843.
+// Previous x=403 put the puppy on a chair; x=1410 put the cat by the chair.
+export const DOG_GROUND_Y = 918;
+export const CAT_TABLE_Y = 839;
+export const DOG_WALKABLE_X = [870, 1080] as const;
+export const CAT_WALKABLE_X = [1308, 1353] as const;
 const INIT: Record<Animal, Vec> = {
-  dog: { x: 403, y: DOG_GROUND_Y }, cat: { x: 1410, y: CAT_TABLE_Y },
+  dog: { x: 951, y: DOG_GROUND_Y }, cat: { x: 1330, y: CAT_TABLE_Y },
 };
-// The table surface at right spans approx x = 1275..1510 (artboard px).
 const LIMITS: Record<Animal, readonly [number, number]> = {
-  dog: [310, 1010], cat: [1350, 1475],
+  dog: DOG_WALKABLE_X, cat: CAT_WALKABLE_X,
 };
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
 const dist = (a: Vec, b: Vec) => Math.hypot(b.x - a.x, b.y - a.y);
@@ -110,14 +115,16 @@ export class ActorsDirector {
     pet.desired = 0; pet.timer = 15;
     // Meet the cat from the floor NEXT to the table, not on top of it.
     const end: Vec = target === "dog"
-      ? { x: clamp(pet.x + 108, 410, 1110), y: DOG_GROUND_Y }
-      : { x: clamp(pet.x - 116, 1215, 1360), y: 915 };
-    // Counter's left exit, then pavement along the foreground. Right 'exit'
-    // in the old version ran straight through the tall glass refrigerators.
+      ? { x: clamp(pet.x + 95, 905, 1170), y: DOG_GROUND_Y }
+      : { x: clamp(pet.x - 73, 1210, 1300), y: 915 };
+    // Exit via the left end of the counter, then follow the foreground
+    // walkway before approaching either animal. No walking through fridges.
+    // The front seating remains part of the illustrated scene and characters
+    // must not teleport from one side of the store to the other.
     const path: Vec[] = [
       HOME, { x: 610, y: 693 }, { x: 433, y: 700 },
-      { x: 317, y: 729 }, { x: 310, y: 819 }, { x: 375, y: 919 },
-      ...(end.x > 735 ? [{ x: 770, y: 919 }] : []),
+      { x: 317, y: 729 }, { x: 306, y: 817 }, { x: 361, y: 916 },
+      { x: 770, y: 918 },
       ...(end.x > 1090 ? [{ x: 1115, y: 918 }] : []),
       end,
     ];
