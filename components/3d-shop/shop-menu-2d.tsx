@@ -54,7 +54,7 @@ export function ShopMenu2D({ onClose, initialView = "browse" }: Props) {
       <header className="ve-menu-header">
         <div className="ve-menu-brand">
           <span className="ve-menu-flower" aria-hidden="true">✿</span>
-          <div><p className="ve-menu-kicker">FRESH FROM THE GARDEN</p><h2 id="ve-menu-title">Thực đơn Vườn Ép</h2></div>
+          <div><p className="ve-menu-kicker">FRESH FROM THE GARDEN</p><h2 id="ve-menu-title">Thực đơn Vườn É</h2></div>
         </div>
         <button className="ve-menu-close" type="button" onClick={onClose} aria-label="Đóng thực đơn, quay lại cửa hàng">✕</button>
       </header>
