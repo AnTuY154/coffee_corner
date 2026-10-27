@@ -13,7 +13,7 @@ type Key = "sign" | "clerk" | "menu" | "fruits" | "cooler" | "seats" | "seatsRig
 type Hotspot = {
   id: Key; name: string; hint: string;
   x: number; y: number; w: number; h: number;
-  action: Action; placement?: "above" | "below" | "left";
+  action: Action; placement?: "above" | "below" | "left" | "right";
 };
 type StoryAction = Exclude<Action, "order">;
 
@@ -45,7 +45,7 @@ const ART_HOTSPOTS: PixelHotspot[] = [
   { id: "smoothieBoard", name: "Sinh Tố", hint: "Sinh tố thơm mịn đang chờ bạn!", box: [38, 410, 204, 90], action: "order" },
   { id: "freshFruitBoard", name: "Trái Cây Tươi", hint: "Khám phá trái cây tươi mỗi ngày!", box: [32, 480, 214, 90], action: "order" },
   { id: "snackBoard", name: "Đồ Ăn Nhẹ", hint: "Chọn một món ăn nhẹ cùng ly nước nhé!", box: [26, 550, 221, 93], action: "order" },
-  { id: "menu", name: "Bảng thực đơn", hint: "Xem tất cả nước ép theo mùa!", box: [654, 346, 382, 132], action: "order", placement: "below" },
+  { id: "menu", name: "Bảng thực đơn", hint: "Xem tất cả nước ép theo mùa!", box: [654, 346, 382, 132], action: "order", placement: "right" },
   { id: "clerk", name: "Nhân viên dễ thương", hint: "Nhấn vào nhân viên để gọi món nhé!", box: [705, 524, 118, 132], action: "order" },
   { id: "fruits", name: "Quầy trái cây", hint: "Trái cây tươi vừa về quầy!", box: [809, 589, 165, 80], action: "order" },
   { id: "cooler", name: "Tủ nước ép", hint: "Nước ép mát lành đang chờ bạn!", box: [985, 541, 148, 251], action: "order", placement: "left" },
@@ -119,8 +119,8 @@ export function IllustratedShop() {
   ) => {
     // An anchored cloud must be positioned from the ACTUAL element rectangle
     // (already scaled with the 1672×941 stage), not pointer coordinates.
-    // Old behaviour made the "Bảng thực đơn" cloud drift left/up over the
-    // fruit counter while hovering the three hanging menu posters.
+    // Old behaviour made the "Bảng thực đơn" cloud drift over the
+    // shop. Place it beside the menu cards without covering the employee.
     const bounds = element.getBoundingClientRect();
     const width = Math.min(230, window.innerWidth - 24);
     // 130px accommodates the largest Vietnamese hint and extra padding.
@@ -378,7 +378,7 @@ export function IllustratedShop() {
                 placeTooltip(e.clientX, e.clientY);
               } else {
                 // Static objects stay fixed; in particular, the central menu
-                // tooltip is ALWAYS below the three hanging poster boards.
+                // tooltip stays to the RIGHT of the three hanging poster boards.
                 placeTooltipAtElement(e.currentTarget, getTooltipSide(spot));
               }
             }
