@@ -6,7 +6,7 @@
 .ve-menu-brand{display:flex;align-items:center;gap:15px}
 .ve-menu-flower{display:grid;place-items:center;flex:0 0 48px;height:48px;border:1px solid #cfe9b169;border-radius:50%;font-size:27px;color:#f3d99a;background:#ffffff11}
 .ve-menu-kicker{margin:0 0 4px!important;font:700 10px/1.35 var(--body,Arial),sans-serif!important;letter-spacing:.16em;color:inherit;opacity:.7}
-.ve-menu-header h2{font:600 clamp(23px,2.7vw,37px)/1.18 var(--heading,Georgia),serif;letter-spacing:-.025em;margin:0}
+.ve-menu-header h2{font:600 clamp(23px,2.7vw,37px)/1.18 var(--heading,Georgia),serif;letter-spacing:-.025em;margin:0;color:#fff9e5!important;text-shadow:0 1px 1px #163c304a}
 .ve-menu-close,.ve-menu-mobile-close{flex:0 0 40px;border:1px solid #ffffff70;border-radius:50%;background:#ffffff16;color:inherit;width:40px;height:40px;font-size:18px;cursor:pointer}
 .ve-menu-close:hover{background:#ffffff2d}
 .ve-menu-body{display:grid;grid-template-columns:minmax(0,1fr) 284px;min-height:0;flex:1}
@@ -120,3 +120,6 @@
 .ve-order-demo{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-height:270px}
 .ve-order-demo .ve-menu-checkout{max-width:270px;margin-top:20px}
 @media(max-width:700px){.ve-scene-checkout{padding:20px 16px}.ve-checkout-columns{grid-template-columns:1fr;gap:18px}.ve-checkout-summary{order:-1}.ve-checkout-intro h3{font-size:29px}.ve-menu-dialog:has(.ve-order-complete){height:auto;min-height:50dvh}}
+
+/* Screen-reader-only labels must not turn into a visible line above the search field. */
+.ve-menu-search .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
