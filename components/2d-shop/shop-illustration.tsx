@@ -204,6 +204,41 @@ export function ShopIllustration() {
        transform={`rotate(${(i*41)%90} ${x} ${y})`}/>;
    })}
   </g>
+  {/* Outdoor customer seating for the open-plan 30m² shop (2 patio tables, 4 chairs). */}
+  <g stroke={ink} strokeLinejoin="round" strokeLinecap="round">
+   {/* Warm timber chairs, planted under the shop's overhanging canopy. */}
+   {[[476,677],[753,689],[801,706],[1121,724]].map(([x,y],i)=><g key={i} transform={`translate(${x} ${y})`}>
+     <path d="M-39-58L-34 31M39-58L33 31" stroke="#95704b" strokeWidth="7" fill="none"/>
+     <path d="M-43-62Q0-75 42-60L44-28Q2-14-43-28Z" fill="#b98d5c" strokeWidth="3"/>
+     <path d="M-39-15Q0-23 36-13L30 2H-32Z" fill="#d8ad72" strokeWidth="3"/>
+     <path d="M-18-55v31M0-58v33M18-57v31" stroke="#e5c18f" strokeWidth="5"/>
+     <path d="M-30 0l-13 66M30 0l12 66" stroke="#8b6948" strokeWidth="6"/>
+     <path d="M-25-3Q0-10 25-3" stroke="#f2e0b8" strokeWidth="5"/>
+    </g>)}
+   {/* Low coffee tables and a few freshly served juices */}
+   {[610,956].map((x,i)=><g key={i} transform={`translate(${x} ${i?727:710})`}>
+    <ellipse cx="0" cy="68" rx="106" ry="11" fill="#9e9b6e" stroke="none" opacity=".18"/>
+    <path d="M-60-9l-15 79M60-9l14 79" fill="none" stroke="#9d754d" strokeWidth="9"/>
+    <ellipse cx="0" cy="-6" rx="110" ry="28" fill="#d8b080" strokeWidth="4"/>
+    <ellipse cx="0" cy="-14" rx="102" ry="19" fill="#f3d9a8" strokeWidth="2"/>
+    {[[-21,"#eaaa59"],[25,"#9abf80"]].map(([dx,col],j)=><g key={j} transform={`translate(${dx} -49)`}>
+      <path d="M-13-18h28l-4 43H-9Z" fill={col as string} strokeWidth="2"/>
+      <path d="M1-18L12-43" stroke="#f5efcf" strokeWidth="3"/>
+      <ellipse cx="0" cy="-18" rx="14" ry="4" fill="#fff1d6" stroke="none"/>
+     </g>)}
+   </g>)}
+  </g>
+  {/* One tiny customer strolls softly through the illustrated storefront. */}
+  <g className="ve2d-walker" stroke={ink} strokeWidth="3.1" strokeLinejoin="round">
+   <ellipse cx="101" cy="732" rx="24" ry="5" fill="#aa9a73" opacity=".17" stroke="none"/>
+   <path d="M94 717L88 746M109 717L115 746" stroke="#8b9e7f" strokeWidth="9"/>
+   <path d="M77 689Q101 676 121 692L115 723H88Z" fill="#d5b69b"/>
+   <path d="M83 700L70 720M119 698l13 16" stroke="#e2b99d" strokeWidth="8"/>
+   <ellipse cx="102" cy="665" rx="19" ry="22" fill="#ecc7a7"/>
+   <path d="M82 665Q77 634 99 638Q126 635 122 662Q106 654 82 665Z" fill="#5e5948"/>
+   <circle cx="96" cy="669" r="2.5" fill={ink} stroke="none"/>
+   <circle cx="109" cy="669" r="2.5" fill={ink} stroke="none"/>
+  </g>
   {/* Floor pots, fallen leaves and a gentle wandering animal */}
   <path d="M1202 659h81l-9 59h-60Z" fill="#d2b18c" stroke={ink} strokeWidth="3"/>
   <g fill="#7c9e6f">{Array.from({length:5},(_,i)=><ellipse key={i} cx={1240+(i-2)*9} cy={647-(i%2)*20} rx="16" ry="27" transform={`rotate(${i*19-40} ${1240+(i-2)*9} ${647-(i%2)*20})`}/>)}</g>
