@@ -59,7 +59,7 @@ export function IllustratedShop(){
       aria-label={spot.name+". "+spot.hint} aria-describedby={"ve2d-cloud-"+spot.id}
       onPointerEnter={e=>{if(e.pointerType!=="touch")setActive(spot.id);}}
       onPointerLeave={e=>{if(e.pointerType!=="touch")setActive(v=>v===spot.id?null:v);}}
-      onFocus={()=>setActive(spot.id)}
+      onFocus={e=>{if(e.currentTarget.matches(":focus-visible"))setActive(spot.id);}}
       onBlur={()=>setActive(v=>v===spot.id?null:v)}
       onClick={e=>{
        // Touch: first tap previews the cloud; second tap activates.
