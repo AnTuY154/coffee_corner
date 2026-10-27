@@ -28,7 +28,7 @@ const HOME = { x: 764, y: 694, scale: .84 };
 // while the clear LEFT half of the right tabletop is x=1255..1375, y≈843.
 // Previous x=403 put the puppy on a chair; x=1410 put the cat by the chair.
 export const DOG_GROUND_Y = 918;
-export const CAT_TABLE_Y = 839;
+export const CAT_TABLE_Y = 853;
 export const DOG_WALKABLE_X = [870, 1080] as const;
 export const CAT_WALKABLE_X = [1308, 1353] as const;
 const INIT: Record<Animal, Vec> = {
