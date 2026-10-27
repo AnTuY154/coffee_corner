@@ -343,3 +343,57 @@ html:has(.ve2d-root),body:has(.ve2d-root){height:100%;overflow:hidden!important}
     transform:none!important;
   }
 }
+
+
+/*
+ * When a 3:2 image covers a 16:9/ultrawide desktop, the lower art is
+ * necessarily cropped. Keep the two animal puppets at visible foreground
+ * coordinates rather than letting the 3:2 camera chop off their legs.
+ * The corresponding DOM hitboxes use viewport coordinates too.
+ */
+.ve2d-wide-brand{display:none!important}
+@media (min-width:761px) and (min-aspect-ratio:8/5){
+  .ve2d-actor-dog{
+    position:fixed;
+    top:auto;
+    left:12vw;
+    bottom:1.7dvh;
+    width:clamp(170px,14vw,245px);
+  }
+  .ve2d-actor-cat{
+    position:fixed;
+    top:auto;
+    left:auto;
+    right:5.5vw;
+    bottom:14dvh;
+    width:clamp(135px,11vw,210px);
+  }
+  .ve2d-stage[data-approved-art=true] .ve2d-hotspot[data-target=dog]{
+    position:fixed;
+    top:auto!important;left:11vw!important;bottom:0!important;
+    transform:none!important;
+    width:clamp(210px,20vw,350px)!important;
+    height:clamp(112px,10.5vw,190px)!important;
+  }
+  .ve2d-stage[data-approved-art=true] .ve2d-hotspot[data-target=cat]{
+    position:fixed;
+    top:auto!important;left:auto!important;right:3.5vw!important;
+    bottom:12dvh!important;
+    transform:none!important;
+    width:clamp(165px,17vw,265px)!important;
+    height:clamp(110px,12vw,180px)!important;
+  }
+  .ve2d-stage[data-approved-art=true] .ve2d-dog-heart{
+    position:fixed;top:auto;left:25vw;bottom:12dvh;
+  }
+  .ve2d-stage[data-approved-art=true] .ve2d-cat-heart{
+    position:fixed;top:auto;left:auto;right:7vw;bottom:26dvh;
+  }
+}
+@media (min-width:761px) and (min-aspect-ratio:21/10){
+  .ve2d-root[data-approved-art=true] .ve2d-wide-brand{
+    display:inline-flex!important;
+    align-items:center;
+    pointer-events:none;
+  }
+}
