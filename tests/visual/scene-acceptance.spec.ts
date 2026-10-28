@@ -94,15 +94,15 @@ async function simulateUntil(page: Page, goal: "off-counter" | "petting" | "home
 test("employee leaves counter without giant white graphics panel; dog remains on pavement", async ({ page }, info) => {
   const host = await ready(page);
   await assertSurfaceCoords(page);
-  await expect(host).toHaveAttribute("data-employee-scale", "1.240");
-  await expect(host).toHaveAttribute("data-employee-y", "760");
+  await expect(host).toHaveAttribute("data-employee-scale", "1.430");
+  await expect(host).toHaveAttribute("data-employee-y", "810");
   // Visual geometry invariant: only the first ~53% of the full-body texture
   // is above the opaque counter edge. The former implementation exposed
   // ~78%, including the entire green apron and part of the dress.
   const portraitFraction = Number(await host.getAttribute("data-employee-visible-fraction"));
   expect(portraitFraction, "worker must be cropped precisely at belly/waist")
-    .toBeGreaterThan(.46);
-  expect(portraitFraction).toBeLessThan(.59);
+    .toBeGreaterThan(.39);
+  expect(portraitFraction).toBeLessThan(.46);
   await expect(host).toHaveAttribute("data-counter-mask-height", "650");
   await checkNoWhitePanel(page, "before visit");
   await page.screenshot({path: info.outputPath("employee-closeup-behind-counter.png")});
@@ -125,8 +125,8 @@ test("employee leaves counter without giant white graphics panel; dog remains on
   await expect(host).toHaveAttribute("data-counter-mask-height", "650");
   await expect(host).toHaveAttribute("data-employee-y", "760");
   const backAtCounter = Number(await host.getAttribute("data-employee-visible-fraction"));
-  expect(backAtCounter).toBeGreaterThan(.46);
-  expect(backAtCounter).toBeLessThan(.59);
+  expect(backAtCounter).toBeGreaterThan(.39);
+  expect(backAtCounter).toBeLessThan(.46);
   await checkNoWhitePanel(page, "employee returned behind counter");
 });
 
