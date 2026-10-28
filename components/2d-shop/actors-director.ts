@@ -21,15 +21,22 @@ export type WorldPose = {
   seconds: number;
 };
 
-// Feet are anchored behind the wood countertop when greeting visitors.
-// Behind the counter, only the upper body is visible. The larger portrait
-// makes her face readable without magnifying the entire outdoor character.
-const HOME = { x: 764, y: 694, scale: 1.08 };
+// The top edge of the wooden service counter sits at about y=650 in the
+// approved 1672x941 illustration. Position the worker's invisible feet FAR
+// enough behind that edge to show only her head, arms and torso down to the
+// belly (not her dress/skirt). The image remains a full-body transparent
+// texture, but the permanent Pixi stencil hides its lower half.
+//
+// Before this correction HOME.y=694 put the skirt visibly ON the countertop.
+// The new scale also makes the face readable from a laptop screen.
+export const COUNTER_WAISTLINE_Y = 650;
+export const COUNTER_PORTRAIT = { x: 764, y: 760, scale: 1.24 } as const;
+const HOME = COUNTER_PORTRAIT;
 const PATIO_SCALE = .895;
 const smoothStep = (t: number) => { const x = clamp(t, 0, 1); return x * x * (3 - 2 * x); };
 export function employeeSceneScale(position: Vec): number {
-  // Ease between close-up barista and natural full-body running scale while
-  // she exits the service counter. Returning applies the exact same rule.
+  // Ease between waist-up barista portrait and natural full-body running
+  // scale while she exits the service counter. Return reverses the easing.
   const distance = Math.hypot(position.x - HOME.x, position.y - HOME.y);
   return HOME.scale + (PATIO_SCALE - HOME.scale) * smoothStep(distance / 200);
 }
@@ -132,7 +139,7 @@ export class ActorsDirector {
     // The front seating remains part of the illustrated scene and characters
     // must not teleport from one side of the store to the other.
     const path: Vec[] = [
-      HOME, { x: 610, y: 693 }, { x: 433, y: 700 },
+      HOME, { x: 610, y: 724 }, { x: 433, y: 700 },
       { x: 317, y: 729 }, { x: 306, y: 817 }, { x: 361, y: 916 },
       { x: 770, y: 918 },
       ...(end.x > 1090 ? [{ x: 1115, y: 918 }] : []),
@@ -233,7 +240,10 @@ export class ActorsDirector {
           ...position, scale: employeeSceneScale(position),
           action: "run", facing: Math.abs(diffX) > .1 ? (diffX < 0 ? -1 : 1) : this.worker.facing,
           stride: Math.sin(this.time * 17),
-          behindCounter: position.y < 730 && position.x > 345,
+          // Keep her hidden behind the counter while walking toward the
+          // LEFT exit; otherwise the full dress reappears the moment her
+          // portrait's hidden feet begin at y=760.
+          behindCounter: position.x > 345 && position.y < 790,
         };
         if (progress >= 1) {
           visit.elapsed = 0;
