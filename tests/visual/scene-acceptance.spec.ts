@@ -13,6 +13,11 @@ async function ready(page: Page) {
   const host = page.locator(".ve2d-pixi-pets[data-visible='true']");
   await expect(host).toBeVisible();
   await expect(host).toHaveAttribute("data-phase", "idle");
+  // Hold the real simulation at each named state so screenshots do not
+  // accidentally show the NEXT action after slow CI image sampling.
+  await host.evaluate((element: HTMLElement) => {
+    element.dataset.reviewHold = "true";
+  });
   return host;
 }
 
@@ -89,15 +94,20 @@ async function simulateUntil(page: Page, goal: "off-counter" | "petting" | "home
 test("employee leaves counter without giant white graphics panel; dog remains on pavement", async ({ page }, info) => {
   const host = await ready(page);
   await assertSurfaceCoords(page);
+  await expect(host).toHaveAttribute("data-employee-scale", /1\.0[7-9]/);
   await checkNoWhitePanel(page, "before visit");
+  await page.screenshot({path: info.outputPath("employee-closeup-behind-counter.png")});
   // Clicking the animal requests a visit; dismiss the story popup to inspect
   // the real shop and moving Pixi canvas without a modal dimming overlay.
   await askForVisit(page, "dog");
   await simulateUntil(page, "off-counter");
+  await expect(host).toHaveAttribute("data-employee-pose-asset", "run");
   await checkNoWhitePanel(page, "employee outside counter");
+  await page.screenshot({path: info.outputPath("employee-real-running-pose.png")});
 
   await simulateUntil(page, "petting");
   await expect(host).toHaveAttribute("data-employee-action", "pet");
+  await expect(host).toHaveAttribute("data-employee-pose-asset", "pet");
   await checkNoWhitePanel(page, "employee petting dog");
   await assertSurfaceCoords(page);
   await page.screenshot({ path: info.outputPath("dog-visit-no-white-overlay.png") });
@@ -113,6 +123,7 @@ test("cat stays on table while worker pets it from the floor", async ({ page }, 
   await askForVisit(page, "cat");
   await simulateUntil(page, "petting");
   await expect(host).toHaveAttribute("data-counter-mask-height", "852");
+  await expect(host).toHaveAttribute("data-employee-pose-asset", "pet");
   await assertSurfaceCoords(page);
   const coords = await host.evaluate((el: HTMLElement) => ({ ...el.dataset }));
   expect(Number(coords.employeeY)).toBeGreaterThan(Number(coords.catY) + 50);

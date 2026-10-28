@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { ActorsDirector, ARTBOARD, DOG_GROUND_Y, CAT_TABLE_Y,
-  DOG_WALKABLE_X, CAT_WALKABLE_X, interpolateRoute } from "../components/2d-shop/actors-director.ts";
+  DOG_WALKABLE_X, CAT_WALKABLE_X, interpolateRoute, employeeSceneScale } from "../components/2d-shop/actors-director.ts";
 import { deformVertices } from "../components/2d-shop/deform-rig.ts";
 
 assert.deepEqual(ARTBOARD, { width: 1672, height: 941 });
@@ -18,6 +18,9 @@ const start = d.step(0);
 assert.equal(start.worker.behindCounter, true);
 assert.equal(start.worker.action, "wave");
 assert.equal(start.worker.y, 694);
+assert.equal(start.worker.scale, 1.08, "counter portrait is larger to show face");
+assert(employeeSceneScale({x:764,y:694}) > employeeSceneScale({x:764,y:918}),
+  "scale eases from a counter portrait into natural full-body size");
 let sawDogWalk = false, sawDogBark = false, sawDogJump = false;
 let sawCatGroom = false, sawCatNap = false, sawCatWalk = false;
 let last = start;
@@ -51,11 +54,18 @@ const visits = new ActorsDirector();
 visits.request("dog");
 visits.request("cat");
 let metDog = false, metCat = false, returned = false;
+let sawRunPose = false, sawPetPose = false;
 let previousPhase = "", previousPos = visits.step(0);
 for (let i = 0; i < 1800; i++) {
   const state = visits.step(.05);
   assert(Math.hypot(state.worker.x-previousPos.worker.x,state.worker.y-previousPos.worker.y)<26,
     "no jump at counter exit, grooming or return");
+  if (state.worker.action === "run") {
+    sawRunPose = true;
+    assert(state.worker.scale <= 1.081 && state.worker.scale >= .894,
+      "worker running scale smoothly stays between counter and patio proportions");
+  }
+  if (state.worker.action === "pet") sawPetPose = true;
   if (state.phase === "petting") {
     if(state.target === "dog") {
       metDog = true;
@@ -78,7 +88,8 @@ for (let i = 0; i < 1800; i++) {
   previousPos=state;
   if(metDog && metCat && returned) break;
 }
-assert(metDog && metCat && returned,"queued visits both complete and employee returns");
+assert(metDog && metCat && returned && sawRunPose && sawPetPose,
+  "visits include illustrated running, real crouching and returning to greeting pose");
 const reduced = new ActorsDirector();
 reduced.request("cat");
 for(let i=0;i<25;i++) {
@@ -101,7 +112,10 @@ assert.deepEqual([...original],[0,0,50,50,100,75,120,100],"canonical geometry is
 const renderer=readFileSync("components/2d-shop/pets-world.tsx","utf8");
 for(const p of ["MeshPlane","canonical/dog.webp","canonical/cat.webp","canonical/employee.webp",
   "state.mood === \"jump\"","state.mood === \"bark\"","state.mood === \"nap\"","onBarkRef",
-  "nextMaskHeight","employee.holder.mask = counterMask"])
+  "nextMaskHeight","employee.holder.mask = counterMask",
+  "workerTextures[person.action]", "animated/employee/run.webp",
+  "animated/employee/pet.webp", "animated/employee/wave.webp",
+  "employee.mesh.autoResize = false"])
   assert(renderer.includes(p),"renderer missing behavior: "+p);
 assert.doesNotMatch(renderer,/pets\/dog-walk\.png|actors\/anime\/idle\.webp/);
 assert.doesNotMatch(renderer,/employee\.holder\.mask\s*=\s*person\.behindCounter\s*\?/,

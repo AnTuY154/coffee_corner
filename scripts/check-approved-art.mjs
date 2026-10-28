@@ -45,3 +45,28 @@ for (const [name, size] of Object.entries(expected)) {
   console.log("OK canonical source", name, size.join("x"), hash.slice(0, 12));
 }
 console.log("PASS: only the four approved source illustrations are required at runtime.");
+
+// Additional animation poses are derivatives, NEVER replacement source images.
+const derivedFolder = resolve("public/art/animated/employee");
+const derivedManifest = resolve(derivedFolder, "manifest.json");
+if (existsSync(derivedManifest)) {
+  const assets = JSON.parse(readFileSync(derivedManifest, "utf8"));
+  assert.equal(assets.baseDesign, "/art/canonical/employee.webp");
+  for (const action of ["run", "pet", "wave"]) {
+    const item = assets.poses[action];
+    const file = resolve(derivedFolder, item.file);
+    if (!existsSync(file)) {
+      if (required) throw new Error("Missing employee action pose: " + action);
+      continue;
+    }
+    const raw = readFileSync(file);
+    assert.deepEqual(dimensions(raw), [1086, 1448], "Incorrect employee pose geometry: " + action);
+    assert.equal(raw.toString("ascii", 12, 16), "VP8X", "Missing RGBA WebP: " + action);
+    assert((raw[20] & 0x10) !== 0, "Missing transparency: " + action);
+    assert.equal(createHash("sha256").update(raw).digest("hex"), item.sha256,
+      "Employee pose changed unexpectedly: " + action);
+    console.log("OK employee animation pose", action);
+  }
+} else if (required) {
+  throw new Error("Employee pose manifest is required for the active animation renderer");
+}
