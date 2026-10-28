@@ -172,7 +172,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           // Catch up in <=50ms physics substeps after a slow WebGL frame.
           // The former hard 50ms frame cap caused the whole simulation to run
           // in slow motion at low FPS (and made interaction time out in CI).
-          let remaining = Math.min(Math.max(tick.deltaMS / 1000, 0), .2);
+          const reviewPaused = reviewMode && host.current?.dataset.reviewHold === "true";
+          let remaining = reviewPaused ? 0 : Math.min(Math.max(tick.deltaMS / 1000, 0), .2);
           stepTime += remaining;
           let pose = director.step(Math.min(remaining, .05), reduced.matches);
           remaining = Math.max(0, remaining - .05);
@@ -250,7 +251,9 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             { gait: pose.seconds * 13, speed: person.action === "run" ? 65 : 0,
               seconds: pose.seconds, motion: person.action }, "employee");
           employee.buffer.update();
-          lastNotification += Math.min(Math.max(tick.deltaMS / 1000, 0), .2);
+          lastNotification += reviewPaused
+            ? .15 // Publish the held frame promptly for visual assertions.
+            : Math.min(Math.max(tick.deltaMS / 1000, 0), .2);
           if (lastNotification >= .13) {
             lastNotification = 0;
             // Public read-only scene diagnostics for independent browser QA.
