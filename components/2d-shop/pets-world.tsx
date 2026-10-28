@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { ActorsDirector, ARTBOARD, COUNTER_WAISTLINE_Y, type Animal } from "./actors-director";
 import { deformVertices, type RigKind } from "./deform-rig";
+import { FRAME_SEQUENCES, FRAME_FPS, animationFrameAt, framePath, type CharacterId } from "./animation-frames";
 
 export type PetPositions = {
   dog: { x: number; y: number };
@@ -98,6 +99,38 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           Assets.load(`${artBase}/animated/cat/groom.webp`),
         ]);
         if (disposed) return;
+        type FrameTexture = typeof dogTexture;
+        const frames: Record<CharacterId, Record<string, FrameTexture[]>> = {
+          employee: {}, dog: {}, cat: {},
+        };
+        // Complete sequences only: never flash an empty frame.
+        await Promise.all((Object.keys(FRAME_SEQUENCES) as CharacterId[]).flatMap(character =>
+          Object.entries(FRAME_SEQUENCES[character]).map(async ([action, count]) => {
+            try {
+              const loaded = await Promise.all(Array.from({ length: count }, (_, i) =>
+                Assets.load(framePath(artBase, character, action, i)) as Promise<FrameTexture>));
+              if (loaded.length === count && loaded.every(t =>
+                t.width === loaded[0].width && t.height === loaded[0].height)) {
+                frames[character][action] = loaded;
+              }
+            } catch { /* canonical portrait remains the fallback */ }
+          }),
+        ));
+        if (disposed) return;
+        const clocks: Record<CharacterId, { action: string; elapsed: number }> = {
+          employee: { action: "", elapsed: 0 }, dog: { action: "", elapsed: 0 },
+          cat: { action: "", elapsed: 0 },
+        };
+        function frameFor(character: CharacterId, action: string,
+          fallback: FrameTexture, delta: number): FrameTexture {
+          const clock = clocks[character];
+          if (clock.action !== action) { clock.action = action; clock.elapsed = 0; }
+          else clock.elapsed += delta;
+          const sequence = frames[character][action];
+          if (!sequence?.length) return fallback;
+          const fps = (FRAME_FPS[character] as Record<string, number>)[action] ?? 8;
+          return sequence[animationFrameAt(clock.elapsed, fps, sequence.length)];
+        }
 
         function makeActor(texture: typeof dogTexture, kind: RigKind, width: number, height: number) {
           const holder = new Container();
@@ -218,6 +251,11 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               const wanted = state.mood === "groom" ? catGroomPose : catTexture;
               if (p.mesh.texture !== wanted) p.mesh.texture = wanted;
             }
+            const fallbackPose = p.kind === "cat" && state.mood === "groom"
+              ? catGroomPose : p.texture;
+            const nextFrame = frameFor(p.kind as Animal, state.mood, fallbackPose,
+              Math.min(Math.max(tick.deltaMS / 1000, 0), .2));
+            if (p.mesh.texture !== nextFrame) p.mesh.texture = nextFrame;
             // Explicit world surfaces: puppy paws on the courtyard tiles,
             // cat paws ON the wooden outdoor tabletop (not on the ground).
             // Visible movement must match the director's state. Previously
@@ -253,7 +291,12 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             // During a bark the head bounces and tail wags; during a nap
             // the cat curls closer to the tabletop, with a breathing cycle.
             if (napping) p.holder.scale.y += Math.sin(pose.seconds * 1.8) * .01;
-            deformVertices(p.original, p.vertices, p.texture.width, p.texture.height,
+            // Full illustrated frames contain their own limb motion. Avoid
+            // warping real frames; keep rig deformation for legacy art only.
+            if (frames[p.kind as Animal][state.mood]?.length) {
+              p.vertices.set(p.original);
+              p.buffer.update();
+            } else deformVertices(p.original, p.vertices, p.texture.width, p.texture.height,
               { gait: state.gait, speed: state.speed, seconds: pose.seconds,
                 motion: state.mood, actionProgress: state.actionProgress }, p.kind);
             p.buffer.update();
@@ -271,7 +314,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           // Switch the full illustrated pose — running is a real bent-knee
           // running drawing, petting is an actual crouch/reaching-arm drawing.
           // Deformation alone can no longer fake these body poses.
-          const requiredTexture = workerTextures[person.action];
+          const requiredTexture = frameFor("employee", person.action,
+            workerTextures[person.action], Math.min(Math.max(tick.deltaMS / 1000, 0), .2));
           if (employee.mesh.texture !== requiredTexture)
             employee.mesh.texture = requiredTexture;
           // The run and pet source poses reach to the right; mirror when
@@ -313,7 +357,10 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           employee.holder.rotation = runningOutside
             ? Math.sin(pose.seconds * 16) * .028
             : person.action === "pet" ? Math.sin(pose.seconds * 6) * .015 : 0;
-          deformVertices(employee.original, employee.vertices, employee.texture.width,
+          if (frames.employee[person.action]?.length) {
+            employee.vertices.set(employee.original);
+            employee.buffer.update();
+          } else deformVertices(employee.original, employee.vertices, employee.texture.width,
             employee.texture.height,
             { gait: pose.seconds * 17, speed: runningOutside ? 85 : 0,
               seconds: pose.seconds, motion: person.action }, "employee");
