@@ -1,7 +1,7 @@
 {
   "mode": "painted-frames",
-  "enabled": false,
-  "note": "Frame atlas loading is opt-in. Until approved sprite atlases are installed, use canonical approved full-body poses without image deformation.",
+  "enabled": true,
+  "note": "36 illustrated frames are installed as three transparent 4x3 WebP atlases. Use PixiJS AnimatedSprite and do not warp or squash approved character illustrations.",
   "imageFormat": "webp",
   "frameCounts": {
     "employee": 12,
