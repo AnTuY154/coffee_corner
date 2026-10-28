@@ -138,6 +138,18 @@ assert.equal(sourceManifest.mode, "painted-frames");
 assert(sourceManifest.frameCounts.employee >= 12);
 assert(sourceManifest.frameCounts.dog >= 12);
 assert(sourceManifest.frameCounts.cat >= 12);
+assert.equal(sourceManifest.enabled, true, "the generated frame atlases must actually be enabled");
+for (const name of ["employee", "dog", "cat"]) {
+  const atlas = JSON.parse(readFileSync(`public/art/animated/sprites/${name}.json`, "utf8"));
+  const binary = readFileSync(`public/art/animated/sprites/${name}.webp`);
+  assert.equal(binary.subarray(0, 4).toString(), "RIFF", name + " is a real WebP");
+  assert.equal(binary.subarray(8, 12).toString(), "WEBP");
+  assert.equal(Object.keys(atlas.frames).length, 12, name + " must have 12 drawn frames");
+  for (const [action, indices] of Object.entries(atlas.animations)) {
+    assert.equal(indices.length, 4, name + " " + action + " needs four changing frames");
+    for (const key of indices) assert(atlas.frames[key], "missing actual frame: " + key);
+  }
+}
 const renderer=readFileSync("components/2d-shop/pets-world.tsx","utf8");
 for(const p of ["AnimatedSprite", "drawPose", "canonical/dog.webp",
   "canonical/cat.webp", "canonical/employee.webp", "actionProgress",
