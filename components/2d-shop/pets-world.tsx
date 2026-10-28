@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ActorsDirector, ARTBOARD, type Animal } from "./actors-director";
+import { ActorsDirector, ARTBOARD, COUNTER_WAISTLINE_Y, type Animal } from "./actors-director";
 import { deformVertices, type RigKind } from "./deform-rig";
 
 export type PetPositions = {
@@ -152,10 +152,10 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         // Keep ONE stencil mask assigned throughout the actor's lifetime;
         // only change its geometry between the counter and full artboard.
         // Pixi never paints an active mask into the color buffer.
-        const counterMask = new Graphics().rect(0, 0, ARTBOARD.width, 650).fill(0xffffff);
+        const counterMask = new Graphics().rect(0, 0, ARTBOARD.width, COUNTER_WAISTLINE_Y).fill(0xffffff);
         employee.holder.mask = counterMask;
         world.addChild(counterMask);
-        let maskHeight = 650;
+        let maskHeight = COUNTER_WAISTLINE_Y;
 
         const director = new ActorsDirector();
         directorRef.current = director;
@@ -238,7 +238,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           // let the actual painted tabletop occlude the lower legs as in life.
           const besideCatTable = pose.target === "cat" &&
             person.x >= 1175 && person.y >= 870;
-          const nextMaskHeight = person.behindCounter ? 650 :
+          const nextMaskHeight = person.behindCounter ? COUNTER_WAISTLINE_Y :
             besideCatTable ? 852 : ARTBOARD.height;
           if (nextMaskHeight !== maskHeight) {
             counterMask.clear().rect(0, 0, ARTBOARD.width, nextMaskHeight).fill(0xffffff);
@@ -265,6 +265,14 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               host.current.dataset.employeeAction = person.action;
               host.current.dataset.employeePoseAsset = person.action;
               host.current.dataset.employeeScale = person.scale.toFixed(3);
+              // Fraction of employee artboard visible above the counter:
+              // target ≈ half-body, from belly to head (not the skirt).
+              const portraitHeight = employee.height * person.scale;
+              const portraitTop = person.y - portraitHeight * .96;
+              const visibleFraction = Math.max(0, Math.min(1,
+                (COUNTER_WAISTLINE_Y - portraitTop) / portraitHeight));
+              host.current.dataset.employeeVisibleFraction = person.behindCounter
+                ? visibleFraction.toFixed(3) : "1";
               host.current.dataset.counterMaskHeight = String(maskHeight);
               host.current.dataset.dogX = String(Math.round(pose.dog.x));
               host.current.dataset.dogY = String(Math.round(pose.dog.y));
@@ -279,7 +287,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               dog: { x: pose.dog.x, y: pose.dog.y - 56 },
               cat: { x: pose.cat.x, y: pose.cat.y - 42 },
               clerk: { x: person.x, y: person.y - (person.behindCounter
-                ? 112 * person.scale : 103 * person.scale) },
+                ? 146 * person.scale : 103 * person.scale) },
             });
           }
         };
