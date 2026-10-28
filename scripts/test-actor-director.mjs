@@ -31,7 +31,7 @@ assert(fractionAboveCounter >= .39 && fractionAboveCounter <= .46,
   "visible employee must be BELLY-UP, with no skirt or legs above the counter");
 assert(COUNTER_WAISTLINE_Y < start.worker.y,
   "employee feet must remain behind counter, out of the visible stage");
-assert(employeeSceneScale({x:764,y:694}) > employeeSceneScale({x:764,y:918}),
+assert(employeeSceneScale(COUNTER_PORTRAIT) > employeeSceneScale({x:1050,y:918}),
   "scale eases from a counter portrait into natural full-body size");
 let sawDogWalk = false, sawDogBark = false, sawDogJump = false;
 let sawCatGroom = false, sawCatNap = false, sawCatWalk = false;
