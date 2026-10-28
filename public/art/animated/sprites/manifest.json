@@ -1,0 +1,38 @@
+{
+  "mode": "painted-frames",
+  "enabled": false,
+  "note": "Frame atlas loading is opt-in. Until approved sprite atlases are installed, use canonical approved full-body poses without image deformation.",
+  "imageFormat": "webp",
+  "frameCounts": {
+    "employee": 12,
+    "dog": 12,
+    "cat": 12
+  },
+  "actions": {
+    "employee": [
+      "run",
+      "pet",
+      "wave"
+    ],
+    "dog": [
+      "walk",
+      "bark",
+      "jump",
+      "happy"
+    ],
+    "cat": [
+      "walk",
+      "groom",
+      "nap",
+      "happy"
+    ]
+  },
+  "assets": [
+    "employee.json",
+    "employee.webp",
+    "dog.json",
+    "dog.webp",
+    "cat.json",
+    "cat.webp"
+  ]
+}
