@@ -199,18 +199,39 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             const state = pose[p.kind as Animal];
             // Explicit world surfaces: puppy paws on the courtyard tiles,
             // cat paws ON the wooden outdoor tabletop (not on the ground).
+            // Visible movement must match the director's state. Previously
+            // only mesh points moved (by <3px on screen), which looked like
+            // sliding photos. Use foot-locked world transforms as well:
+            // running bobs, a real airborne jump, a sleepy crouch and
+            // different tail/head rhythms. Keep the floor shadow anchored.
             const dogJump = p.kind === "dog" && state.mood === "jump";
-            const height = dogJump ? Math.sin(state.actionProgress * Math.PI) * 34 : 0;
-            p.holder.position.set(state.x, state.y - height);
-            p.holder.scale.x = state.facing;
+            const jumping = dogJump ? Math.sin(state.actionProgress * Math.PI) * 40 : 0;
+            const walking = state.mood === "walk" || state.mood === "turn";
+            const bounce = walking ? Math.pow(Math.sin(state.gait), 2) *
+              Math.min(4.2, Math.abs(state.speed) / 17) : 0;
+            const excited = state.mood === "happy" || state.mood === "bark";
+            const wag = p.kind === "dog" && excited
+              ? Math.sin(pose.seconds * 11) * .024 : 0;
+            const grooming = p.kind === "cat" && state.mood === "groom";
+            const napping = p.kind === "cat" && state.mood === "nap";
+            const napEase = napping ? Math.min(1, state.actionProgress * 6) : 0;
+            p.holder.position.set(state.x, state.y - jumping - bounce);
+            p.holder.scale.set(state.facing * (1 + napEase * .14),
+              dogJump ? 1 + jumping / 230 : 1 - napEase * .25);
+            p.holder.rotation = walking ? Math.sin(state.gait) * .02
+              : grooming ? Math.sin(pose.seconds * 6) * .027
+              : wag;
             p.holder.zIndex = state.y;
-            p.shadow.y = height;
-            p.shadow.scale.x = dogJump ? 1 - height / 110 : 1;
+            p.shadow.y = jumping + bounce;
+            p.shadow.scale.x = dogJump ? 1 - jumping / 110 : 1;
             p.shadow.alpha = dogJump ? .16 : 1;
             p.heart.alpha = state.mood === "happy" ? .7 + Math.sin(stepTime * 7) * .25 : 0;
             p.actionLabel.alpha = state.mood === "bark" || state.mood === "nap"
               ? state.mood === "bark" ? .8 + Math.sin(stepTime * 18) * .2 : .72 : 0;
             p.actionLabel.y = -p.height - 24 - (dogJump ? 20 : Math.abs(Math.sin(stepTime * 2)) * 4);
+            // During a bark the head bounces and tail wags; during a nap
+            // the cat curls closer to the tabletop, with a breathing cycle.
+            if (napping) p.holder.scale.y += Math.sin(pose.seconds * 1.8) * .01;
             deformVertices(p.original, p.vertices, p.texture.width, p.texture.height,
               { gait: state.gait, speed: state.speed, seconds: pose.seconds,
                 motion: state.mood, actionProgress: state.actionProgress }, p.kind);
@@ -219,7 +240,13 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           if (pose.dog.mood === "bark" && previousDogMood !== "bark") onBarkRef.current?.();
           previousDogMood = pose.dog.mood;
           const person = pose.worker;
-          employee.holder.position.set(person.x, person.y);
+          // A true running pose already has bent legs. Foot-locked strides
+          // now add a vertical rise/fall; petting uses the crouching asset
+          // and strokes instead of moving the whole full-body image sideways.
+          const runningOutside = person.action === "run" && !person.behindCounter;
+          const runLift = runningOutside
+            ? Math.pow(Math.sin(pose.seconds * 9), 2) * 4.5 : 0;
+          employee.holder.position.set(person.x, person.y - runLift);
           // Switch the full illustrated pose — running is a real bent-knee
           // running drawing, petting is an actual crouch/reaching-arm drawing.
           // Deformation alone can no longer fake these body poses.
@@ -244,11 +271,12 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             counterMask.clear().rect(0, 0, ARTBOARD.width, nextMaskHeight).fill(0xffffff);
             maskHeight = nextMaskHeight;
           }
-          employee.holder.rotation = person.action === "run" ? Math.sin(pose.seconds * 15) * .023 :
-            person.action === "pet" ? Math.sin(pose.seconds * 6) * .012 : 0;
+          employee.holder.rotation = runningOutside
+            ? Math.sin(pose.seconds * 16) * .028
+            : person.action === "pet" ? Math.sin(pose.seconds * 6) * .015 : 0;
           deformVertices(employee.original, employee.vertices, employee.texture.width,
             employee.texture.height,
-            { gait: pose.seconds * 13, speed: person.action === "run" ? 65 : 0,
+            { gait: pose.seconds * 17, speed: runningOutside ? 85 : 0,
               seconds: pose.seconds, motion: person.action }, "employee");
           employee.buffer.update();
           lastNotification += reviewPaused
@@ -277,9 +305,12 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               host.current.dataset.dogX = String(Math.round(pose.dog.x));
               host.current.dataset.dogY = String(Math.round(pose.dog.y));
               host.current.dataset.dogMood = pose.dog.mood;
+              host.current.dataset.dogJumpHeight = String(Math.round(
+                pose.dog.mood === "jump" ? Math.sin(pose.dog.actionProgress * Math.PI) * 40 : 0));
               host.current.dataset.catX = String(Math.round(pose.cat.x));
               host.current.dataset.catY = String(Math.round(pose.cat.y));
               host.current.dataset.catMood = pose.cat.mood;
+              host.current.dataset.workerRunLift = runLift.toFixed(2);
             }
             onMoveRef.current({
               // Hotspot centers match the VISIBLE rendered sprites in the
