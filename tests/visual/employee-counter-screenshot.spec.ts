@@ -14,13 +14,13 @@ test("counter employee visible only belly-up, face enlarged", async ({page}) => 
   const host = page.locator(".ve2d-pixi-pets[data-visible='true']");
   await expect(host).toHaveAttribute("data-phase", "idle");
   await host.evaluate((el: HTMLElement) => { el.dataset.reviewHold = "true"; });
-  await expect(host).toHaveAttribute("data-employee-scale", "1.240");
+  await expect(host).toHaveAttribute("data-employee-scale", "1.430");
   await expect(host).toHaveAttribute("data-counter-mask-height", "650");
   const p = await host.evaluate((el: HTMLElement) => ({...el.dataset}));
   const fraction = Number(p.employeeVisibleFraction);
-  expect(fraction).toBeGreaterThan(.46);
-  expect(fraction).toBeLessThan(.59);
-  expect(p.employeeY).toBe("760");
+  expect(fraction).toBeGreaterThan(.39);
+  expect(fraction).toBeLessThan(.46);
+  expect(p.employeeY).toBe("810");
   mkdirSync("qa-counter", {recursive:true});
   const stage = page.locator(".ve2d-stage");
   await stage.screenshot({path:"qa-counter/01-full-cafe.png",animations:"disabled"});
