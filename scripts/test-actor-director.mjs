@@ -18,16 +18,16 @@ const d = new ActorsDirector();
 const start = d.step(0);
 assert.equal(start.worker.behindCounter, true);
 assert.equal(start.worker.action, "wave");
-assert.equal(start.worker.y, 760, "portrait feet sit BELOW countertop, skirt must stay hidden");
-assert.equal(start.worker.scale, 1.24, "counter portrait is larger to show face");
+assert.equal(start.worker.y, 810, "portrait feet sit BELOW countertop, skirt must stay hidden");
+assert.equal(start.worker.scale, 1.43, "face is enlarged while only belly-up is shown");
 assert.equal(COUNTER_WAISTLINE_Y, 650);
-assert.deepEqual(COUNTER_PORTRAIT, { x: 764, y: 760, scale: 1.24 });
+assert.deepEqual(COUNTER_PORTRAIT, { x: 764, y: 810, scale: 1.43 });
 // A real cropped torso occupies at most the upper 60% of the illustrated
 // character; a formerly exposed full skirt would give a fraction >75%.
 const entireCharacterHeight = 208 * start.worker.scale;
 const paintedTop = start.worker.y - entireCharacterHeight * .96;
 const fractionAboveCounter = (COUNTER_WAISTLINE_Y - paintedTop) / entireCharacterHeight;
-assert(fractionAboveCounter >= .46 && fractionAboveCounter <= .59,
+assert(fractionAboveCounter >= .39 && fractionAboveCounter <= .46,
   "visible employee must be BELLY-UP, with no skirt or legs above the counter");
 assert(COUNTER_WAISTLINE_Y < start.worker.y,
   "employee feet must remain behind counter, out of the visible stage");
@@ -74,7 +74,7 @@ for (let i = 0; i < 1800; i++) {
     "no jump at counter exit, grooming or return");
   if (state.worker.action === "run") {
     sawRunPose = true;
-    assert(state.worker.scale <= 1.241 && state.worker.scale >= .894,
+    assert(state.worker.scale <= 1.431 && state.worker.scale >= .894,
       "worker running scale smoothly stays between counter and patio proportions");
   }
   if (state.worker.action === "pet") sawPetPose = true;
@@ -128,7 +128,7 @@ for(const p of ["MeshPlane","canonical/dog.webp","canonical/cat.webp","canonical
   "workerTextures[person.action]", "animated/employee/run.webp",
   "animated/employee/pet.webp", "animated/employee/wave.webp",
   "employee.mesh.autoResize = false", "COUNTER_WAISTLINE_Y",
-  "employeeVisibleFraction", "146 * person.scale"])
+  "employeeVisibleFraction", "156 * person.scale"])
   assert(renderer.includes(p),"renderer missing behavior: "+p);
 assert.doesNotMatch(renderer,/pets\/dog-walk\.png|actors\/anime\/idle\.webp/);
 assert.doesNotMatch(renderer,/employee\.holder\.mask\s*=\s*person\.behindCounter\s*\?/,
