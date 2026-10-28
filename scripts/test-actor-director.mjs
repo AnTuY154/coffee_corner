@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import { ActorsDirector, ARTBOARD, DOG_GROUND_Y, CAT_TABLE_Y,
   DOG_WALKABLE_X, CAT_WALKABLE_X, interpolateRoute, employeeSceneScale,
   COUNTER_WAISTLINE_Y, COUNTER_PORTRAIT } from "../components/2d-shop/actors-director.ts";
-import { deformVertices } from "../components/2d-shop/deform-rig.ts";
 
 assert.deepEqual(ARTBOARD, { width: 1672, height: 941 });
 assert(DOG_GROUND_Y > CAT_TABLE_Y + 60, "dog is on patio, cat is on table");
@@ -133,31 +132,30 @@ for(let i=0;i<25;i++) {
   assert.equal(p.cat.mood,"nap");
 }
 
-const original=new Float32Array([0,0,50,50,100,75,120,100]);
-for(const [kind,motion] of [["dog","walk"],["dog","bark"],["dog","jump"],
-  ["cat","groom"],["cat","nap"],["employee","wave"],["employee","pet"]]) {
-  const copy=new Float32Array(original);
-  deformVertices(original,copy,120,100,{gait:1.6,speed:30,seconds:1.1,
-    motion,actionProgress:.48},kind);
-  assert.notDeepEqual([...copy],[...original],kind+" "+motion+" has animated vertex geometry");
-  assert(copy.every(Number.isFinite),"no broken rig vertices");
-}
-assert.deepEqual([...original],[0,0,50,50,100,75,120,100],"canonical geometry is immutable");
+// Frame animation must never stretch or warp the approved character images.
+const sourceManifest = JSON.parse(readFileSync("public/art/animated/sprites/manifest.json","utf8"));
+assert.equal(sourceManifest.mode, "painted-frames");
+assert(sourceManifest.frameCounts.employee >= 12);
+assert(sourceManifest.frameCounts.dog >= 12);
+assert(sourceManifest.frameCounts.cat >= 12);
 const renderer=readFileSync("components/2d-shop/pets-world.tsx","utf8");
-for(const p of ["MeshPlane","canonical/dog.webp","canonical/cat.webp","canonical/employee.webp",
-  "state.mood === \"jump\"","state.mood === \"bark\"","state.mood === \"nap\"","onBarkRef",
-  "nextMaskHeight","employee.holder.mask = counterMask",
-  "workerTextures[person.action]", "animated/employee/run.webp",
-  "animated/employee/pet.webp", "animated/employee/wave.webp",
-  "employee.mesh.autoResize = false", "COUNTER_WAISTLINE_Y",
+for(const p of ["AnimatedSprite", "drawPose", "canonical/dog.webp",
+  "canonical/cat.webp", "canonical/employee.webp", "actionProgress",
+  "state.mood === \"jump\"", "state.mood === \"bark\"", "state.mood === \"nap\"",
+  "onBarkRef", "nextMaskHeight", "employee.holder.mask = counterMask",
+  "animated/employee/run.webp", "animated/employee/pet.webp",
+  "animated/employee/wave.webp", "COUNTER_WAISTLINE_Y",
   "employeeVisibleFraction", "156 * person.scale",
-  "runLift", "dogJumpHeight", "cat-groom", "cat-nap",
-  "animated/cat/groom.webp", "cat.mesh.autoResize = false",
-  "catPoseAsset"])
-  assert(renderer.includes(p),"renderer missing behavior: "+p);
+  "dogJumpHeight", "catPoseAsset", "frameRendering"]) {
+  assert(renderer.includes(p), "missing painted-frame behavior: " + p);
+}
+assert(!renderer.includes("MeshPlane"), "no mesh warping");
+assert(!renderer.includes("deformVertices"), "no deform vertices");
+assert(!renderer.includes("p.holder.rotation = walking"), "no animated body tilting");
+assert(!renderer.includes("napEase"), "no cartoon-like cat squashing");
 assert.doesNotMatch(renderer,/pets\/dog-walk\.png|actors\/anime\/idle\.webp/);
 assert.doesNotMatch(renderer,/employee\.holder\.mask\s*=\s*person\.behindCounter\s*\?/,
   "releasing the Pixi stencil reveals a giant white rectangle");
 assert.doesNotMatch(renderer,/employee\.holder\.mask\s*=\s*null/,
   "employee mask must remain active throughout visits");
-console.log("PASS: canonical art, ground/table paths, no teleport, employee visits, bark/jump/tail, groom/nap, accessible reduced motion");
+console.log("PASS: canonical art, safe routes, coordinated visits and frame-only rendering without mesh distortion");
