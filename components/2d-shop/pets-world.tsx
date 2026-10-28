@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { ActorsDirector, ARTBOARD, COUNTER_WAISTLINE_Y, type Animal } from "./actors-director";
-import { deformVertices, type RigKind } from "./deform-rig";
+
 
 export type PetPositions = {
   dog: { x: number; y: number };
@@ -46,7 +46,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
     const mount = host.current;
     if (!mount) return;
     async function start() {
-      const { Application, Assets, Container, MeshPlane, Graphics, Text } = await import("pixi.js");
+      const { Application, Assets, Container, AnimatedSprite, Graphics, Text } = await import("pixi.js");
       if (!mount || disposed) return;
       const app = new Application();
       try {
@@ -99,18 +99,32 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         ]);
         if (disposed) return;
 
-        function makeActor(texture: typeof dogTexture, kind: RigKind, width: number, height: number) {
+        // Actual painted frames, no mesh deformation and no arm/leg warping.
+        // An atlas can supply multiple drawings for each state; single-pose
+        // fallback preserves the original approved art in older deployments.
+        const [employeeAtlas, dogAtlas, catAtlas] = await Promise.all(
+          (["employee", "dog", "cat"] as const).map(async name => {
+            try {
+              const response = await fetch(`${artBase}/animated/sprites/manifest.json`);
+              if (!response.ok) return null;
+              const manifest: { enabled?: boolean } = await response.json();
+              if (!manifest.enabled) return null;
+              return await Assets.load(`${artBase}/animated/sprites/${name}.json`);
+            } catch { return null; }
+          }),
+        );
+
+        type TextureFrame = typeof dogTexture;
+        type Kind = "employee" | "dog" | "cat";
+        function makeActor(texture: TextureFrame, kind: Kind, width: number, height: number) {
           const holder = new Container();
           const shadow = new Graphics().ellipse(0, -3, width * .35, 9)
             .fill({ color: 0x423b2a, alpha: .2 });
-          const mesh = new MeshPlane({ texture, verticesX: 17, verticesY: 17 });
-          const attr = mesh.geometry.getAttribute("aPosition");
-          const original = new Float32Array(attr.buffer.data);
-          const vertices = attr.buffer.data as Float32Array;
-          mesh.scale.set(width / texture.width, height / texture.height);
-          mesh.position.set(-width / 2, -height * .96);
-          // The position buffer is deformed around its unchanged source UVs.
-          // Mesh deformation preserves original faces, patterns and textures.
+          const sprite = new AnimatedSprite({
+            textures: [texture], autoUpdate: false, anchor: { x: .5, y: .96 },
+          });
+          sprite.width = width;
+          sprite.height = height;
           const heart = new Text({ text: "♡", style: { fill: 0xe57d8d, fontSize: 34, fontWeight: "bold" } });
           heart.anchor.set(.5);
           heart.position.set(12, -height - 13);
@@ -123,32 +137,57 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           actionLabel.anchor.set(.5);
           actionLabel.position.set(4, -height - 24);
           actionLabel.alpha = 0;
-          holder.addChild(shadow, mesh, heart, actionLabel);
+          holder.addChild(shadow, sprite, heart, actionLabel);
           world.addChild(holder);
-          return { holder, shadow, mesh, buffer: attr.buffer, vertices, original,
-            width, height, heart, actionLabel, kind, texture };
+          return { holder, shadow, sprite, width, height, heart, actionLabel, kind, animationKey: "" };
+        }
+        function frames(sheet: typeof employeeAtlas, action: string, fallback: TextureFrame) {
+          const textureList = sheet?.animations?.[action] as TextureFrame[] | undefined;
+          return textureList?.length ? textureList : [fallback];
+        }
+        // Assigning the array only when an action changes avoids resetting the
+        // walk cycle each frame. Pixi's AnimatedSprite is driven explicitly by
+        // the one authoritative ActorsDirector clock, including paused QA.
+        function drawPose(
+          actor: ReturnType<typeof makeActor>, key: string,
+          textures: TextureFrame[], seconds: number, fps: number,
+          actionProgress?: number,
+        ) {
+          if (actor.animationKey !== key) {
+            actor.animationKey = key;
+            actor.sprite.textures = textures;
+            actor.sprite.width = actor.width;
+            actor.sprite.height = actor.height;
+          }
+          const index = textures.length <= 1 ? 0 : actionProgress === undefined
+            ? Math.floor(seconds * fps) % textures.length
+            : Math.min(textures.length - 1, Math.floor(actionProgress * textures.length));
+          if (actor.sprite.currentFrame !== index) actor.sprite.gotoAndStop(index);
         }
 
         const employee = makeActor(employeeTexture, "employee", 155, 208);
-        // All pose images have the canonical employee's 1086x1448 transparent
-        // artboard. Never rebuild the vertex mesh when switching a texture:
-        // this preserves UVs, world size, feet anchoring and hitbox geometry.
-        employee.mesh.autoResize = false;
-        const workerTextures = {
-          idle: employeeTexture,
-          wave: wavePose,
-          run: runPose,
-          pet: petPose,
-        } as const;
         const dog = makeActor(dogTexture, "dog", 118, 118);
-        // The cat occupies the clear left section of the wooden tabletop;
-        // the flower vase and right-hand chair are not a walkable surface.
         const cat = makeActor(catTexture, "cat", 86, 86);
-        // Full-artboard derived grooming illustration from the approved
-        // calico character, on the same 1254×1254 transparent canvas.
-        // Switching mesh texture cannot resize Pixi's geometry/foot anchor.
-        cat.mesh.autoResize = false;
-
+        const employeeFrames = {
+          idle: frames(employeeAtlas, "idle", employeeTexture),
+          wave: frames(employeeAtlas, "wave", wavePose),
+          run: frames(employeeAtlas, "run", runPose),
+          pet: frames(employeeAtlas, "pet", petPose),
+        };
+        const dogFrames = {
+          idle: frames(dogAtlas, "idle", dogTexture),
+          walk: frames(dogAtlas, "walk", dogTexture),
+          bark: frames(dogAtlas, "bark", dogTexture),
+          jump: frames(dogAtlas, "jump", dogTexture),
+          happy: frames(dogAtlas, "happy", dogTexture),
+        };
+        const catFrames = {
+          idle: frames(catAtlas, "idle", catTexture),
+          walk: frames(catAtlas, "walk", catTexture),
+          groom: frames(catAtlas, "groom", catGroomPose),
+          nap: frames(catAtlas, "nap", catTexture),
+          happy: frames(catAtlas, "happy", catTexture),
+        };
         // Pixi v8: a Graphics object ceases to be an active stencil mask when
         // its last masked actor sets `.mask = null`. At that moment it becomes
         // VISIBLE as a giant opaque rectangle. This was the white 1672x650
@@ -214,70 +253,51 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           }
           for (const p of [dog, cat] as const) {
             const state = pose[p.kind as Animal];
-            if (p.kind === "cat") {
-              const wanted = state.mood === "groom" ? catGroomPose : catTexture;
-              if (p.mesh.texture !== wanted) p.mesh.texture = wanted;
-            }
-            // Explicit world surfaces: puppy paws on the courtyard tiles,
-            // cat paws ON the wooden outdoor tabletop (not on the ground).
-            // Visible movement must match the director's state. Previously
-            // only mesh points moved (by <3px on screen), which looked like
-            // sliding photos. Use foot-locked world transforms as well:
-            // running bobs, a real airborne jump, a sleepy crouch and
-            // different tail/head rhythms. Keep the floor shadow anchored.
             const dogJump = p.kind === "dog" && state.mood === "jump";
-            const jumping = dogJump ? Math.sin(state.actionProgress * Math.PI) * 40 : 0;
-            const walking = state.mood === "walk" || state.mood === "turn";
-            const bounce = walking ? Math.pow(Math.sin(state.gait), 2) *
-              Math.min(4.2, Math.abs(state.speed) / 17) : 0;
-            const excited = state.mood === "happy" || state.mood === "bark";
-            const wag = p.kind === "dog" && excited
-              ? Math.sin(pose.seconds * 11) * .024 : 0;
-            const grooming = p.kind === "cat" && state.mood === "groom";
-            const napping = p.kind === "cat" && state.mood === "nap";
-            const napEase = napping ? Math.min(1, state.actionProgress * 6) : 0;
-            p.holder.position.set(state.x, state.y - jumping - bounce);
-            p.holder.scale.set(state.facing * (1 + napEase * .14),
-              dogJump ? 1 + jumping / 230 : 1 - napEase * .25);
-            p.holder.rotation = walking ? Math.sin(state.gait) * .02
-              : grooming ? Math.sin(pose.seconds * 6) * .027
-              : wag;
+            const jumpHeight = dogJump
+              ? Math.sin(state.actionProgress * Math.PI) * 40 : 0;
+            p.holder.position.set(state.x, state.y - jumpHeight);
+            // Orientation flip only: X and Y remain identical in magnitude.
+            // No scaling, warping, rotating, squashing or mesh deformation
+            // during the walk, grooming, sleeping, greeting or jump actions.
+            p.holder.scale.set(state.facing, 1);
+            p.holder.rotation = 0;
             p.holder.zIndex = state.y;
-            p.shadow.y = jumping + bounce;
-            p.shadow.scale.x = dogJump ? 1 - jumping / 110 : 1;
-            p.shadow.alpha = dogJump ? .16 : 1;
-            p.heart.alpha = state.mood === "happy" ? .7 + Math.sin(stepTime * 7) * .25 : 0;
-            p.actionLabel.alpha = state.mood === "bark" || state.mood === "nap"
-              ? state.mood === "bark" ? .8 + Math.sin(stepTime * 18) * .2 : .72 : 0;
-            p.actionLabel.y = -p.height - 24 - (dogJump ? 20 : Math.abs(Math.sin(stepTime * 2)) * 4);
-            // During a bark the head bounces and tail wags; during a nap
-            // the cat curls closer to the tabletop, with a breathing cycle.
-            if (napping) p.holder.scale.y += Math.sin(pose.seconds * 1.8) * .01;
-            deformVertices(p.original, p.vertices, p.texture.width, p.texture.height,
-              { gait: state.gait, speed: state.speed, seconds: pose.seconds,
-                motion: state.mood, actionProgress: state.actionProgress }, p.kind);
-            p.buffer.update();
+            p.shadow.y = jumpHeight;
+            p.shadow.scale.x = 1;
+            p.shadow.alpha = dogJump ? .26 : 1;
+            p.heart.alpha = state.mood === "happy" ? .8 : 0;
+            p.actionLabel.alpha = state.mood === "bark" || state.mood === "nap" ? .8 : 0;
+            p.actionLabel.y = -p.height - 24;
+            if (p.kind === "dog") {
+              const name = (state.mood === "walk" || state.mood === "turn") ? "walk"
+                : state.mood === "bark" ? "bark"
+                : state.mood === "jump" ? "jump"
+                : state.mood === "happy" ? "happy" : "idle";
+              drawPose(p, name, dogFrames[name], pose.seconds,
+                name === "walk" ? 9 : 6,
+                name === "jump" || name === "bark" ? state.actionProgress : undefined);
+            } else {
+              const name = (state.mood === "walk" || state.mood === "turn") ? "walk"
+                : state.mood === "groom" ? "groom"
+                : state.mood === "nap" ? "nap"
+                : state.mood === "happy" ? "happy" : "idle";
+              drawPose(p, name, catFrames[name], pose.seconds,
+                name === "walk" ? 7 : 4,
+                name === "nap" ? state.actionProgress : undefined);
+            }
           }
           if (pose.dog.mood === "bark" && previousDogMood !== "bark") onBarkRef.current?.();
           previousDogMood = pose.dog.mood;
           const person = pose.worker;
-          // A true running pose already has bent legs. Foot-locked strides
-          // now add a vertical rise/fall; petting uses the crouching asset
-          // and strokes instead of moving the whole full-body image sideways.
+          // Running and crouching are different PAINTED frames, not a
+          // deformation of the standing employee. Feet follow world routes.
           const runningOutside = person.action === "run" && !person.behindCounter;
-          const runLift = runningOutside
-            ? Math.pow(Math.sin(pose.seconds * 9), 2) * 4.5 : 0;
-          employee.holder.position.set(person.x, person.y - runLift);
-          // Switch the full illustrated pose — running is a real bent-knee
-          // running drawing, petting is an actual crouch/reaching-arm drawing.
-          // Deformation alone can no longer fake these body poses.
-          const requiredTexture = workerTextures[person.action];
-          if (employee.mesh.texture !== requiredTexture)
-            employee.mesh.texture = requiredTexture;
-          // The run and pet source poses reach to the right; mirror when
-          // approaching the dog from its right side. At the counter, preserve
-          // the original apron writing and the face's approved appearance.
-          const poseFacing = person.action === "run" || person.action === "pet"
+          const runLift = 0;
+          employee.holder.position.set(person.x, person.y);
+          drawPose(employee, person.action, employeeFrames[person.action],
+            pose.seconds, person.action === "run" ? 10 : person.action === "pet" ? 5 : 4);
+          const poseFacing = runningOutside || person.action === "pet"
             ? person.facing : 1;
           employee.holder.scale.set(person.scale * poseFacing, person.scale);
           employee.holder.zIndex = person.y + .1;
@@ -310,14 +330,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             counterMask.clear().rect(0, 0, ARTBOARD.width, nextMaskHeight).fill(0xffffff);
             maskHeight = nextMaskHeight;
           }
-          employee.holder.rotation = runningOutside
-            ? Math.sin(pose.seconds * 16) * .028
-            : person.action === "pet" ? Math.sin(pose.seconds * 6) * .015 : 0;
-          deformVertices(employee.original, employee.vertices, employee.texture.width,
-            employee.texture.height,
-            { gait: pose.seconds * 17, speed: runningOutside ? 85 : 0,
-              seconds: pose.seconds, motion: person.action }, "employee");
-          employee.buffer.update();
+          employee.holder.rotation = 0;
           lastNotification += reviewPaused
             ? .15 // Publish the held frame promptly for visual assertions.
             : Math.min(Math.max(tick.deltaMS / 1000, 0), .2);
@@ -351,6 +364,10 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               host.current.dataset.catMood = pose.cat.mood;
               host.current.dataset.catPoseAsset = pose.cat.mood === "groom"
                 ? "groom" : "canonical";
+              host.current.dataset.dogFrame = String(dog.sprite.currentFrame);
+              host.current.dataset.catFrame = String(cat.sprite.currentFrame);
+              host.current.dataset.employeeFrame = String(employee.sprite.currentFrame);
+              host.current.dataset.frameRendering = "painted-sprites";
               host.current.dataset.workerRunLift = runLift.toFixed(2);
             }
             onMoveRef.current({
