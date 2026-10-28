@@ -266,7 +266,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               host.current.dataset.employeePoseAsset = person.action;
               host.current.dataset.employeeScale = person.scale.toFixed(3);
               // Fraction of employee artboard visible above the counter:
-              // target ≈ half-body, from belly to head (not the skirt).
+              // target ≈ upper 42% of full illustrated texture: belly to head, no skirt.
               const portraitHeight = employee.height * person.scale;
               const portraitTop = person.y - portraitHeight * .96;
               const visibleFraction = Math.max(0, Math.min(1,
@@ -287,7 +287,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               dog: { x: pose.dog.x, y: pose.dog.y - 56 },
               cat: { x: pose.cat.x, y: pose.cat.y - 42 },
               clerk: { x: person.x, y: person.y - (person.behindCounter
-                ? 146 * person.scale : 103 * person.scale) },
+                ? 156 * person.scale : 103 * person.scale) },
             });
           }
         };
