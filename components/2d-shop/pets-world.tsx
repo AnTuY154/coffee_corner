@@ -88,13 +88,14 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         app.destroy(true, { children: true, texture: false, textureSource: false });
       };
       try {
-        const [employeeTexture, dogTexture, catTexture, wavePose, runPose, petPose] = await Promise.all([
+        const [employeeTexture, dogTexture, catTexture, wavePose, runPose, petPose, catGroomPose] = await Promise.all([
           Assets.load(`${artBase}/canonical/employee.webp`),
           Assets.load(`${artBase}/canonical/dog.webp`),
           Assets.load(`${artBase}/canonical/cat.webp`),
           Assets.load(`${artBase}/animated/employee/wave.webp`),
           Assets.load(`${artBase}/animated/employee/run.webp`),
           Assets.load(`${artBase}/animated/employee/pet.webp`),
+          Assets.load(`${artBase}/animated/cat/groom.webp`),
         ]);
         if (disposed) return;
 
@@ -143,6 +144,10 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         // The cat occupies the clear left section of the wooden tabletop;
         // the flower vase and right-hand chair are not a walkable surface.
         const cat = makeActor(catTexture, "cat", 86, 86);
+        // Full-artboard derived grooming illustration from the approved
+        // calico character, on the same 1254×1254 transparent canvas.
+        // Switching mesh texture cannot resize Pixi's geometry/foot anchor.
+        cat.mesh.autoResize = false;
 
         // Pixi v8: a Graphics object ceases to be an active stencil mask when
         // its last masked actor sets `.mask = null`. At that moment it becomes
@@ -207,6 +212,10 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           }
           for (const p of [dog, cat] as const) {
             const state = pose[p.kind as Animal];
+            if (p.kind === "cat") {
+              const wanted = state.mood === "groom" ? catGroomPose : catTexture;
+              if (p.mesh.texture !== wanted) p.mesh.texture = wanted;
+            }
             // Explicit world surfaces: puppy paws on the courtyard tiles,
             // cat paws ON the wooden outdoor tabletop (not on the ground).
             // Visible movement must match the director's state. Previously
@@ -320,6 +329,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               host.current.dataset.catX = String(Math.round(pose.cat.x));
               host.current.dataset.catY = String(Math.round(pose.cat.y));
               host.current.dataset.catMood = pose.cat.mood;
+              host.current.dataset.catPoseAsset = pose.cat.mood === "groom"
+                ? "groom" : "canonical";
               host.current.dataset.workerRunLift = runLift.toFixed(2);
             }
             onMoveRef.current({
