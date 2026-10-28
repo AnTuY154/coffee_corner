@@ -4,15 +4,15 @@
  * Missing sequences intentionally fall back to the approved canonical pose.
  */
 export const FRAME_SEQUENCES = {
-  employee: { idle: 4, wave: 8, run: 10, pet: 8 },
-  dog: { idle: 4, walk: 8, turn: 4, happy: 6, bark: 6, jump: 8 },
-  cat: { idle: 4, walk: 8, turn: 4, happy: 6, groom: 8, nap: 4 },
+  employee: { idle: 6, wave: 6, talk: 6, run: 12, walk: 8, pet_dog: 8, pet_cat: 8, prepare: 6 },
+  dog: { idle: 6, walk: 8, run: 12, happy: 8, jump: 8, nap: 6 },
+  cat: { idle: 6, walk: 8, run: 8, happy: 8, jump: 8, nap: 6, groom: 8 },
 } as const;
 
 export const FRAME_FPS = {
-  employee: { idle: 4, wave: 9, run: 14, pet: 10 },
-  dog: { idle: 3, walk: 12, turn: 7, happy: 8, bark: 11, jump: 12 },
-  cat: { idle: 3, walk: 10, turn: 7, happy: 7, groom: 9, nap: 2 },
+  employee: { idle: 4, wave: 9, talk: 7, run: 14, walk: 10, pet_dog: 10, pet_cat: 10, prepare: 8 },
+  dog: { idle: 3, walk: 12, run: 14, happy: 8, jump: 12, nap: 3 },
+  cat: { idle: 3, walk: 10, run: 12, happy: 7, groom: 9, nap: 2, jump: 11 },
 } as const;
 
 export type CharacterId = keyof typeof FRAME_SEQUENCES;
