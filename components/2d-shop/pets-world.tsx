@@ -107,8 +107,12 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         // Do not issue dozens of missing-image requests until the frame pack is deployed.
         let installed: Partial<Record<CharacterId, Record<string, number>>> = {};
         try {
-          const response = await fetch(`${artBase}/manifest.json`);
-          if (response.ok) installed = await response.json();
+          const response = await fetch(`${artBase}/manifest.json`, { cache: "no-store" });
+          if (response.ok) {
+            const parsed: unknown = await response.json();
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed))
+              installed = parsed as typeof installed;
+          }
         } catch { /* sprite pack is optional */ }
         await Promise.all((Object.keys(FRAME_SEQUENCES) as CharacterId[]).flatMap(character =>
           Object.entries(FRAME_SEQUENCES[character]).filter(([action, count]) =>
@@ -284,7 +288,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             p.holder.position.set(state.x, state.y - jumping - bounce);
             p.holder.scale.set(state.facing * (1 + napEase * .14),
               dogJump ? 1 + jumping / 230 : 1 - napEase * .25);
-            p.holder.rotation = walking ? Math.sin(state.gait) * .02
+            p.holder.rotation = frames[p.kind as Animal][state.mood]?.length ? 0
+              : walking ? Math.sin(state.gait) * .02
               : grooming ? Math.sin(pose.seconds * 6) * .027
               : wag;
             p.holder.zIndex = state.y;
@@ -363,7 +368,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             counterMask.clear().rect(0, 0, ARTBOARD.width, nextMaskHeight).fill(0xffffff);
             maskHeight = nextMaskHeight;
           }
-          employee.holder.rotation = runningOutside
+          employee.holder.rotation = frames.employee[employeeFrameAction]?.length ? 0 : runningOutside
             ? Math.sin(pose.seconds * 16) * .028
             : person.action === "pet" ? Math.sin(pose.seconds * 6) * .015 : 0;
           if (frames.employee[employeeFrameAction]?.length) {
