@@ -35,6 +35,10 @@ test("the dog really barks, jumps and runs on the paved courtyard", async ({page
   await capture(page, "01-dog-bark");
   await advance(page, "dog-jump");
   await expect(host).toHaveAttribute("data-dog-mood", "jump");
+  await expect(host).toHaveAttribute("data-frame-rendering", "painted-sprites");
+  const jumpFrame = Number(await host.getAttribute("data-dog-frame"));
+  expect(jumpFrame).toBeGreaterThanOrEqual(0);
+  expect(jumpFrame).toBeLessThan(4);
   const height = Number(await host.getAttribute("data-dog-jump-height"));
   expect(height, "jump needs actual airborne displacement, not a static pose").toBeGreaterThan(25);
   await capture(page, "02-dog-airborne");
