@@ -1,0 +1,29 @@
+{
+  "description": "Transparent, pre-rendered animation poses derived from the user-approved Vườn É employee appearance. Four canonical originals remain immutable.",
+  "baseDesign": "/art/canonical/employee.webp",
+  "targetArtboard": {
+    "width": 1086,
+    "height": 1448,
+    "alpha": true
+  },
+  "poses": {
+    "run": {
+      "file": "run.webp",
+      "sha256": "8f6cbd200e3fdaa126504406889d6b4ef58c42ee0baf9fb69436208ba4ba579b",
+      "action": "run",
+      "origin": "approved employee run pose"
+    },
+    "pet": {
+      "file": "pet.webp",
+      "sha256": "e7abd0a8163b07a105e8c6779dbd40461b970d18b0826a0439e3c1bb8515c654",
+      "action": "pet",
+      "origin": "approved employee crouching and reaching pose"
+    },
+    "wave": {
+      "file": "wave.webp",
+      "sha256": "899291e5a3a5fe1d80ba0a89c37406b6ff73f7a40f766f580bf3e21ae768a81a",
+      "action": "wave",
+      "origin": "approved employee hand waving pose"
+    }
+  }
+}
