@@ -193,6 +193,16 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               if (goal === "off-counter" && !pose.worker.behindCounter) break;
               if (goal === "petting" && pose.phase === "petting") break;
               if (goal === "home" && startedInVisit && pose.phase === "idle") break;
+              if (goal === "dog-bark" && pose.dog.mood === "bark" &&
+                pose.dog.actionProgress > .3) break;
+              if (goal === "dog-jump" && pose.dog.mood === "jump" &&
+                pose.dog.actionProgress > .38) break;
+              if (goal === "cat-groom" && pose.cat.mood === "groom" &&
+                pose.cat.actionProgress > .3) break;
+              if (goal === "cat-nap" && pose.cat.mood === "nap" &&
+                pose.cat.actionProgress > .3) break;
+              if (goal === "employee-run" && pose.worker.action === "run" &&
+                !pose.worker.behindCounter) break;
             }
           }
           for (const p of [dog, cat] as const) {
