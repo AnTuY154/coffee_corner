@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { ActorsDirector, ARTBOARD, COUNTER_WAISTLINE_Y, type Animal } from "./actors-director";
 import { deformVertices, type RigKind } from "./deform-rig";
-import { FRAME_SEQUENCES, FRAME_FPS, animationFrameAt, framePath, type CharacterId } from "./animation-frames";
+import { FRAME_SEQUENCES, FRAME_FPS, animationFrameAt, framePath, petFrameAction, employeeFrameAction, type CharacterId } from "./animation-frames";
 
 export type PetPositions = {
   dog: { x: number; y: number };
@@ -264,7 +264,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             }
             const fallbackPose = p.kind === "cat" && state.mood === "groom"
               ? catGroomPose : p.texture;
-            const nextFrame = frameFor(p.kind as Animal, state.mood, fallbackPose,
+            const frameAction = petFrameAction(p.kind as Animal, state.mood, state.speed);
+            const nextFrame = frameFor(p.kind as Animal, frameAction, fallbackPose,
               Math.min(Math.max(tick.deltaMS / 1000, 0), .2));
             if (p.mesh.texture !== nextFrame) p.mesh.texture = nextFrame;
             // Explicit world surfaces: puppy paws on the courtyard tiles,
@@ -288,7 +289,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             p.holder.position.set(state.x, state.y - jumping - bounce);
             p.holder.scale.set(state.facing * (1 + napEase * .14),
               dogJump ? 1 + jumping / 230 : 1 - napEase * .25);
-            p.holder.rotation = frames[p.kind as Animal][state.mood]?.length ? 0
+            p.holder.rotation = frames[p.kind as Animal][frameAction]?.length ? 0
               : walking ? Math.sin(state.gait) * .02
               : grooming ? Math.sin(pose.seconds * 6) * .027
               : wag;
@@ -305,7 +306,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             if (napping) p.holder.scale.y += Math.sin(pose.seconds * 1.8) * .01;
             // Full illustrated frames contain their own limb motion. Avoid
             // warping real frames; keep rig deformation for legacy art only.
-            if (frames[p.kind as Animal][state.mood]?.length) {
+            if (frames[p.kind as Animal][frameAction]?.length) {
               p.vertices.set(p.original);
               p.buffer.update();
             } else deformVertices(p.original, p.vertices, p.texture.width, p.texture.height,
@@ -326,9 +327,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           // Switch the full illustrated pose — running is a real bent-knee
           // running drawing, petting is an actual crouch/reaching-arm drawing.
           // Deformation alone can no longer fake these body poses.
-          const employeeFrameAction = person.action === "pet"
-            ? (pose.target === "cat" ? "pet_cat" : "pet_dog") : person.action;
-          const requiredTexture = frameFor("employee", employeeFrameAction,
+          const workerFrame = employeeFrameAction(person.action, pose.target);
+          const requiredTexture = frameFor("employee", workerFrame,
             workerTextures[person.action], Math.min(Math.max(tick.deltaMS / 1000, 0), .2));
           if (employee.mesh.texture !== requiredTexture)
             employee.mesh.texture = requiredTexture;
@@ -368,10 +368,10 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             counterMask.clear().rect(0, 0, ARTBOARD.width, nextMaskHeight).fill(0xffffff);
             maskHeight = nextMaskHeight;
           }
-          employee.holder.rotation = frames.employee[employeeFrameAction]?.length ? 0 : runningOutside
+          employee.holder.rotation = frames.employee[workerFrame]?.length ? 0 : runningOutside
             ? Math.sin(pose.seconds * 16) * .028
             : person.action === "pet" ? Math.sin(pose.seconds * 6) * .015 : 0;
-          if (frames.employee[employeeFrameAction]?.length) {
+          if (frames.employee[workerFrame]?.length) {
             employee.vertices.set(employee.original);
             employee.buffer.update();
           } else deformVertices(employee.original, employee.vertices, employee.texture.width,

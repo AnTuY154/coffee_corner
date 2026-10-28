@@ -26,3 +26,26 @@ export function animationFrameAt(elapsed: number, fps: number, count: number, lo
   const frame = Math.max(0, Math.floor(Math.max(0, elapsed) * fps));
   return looping ? frame % count : Math.min(count - 1, frame);
 }
+
+/** Translate physical simulation states to the approved contact-sheet actions.
+ * No pose is invented: unsupported modes reuse the nearest existing sequence.
+ */
+export function petFrameAction(kind: "dog" | "cat",
+  mood: "idle" | "walk" | "turn" | "happy" | "bark" | "jump" | "groom" | "nap",
+  speed = 0): string {
+  if (mood === "turn") return "walk";
+  if (kind === "dog") {
+    if (mood === "bark") return "happy";
+    if (mood === "groom") return "idle";
+    if (mood === "walk" && Math.abs(speed) >= 70) return "run";
+    return mood === "nap" ? "nap" : mood;
+  }
+  if (mood === "bark") return "happy";
+  if (mood === "walk" && Math.abs(speed) >= 23) return "run";
+  return mood;
+}
+
+export function employeeFrameAction(action: "idle" | "wave" | "run" | "pet",
+  target: "dog" | "cat" | null): string {
+  return action === "pet" ? (target === "cat" ? "pet_cat" : "pet_dog") : action;
+}
