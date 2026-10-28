@@ -1,0 +1,272 @@
+{
+  "frames": {
+    "employee_00": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 360,
+        "h": 360
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 360,
+        "h": 360
+      },
+      "sourceSize": {
+        "w": 360,
+        "h": 360
+      }
+    },
+    "employee_01": {
+      "frame": {
+        "x": 360,
+        "y": 0,
+        "w": 360,
+        "h": 360
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 360,
+        "h": 360
+      },
+      "sourceSize": {
+        "w": 360,
+        "h": 360
+      }
+    },
+    "employee_02": {
+      "frame": {
+        "x": 720,
+        "y": 0,
+        "w": 360,
+        "h": 360
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 360,
+        "h": 360
+      },
+      "sourceSize": {
+        "w": 360,
+        "h": 360
+      }
+    },
+    "employee_03": {
+      "frame": {
+        "x": 1080,
+        "y": 0,
+        "w": 360,
+        "h": 360
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 360,
+        "h": 360
+      },
+      "sourceSize": {
+        "w": 360,
+        "h": 360
+      }
+    },
+    "employee_04": {
+      "frame": {
+        "x": 0,
+        "y": 360,
+        "w": 360,
+        "h": 360
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 360,
+        "h": 360
+      },
+      "sourceSize": {
+        "w": 360,
+        "h": 360
+      }
+    },
+    "employee_05": {
+      "frame": {
+        "x": 360,
+        "y": 360,
+        "w": 360,
+        "h": 360
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 360,
+        "h": 360
+      },
+      "sourceSize": {
+        "w": 360,
+        "h": 360
+      }
+    },
+    "employee_06": {
+      "frame": {
+        "x": 720,
+        "y": 360,
+        "w": 360,
+        "h": 360
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 360,
+        "h": 360
+      },
+      "sourceSize": {
+        "w": 360,
+        "h": 360
+      }
+    },
+    "employee_07": {
+      "frame": {
+        "x": 1080,
+        "y": 360,
+        "w": 360,
+        "h": 360
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 360,
+        "h": 360
+      },
+      "sourceSize": {
+        "w": 360,
+        "h": 360
+      }
+    },
+    "employee_08": {
+      "frame": {
+        "x": 0,
+        "y": 720,
+        "w": 360,
+        "h": 360
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 360,
+        "h": 360
+      },
+      "sourceSize": {
+        "w": 360,
+        "h": 360
+      }
+    },
+    "employee_09": {
+      "frame": {
+        "x": 360,
+        "y": 720,
+        "w": 360,
+        "h": 360
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 360,
+        "h": 360
+      },
+      "sourceSize": {
+        "w": 360,
+        "h": 360
+      }
+    },
+    "employee_10": {
+      "frame": {
+        "x": 720,
+        "y": 720,
+        "w": 360,
+        "h": 360
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 360,
+        "h": 360
+      },
+      "sourceSize": {
+        "w": 360,
+        "h": 360
+      }
+    },
+    "employee_11": {
+      "frame": {
+        "x": 1080,
+        "y": 720,
+        "w": 360,
+        "h": 360
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 360,
+        "h": 360
+      },
+      "sourceSize": {
+        "w": 360,
+        "h": 360
+      }
+    }
+  },
+  "animations": {
+    "run": [
+      "employee_00",
+      "employee_01",
+      "employee_02",
+      "employee_03"
+    ],
+    "pet": [
+      "employee_04",
+      "employee_05",
+      "employee_06",
+      "employee_07"
+    ],
+    "wave": [
+      "employee_08",
+      "employee_09",
+      "employee_10",
+      "employee_11"
+    ]
+  },
+  "meta": {
+    "image": "employee.webp",
+    "size": {
+      "w": 1440,
+      "h": 1080
+    },
+    "scale": "1"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "mode": "painted-frames",
+  "enabled": true,
+  "note": "36 illustrated frames are installed as three transparent 4x3 WebP atlases. Use PixiJS AnimatedSprite and do not warp or squash approved character illustrations.",
+  "imageFormat": "webp",
+  "frameCounts": {
+    "employee": 12,
+    "dog": 12,
+    "cat": 12
+  },
+  "actions": {
+    "employee": [
+      "run",
+      "pet",
+      "wave"
+    ],
+    "dog": [
+      "walk",
+      "bark",
+      "jump",
+      "happy"
+    ],
+    "cat": [
+      "walk",
+      "groom",
+      "nap",
+      "happy"
+    ]
+  },
+  "assets": [
+    "employee.json",
+    "employee.webp",
+    "dog.json",
+    "dog.webp",
+    "cat.json",
+    "cat.webp"
+  ]
+}

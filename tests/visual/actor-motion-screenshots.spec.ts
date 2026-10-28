@@ -35,6 +35,10 @@ test("the dog really barks, jumps and runs on the paved courtyard", async ({page
   await capture(page, "01-dog-bark");
   await advance(page, "dog-jump");
   await expect(host).toHaveAttribute("data-dog-mood", "jump");
+  await expect(host).toHaveAttribute("data-frame-rendering", "painted-sprites");
+  const jumpFrame = Number(await host.getAttribute("data-dog-frame"));
+  expect(jumpFrame).toBeGreaterThanOrEqual(0);
+  expect(jumpFrame).toBeLessThan(4);
   const height = Number(await host.getAttribute("data-dog-jump-height"));
   expect(height, "jump needs actual airborne displacement, not a static pose").toBeGreaterThan(25);
   await capture(page, "02-dog-airborne");
@@ -47,7 +51,11 @@ test("the cat grooms itself and visibly curls up to nap on the right table", asy
   await capture(page, "03-cat-grooming");
   await advance(page, "cat-nap");
   await expect(host).toHaveAttribute("data-cat-mood", "nap");
-  await expect(host).toHaveAttribute("data-cat-pose-asset", "canonical");
+  await expect(host).toHaveAttribute("data-cat-pose-asset", "nap");
+  await expect(host).toHaveAttribute("data-frame-rendering", "painted-sprites");
+  const napFrame = Number(await host.getAttribute("data-cat-frame"));
+  expect(napFrame).toBeGreaterThanOrEqual(0);
+  expect(napFrame).toBeLessThan(4);
   await capture(page, "04-cat-napping");
   const x = Number(await host.getAttribute("data-cat-x"));
   expect(x).toBeGreaterThanOrEqual(1308);
@@ -61,6 +69,7 @@ test("worker changes from waist-up greeting to full-body RUN and crouching PET",
   await page.locator('.ve2d-hotspot[data-target="dog"]').click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.keyboard.press("Escape");
+  await page.mouse.move(3, 3); // keep tooltip from covering the running sprite
   await advance(page, "employee-run");
   await expect(host).toHaveAttribute("data-employee-pose-asset", "run");
   await expect(host).toHaveAttribute("data-counter-mask-height", "941");
