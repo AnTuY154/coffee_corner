@@ -363,7 +363,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               host.current.dataset.catY = String(Math.round(pose.cat.y));
               host.current.dataset.catMood = pose.cat.mood;
               host.current.dataset.catPoseAsset = pose.cat.mood === "groom"
-                ? "groom" : "canonical";
+                ? "groom" : pose.cat.mood === "nap" ? "nap" : "canonical";
               host.current.dataset.dogFrame = String(dog.sprite.currentFrame);
               host.current.dataset.catFrame = String(cat.sprite.currentFrame);
               host.current.dataset.employeeFrame = String(employee.sprite.currentFrame);
