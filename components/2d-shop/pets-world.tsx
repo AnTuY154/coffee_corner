@@ -19,7 +19,8 @@ type Props = {
   onBark?: () => void;
 };
 
-/** Three meshes, one Pixi clock, three immutable canonical source textures. */
+/** One Pixi clock, three characters, immutable canonical design sources.
+ * Employee actions use transparent derivatives of the approved worker. */
 export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const directorRef = useRef<ActorsDirector | null>(null);
@@ -87,10 +88,13 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         app.destroy(true, { children: true, texture: false, textureSource: false });
       };
       try {
-        const [employeeTexture, dogTexture, catTexture] = await Promise.all([
+        const [employeeTexture, dogTexture, catTexture, wavePose, runPose, petPose] = await Promise.all([
           Assets.load(`${artBase}/canonical/employee.webp`),
           Assets.load(`${artBase}/canonical/dog.webp`),
           Assets.load(`${artBase}/canonical/cat.webp`),
+          Assets.load(`${artBase}/animated/employee/wave.webp`),
+          Assets.load(`${artBase}/animated/employee/run.webp`),
+          Assets.load(`${artBase}/animated/employee/pet.webp`),
         ]);
         if (disposed) return;
 
@@ -125,6 +129,16 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         }
 
         const employee = makeActor(employeeTexture, "employee", 155, 208);
+        // All pose images have the canonical employee's 1086x1448 transparent
+        // artboard. Never rebuild the vertex mesh when switching a texture:
+        // this preserves UVs, world size, feet anchoring and hitbox geometry.
+        employee.mesh.autoResize = false;
+        const workerTextures = {
+          idle: employeeTexture,
+          wave: wavePose,
+          run: runPose,
+          pet: petPose,
+        } as const;
         const dog = makeActor(dogTexture, "dog", 118, 118);
         // The cat occupies the clear left section of the wooden tabletop;
         // the flower vase and right-hand chair are not a walkable surface.
@@ -205,8 +219,18 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           previousDogMood = pose.dog.mood;
           const person = pose.worker;
           employee.holder.position.set(person.x, person.y);
-          // Never mirror the employee's apron lettering or reassign mesh scale.
-          employee.holder.scale.set(person.scale);
+          // Switch the full illustrated pose — running is a real bent-knee
+          // running drawing, petting is an actual crouch/reaching-arm drawing.
+          // Deformation alone can no longer fake these body poses.
+          const requiredTexture = workerTextures[person.action];
+          if (employee.mesh.texture !== requiredTexture)
+            employee.mesh.texture = requiredTexture;
+          // The run and pet source poses reach to the right; mirror when
+          // approaching the dog from its right side. At the counter, preserve
+          // the original apron writing and the face's approved appearance.
+          const poseFacing = person.action === "run" || person.action === "pet"
+            ? person.facing : 1;
+          employee.holder.scale.set(person.scale * poseFacing, person.scale);
           employee.holder.zIndex = person.y + .1;
           // From the patio the clerk reaches the cat BEHIND the tabletop,
           // never stepping onto the chairs. Keep the upper body visible, but
@@ -220,7 +244,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             maskHeight = nextMaskHeight;
           }
           employee.holder.rotation = person.action === "run" ? Math.sin(pose.seconds * 15) * .023 :
-            person.action === "pet" ? -.04 + Math.sin(pose.seconds * 7) * .015 : 0;
+            person.action === "pet" ? Math.sin(pose.seconds * 6) * .012 : 0;
           deformVertices(employee.original, employee.vertices, employee.texture.width,
             employee.texture.height,
             { gait: pose.seconds * 13, speed: person.action === "run" ? 65 : 0,
@@ -236,6 +260,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               host.current.dataset.employeeX = String(Math.round(person.x));
               host.current.dataset.employeeY = String(Math.round(person.y));
               host.current.dataset.employeeAction = person.action;
+              host.current.dataset.employeePoseAsset = person.action;
+              host.current.dataset.employeeScale = person.scale.toFixed(3);
               host.current.dataset.counterMaskHeight = String(maskHeight);
               host.current.dataset.dogX = String(Math.round(pose.dog.x));
               host.current.dataset.dogY = String(Math.round(pose.dog.y));
@@ -249,7 +275,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               // same pixel artboard, not their feet or an arbitrary offset.
               dog: { x: pose.dog.x, y: pose.dog.y - 56 },
               cat: { x: pose.cat.x, y: pose.cat.y - 42 },
-              clerk: { x: person.x, y: person.y - (person.behindCounter ? 104 : 92) },
+              clerk: { x: person.x, y: person.y - (person.behindCounter
+                ? 112 * person.scale : 103 * person.scale) },
             });
           }
         };
