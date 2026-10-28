@@ -104,8 +104,15 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           employee: {}, dog: {}, cat: {},
         };
         // Complete sequences only: never flash an empty frame.
+        // Do not issue dozens of missing-image requests until the frame pack is deployed.
+        let installed: Partial<Record<CharacterId, Record<string, number>>> = {};
+        try {
+          const response = await fetch(`${artBase}/manifest.json`);
+          if (response.ok) installed = await response.json();
+        } catch { /* sprite pack is optional */ }
         await Promise.all((Object.keys(FRAME_SEQUENCES) as CharacterId[]).flatMap(character =>
-          Object.entries(FRAME_SEQUENCES[character]).map(async ([action, count]) => {
+          Object.entries(FRAME_SEQUENCES[character]).filter(([action, count]) =>
+            installed[character]?.[action] === count).map(async ([action, count]) => {
             try {
               const loaded = await Promise.all(Array.from({ length: count }, (_, i) =>
                 Assets.load(framePath(artBase, character, action, i)) as Promise<FrameTexture>));
@@ -314,7 +321,9 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           // Switch the full illustrated pose — running is a real bent-knee
           // running drawing, petting is an actual crouch/reaching-arm drawing.
           // Deformation alone can no longer fake these body poses.
-          const requiredTexture = frameFor("employee", person.action,
+          const employeeFrameAction = person.action === "pet"
+            ? (pose.target === "cat" ? "pet_cat" : "pet_dog") : person.action;
+          const requiredTexture = frameFor("employee", employeeFrameAction,
             workerTextures[person.action], Math.min(Math.max(tick.deltaMS / 1000, 0), .2));
           if (employee.mesh.texture !== requiredTexture)
             employee.mesh.texture = requiredTexture;
@@ -357,7 +366,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           employee.holder.rotation = runningOutside
             ? Math.sin(pose.seconds * 16) * .028
             : person.action === "pet" ? Math.sin(pose.seconds * 6) * .015 : 0;
-          if (frames.employee[person.action]?.length) {
+          if (frames.employee[employeeFrameAction]?.length) {
             employee.vertices.set(employee.original);
             employee.buffer.update();
           } else deformVertices(employee.original, employee.vertices, employee.texture.width,
