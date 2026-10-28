@@ -151,7 +151,9 @@ for(const p of ["MeshPlane","canonical/dog.webp","canonical/cat.webp","canonical
   "animated/employee/pet.webp", "animated/employee/wave.webp",
   "employee.mesh.autoResize = false", "COUNTER_WAISTLINE_Y",
   "employeeVisibleFraction", "156 * person.scale",
-  "runLift", "dogJumpHeight", "cat-groom", "cat-nap"])
+  "runLift", "dogJumpHeight", "cat-groom", "cat-nap",
+  "animated/cat/groom.webp", "cat.mesh.autoResize = false",
+  "catPoseAsset"])
   assert(renderer.includes(p),"renderer missing behavior: "+p);
 assert.doesNotMatch(renderer,/pets\/dog-walk\.png|actors\/anime\/idle\.webp/);
 assert.doesNotMatch(renderer,/employee\.holder\.mask\s*=\s*person\.behindCounter\s*\?/,
