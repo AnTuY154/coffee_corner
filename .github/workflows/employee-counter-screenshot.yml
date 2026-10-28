@@ -1,0 +1,30 @@
+name: Vườn É employee portrait screenshot review
+on:
+  pull_request:
+    paths:
+      - "components/2d-shop/**"
+      - "tests/visual/employee-counter-screenshot.spec.ts"
+      - ".github/workflows/employee-counter-screenshot.yml"
+  workflow_dispatch:
+jobs:
+  counter-portrait:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Take actual Chromium screenshots of the waist-up clerk
+        run: npx playwright test tests/visual/employee-counter-screenshot.spec.ts --project=desktop-chromium --workers=1 --retries=0
+      - name: Upload just the two PNGs (no heavy Playwright traces)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: employee-waist-up-screenshot
+          path: qa-counter/*.png
+          if-no-files-found: error
+          retention-days: 7
