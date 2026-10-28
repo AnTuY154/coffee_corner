@@ -13,6 +13,11 @@ async function ready(page: Page) {
   const host = page.locator(".ve2d-pixi-pets[data-visible='true']");
   await expect(host).toBeVisible();
   await expect(host).toHaveAttribute("data-phase", "idle");
+  // Hold the real simulation at each named state so screenshots do not
+  // accidentally show the NEXT action after slow CI image sampling.
+  await host.evaluate((element: HTMLElement) => {
+    element.dataset.reviewHold = "true";
+  });
   return host;
 }
 
