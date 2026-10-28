@@ -27,10 +27,11 @@ export type WorldPose = {
 // belly (not her dress/skirt). The image remains a full-body transparent
 // texture, but the permanent Pixi stencil hides its lower half.
 //
-// Before this correction HOME.y=694 put the skirt visibly ON the countertop.
+// Set the portrait foot anchor below the real countertop so dress and apron skirt
+// disappear at the belly, leaving the head, hands and upper torso visible.
 // The new scale also makes the face readable from a laptop screen.
 export const COUNTER_WAISTLINE_Y = 650;
-export const COUNTER_PORTRAIT = { x: 764, y: 760, scale: 1.24 } as const;
+export const COUNTER_PORTRAIT = { x: 764, y: 810, scale: 1.43 } as const;
 const HOME = COUNTER_PORTRAIT;
 const PATIO_SCALE = .895;
 const smoothStep = (t: number) => { const x = clamp(t, 0, 1); return x * x * (3 - 2 * x); };
@@ -243,7 +244,7 @@ export class ActorsDirector {
           // Keep her hidden behind the counter while walking toward the
           // LEFT exit; otherwise the full dress reappears the moment her
           // portrait's hidden feet begin at y=760.
-          behindCounter: position.x > 345 && position.y < 790,
+          behindCounter: position.x > 345 && position.y < 825,
         };
         if (progress >= 1) {
           visit.elapsed = 0;
