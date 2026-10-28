@@ -22,7 +22,17 @@ export type WorldPose = {
 };
 
 // Feet are anchored behind the wood countertop when greeting visitors.
-const HOME = { x: 764, y: 694, scale: .84 };
+// Behind the counter, only the upper body is visible. The larger portrait
+// makes her face readable without magnifying the entire outdoor character.
+const HOME = { x: 764, y: 694, scale: 1.08 };
+const PATIO_SCALE = .895;
+const smoothStep = (t: number) => { const x = clamp(t, 0, 1); return x * x * (3 - 2 * x); };
+export function employeeSceneScale(position: Vec): number {
+  // Ease between close-up barista and natural full-body running scale while
+  // she exits the service counter. Returning applies the exact same rule.
+  const distance = Math.hypot(position.x - HOME.x, position.y - HOME.y);
+  return HOME.scale + (PATIO_SCALE - HOME.scale) * smoothStep(distance / 200);
+}
 // Verified against the pixel-space geometry of the approved 1672x941 shop:
 // pavement corridor between the two foreground seating areas is x=855..1100,
 // while the clear LEFT half of the right tabletop is x=1255..1375, y≈843.
@@ -220,7 +230,7 @@ export class ActorsDirector {
         const next = interpolateRoute(visit.path, clamp(step + (outbound ? .003 : -.003), 0, 1));
         const diffX = next.x - position.x;
         this.worker = {
-          ...position, scale: HOME.scale + .055 * clamp((position.y - HOME.y) / 225, 0, 1),
+          ...position, scale: employeeSceneScale(position),
           action: "run", facing: Math.abs(diffX) > .1 ? (diffX < 0 ? -1 : 1) : this.worker.facing,
           stride: Math.sin(this.time * 17),
           behindCounter: position.y < 730 && position.x > 345,
@@ -245,7 +255,7 @@ export class ActorsDirector {
         }
       } else {
         const stop = visit.path[visit.path.length - 1];
-        this.worker = { ...stop, scale: .895, action: "pet", facing: visit.target === "dog" ? -1 : 1,
+        this.worker = { ...stop, scale: PATIO_SCALE, action: "pet", facing: visit.target === "dog" ? -1 : 1,
           stride: Math.sin(this.time * 6), behindCounter: false };
         this.pets[visit.target].mood = "happy";
         if (visit.elapsed >= 3.2) {
