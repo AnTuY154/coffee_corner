@@ -43,9 +43,11 @@ test("the cat grooms itself and visibly curls up to nap on the right table", asy
   const host = await setup(page);
   await advance(page, "cat-groom");
   await expect(host).toHaveAttribute("data-cat-mood", "groom");
+  await expect(host).toHaveAttribute("data-cat-pose-asset", "groom");
   await capture(page, "03-cat-grooming");
   await advance(page, "cat-nap");
   await expect(host).toHaveAttribute("data-cat-mood", "nap");
+  await expect(host).toHaveAttribute("data-cat-pose-asset", "canonical");
   await capture(page, "04-cat-napping");
   const x = Number(await host.getAttribute("data-cat-x"));
   expect(x).toBeGreaterThanOrEqual(1308);
