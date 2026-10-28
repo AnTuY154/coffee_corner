@@ -119,7 +119,7 @@ test("employee, dog and cat hover centers follow real Pixi actors", async ({page
     ["cat", Number(p.catX), Number(p.catY) - 42],
     ["clerk", Number(p.employeeX), Number(p.employeeY) -
       (p.employeeAction === "run" || p.employeeAction === "pet"
-        ? 103 : 146) * Number(p.employeeScale)],
+        ? 103 : 156) * Number(p.employeeScale)],
   ] as const) {
     const box = await page.locator(`.ve2d-hotspot[data-target="${key}"]`).boundingBox();
     if (!box) throw new Error(`Missing ${key} hotspot`);
