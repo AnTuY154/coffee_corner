@@ -196,7 +196,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             for (let i = 0; i < 700; i++) {
               pose = director.step(.05, reduced.matches);
               if (goal === "off-counter" && !pose.worker.behindCounter &&
-                pose.worker.y >= 911) break;
+                pose.worker.x >= 775 && pose.worker.y >= 911) break;
               if (goal === "petting" && pose.phase === "petting") break;
               if (goal === "home" && startedInVisit && pose.phase === "idle") break;
               if (goal === "dog-bark" && pose.dog.mood === "bark" &&
@@ -208,7 +208,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               if (goal === "cat-nap" && pose.cat.mood === "nap" &&
                 pose.cat.actionProgress > .3) break;
               if (goal === "employee-run" && pose.worker.action === "run" &&
-                !pose.worker.behindCounter && pose.worker.y >= 911) break;
+                !pose.worker.behindCounter &&
+                pose.worker.x >= 775 && pose.worker.y >= 911) break;
             }
           }
           for (const p of [dog, cat] as const) {
@@ -291,10 +292,17 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           // Gradually reveal the lower body ONLY on the descent from the
           // left passage onto the paved ground, and reverse when returning.
           const inLeftPassage = (pose.phase === "outbound" ||
-            pose.phase === "returning") && person.x < 455 && person.y < 914;
-          const exitFraction = Math.max(0, Math.min(1, (person.y - 805) / 105));
+            pose.phase === "returning") && person.x < 785;
+          // Foreground chairs and the chalkboard are part of the approved
+          // *background*. The worker passes BEHIND them: her lower silhouette
+          // should not be drawn on top of a stool. Reveal upper torso near the
+          // left exit, then smoothly reveal her feet on the open central tiles.
+          const exitY = Math.max(0, Math.min(1, (person.y - 815) / 95));
+          const exitX = Math.max(0, Math.min(1, (person.x - 620) / 160));
+          const soft = exitX * exitX * (3 - 2 * exitX);
           const passageMaskHeight = Math.round(COUNTER_WAISTLINE_Y +
-            (ARTBOARD.height - COUNTER_WAISTLINE_Y) * exitFraction);
+            (790 - COUNTER_WAISTLINE_Y) * exitY +
+            (ARTBOARD.height - 790) * soft * exitY);
           const nextMaskHeight = inLeftPassage ? passageMaskHeight :
             person.behindCounter ? COUNTER_WAISTLINE_Y :
             besideCatTable ? 852 : ARTBOARD.height;
