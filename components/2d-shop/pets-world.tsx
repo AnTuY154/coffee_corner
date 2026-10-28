@@ -195,7 +195,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             // transition, not 800 separate frames on a software GPU.
             for (let i = 0; i < 700; i++) {
               pose = director.step(.05, reduced.matches);
-              if (goal === "off-counter" && !pose.worker.behindCounter) break;
+              if (goal === "off-counter" && !pose.worker.behindCounter &&
+                pose.worker.y >= 911) break;
               if (goal === "petting" && pose.phase === "petting") break;
               if (goal === "home" && startedInVisit && pose.phase === "idle") break;
               if (goal === "dog-bark" && pose.dog.mood === "bark" &&
@@ -207,7 +208,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               if (goal === "cat-nap" && pose.cat.mood === "nap" &&
                 pose.cat.actionProgress > .3) break;
               if (goal === "employee-run" && pose.worker.action === "run" &&
-                !pose.worker.behindCounter) break;
+                !pose.worker.behindCounter && pose.worker.y >= 911) break;
             }
           }
           for (const p of [dog, cat] as const) {
@@ -284,7 +285,18 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           // let the actual painted tabletop occlude the lower legs as in life.
           const besideCatTable = pose.target === "cat" &&
             person.x >= 1175 && person.y >= 870;
-          const nextMaskHeight = person.behindCounter ? COUNTER_WAISTLINE_Y :
+          // The left exit passes beside foreground stools/planters painted
+          // INTO the immutable background. Full-body rendering at world
+          // y=729 made the worker look as though she ran on the chairs.
+          // Gradually reveal the lower body ONLY on the descent from the
+          // left passage onto the paved ground, and reverse when returning.
+          const inLeftPassage = (pose.phase === "outbound" ||
+            pose.phase === "returning") && person.x < 455 && person.y < 914;
+          const exitFraction = Math.max(0, Math.min(1, (person.y - 805) / 105));
+          const passageMaskHeight = Math.round(COUNTER_WAISTLINE_Y +
+            (ARTBOARD.height - COUNTER_WAISTLINE_Y) * exitFraction);
+          const nextMaskHeight = inLeftPassage ? passageMaskHeight :
+            person.behindCounter ? COUNTER_WAISTLINE_Y :
             besideCatTable ? 852 : ARTBOARD.height;
           if (nextMaskHeight !== maskHeight) {
             counterMask.clear().rect(0, 0, ARTBOARD.width, nextMaskHeight).fill(0xffffff);
