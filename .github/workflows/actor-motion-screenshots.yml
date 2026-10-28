@@ -1,0 +1,30 @@
+name: Vườn É visible actor motion screenshots
+on:
+  pull_request:
+    paths:
+      - "components/2d-shop/**"
+      - "tests/visual/actor-motion-screenshots.spec.ts"
+      - ".github/workflows/actor-motion-screenshots.yml"
+  workflow_dispatch:
+jobs:
+  visual-motion-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Browser visual acceptance for all character actions
+        run: npx playwright test tests/visual/actor-motion-screenshots.spec.ts --project=desktop-chromium --workers=1 --retries=0
+      - name: Preserve action screenshots independently of large Playwright trace
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vuon-e-character-action-review
+          path: qa-motion/*.png
+          if-no-files-found: warn
+          retention-days: 7
