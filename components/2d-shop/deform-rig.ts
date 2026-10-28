@@ -43,11 +43,12 @@ export function deformVertices(
         dy -= hand * Math.cos(controls.seconds * 7) * height * .013;
       }
       if (petting) {
-        // Bring the arm toward the pet, compress knees and bow forward.
-        dx -= v * width * .027;
-        dy -= skirt * height * .064;
-        dx -= hand * width * .045;
-        dy += hand * height * .040;
+        // The "pet.webp" is ALREADY a real crouching illustration. Do not
+        // deform the whole standing body into a second bend; only animate the
+        // outstretched hand in a gentle, repeating stroking motion.
+        const stroke = .5 + .5 * Math.sin(controls.seconds * 6);
+        dx += hand * width * .009 * stroke;
+        dy += hand * height * .015 * stroke;
       }
       if (moving) {
         dx += legs * (u < .50 ? -1 : 1) * Math.sin(phase) * width * .029 * speedWeight;
