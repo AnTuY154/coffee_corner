@@ -62,6 +62,28 @@ for (let i = 0; i < 1600; i++) {
 assert(sawDogWalk && sawDogBark && sawDogJump, "dog walks, barks and jumps");
 assert(sawCatWalk && sawCatGroom && sawCatNap, "cat walks on table, grooms and naps");
 
+// Acceptance: every advertised action must appear during an ordinary page
+// visit, not only after a minute or if the visitor knows a secret click target.
+const showcase = new ActorsDirector();
+const seenMood = new Set();
+let firstAutonomousVisit = Infinity;
+let biggestDogDisplacement = 0, biggestCatDisplacement = 0;
+for (let i = 0; i < 1000; i++) {
+  const pose = showcase.step(.05);
+  seenMood.add("dog:" + pose.dog.mood);
+  seenMood.add("cat:" + pose.cat.mood);
+  if (pose.phase === "outbound") firstAutonomousVisit = Math.min(firstAutonomousVisit, pose.seconds);
+  biggestDogDisplacement = Math.max(biggestDogDisplacement, Math.abs(pose.dog.x - 951));
+  biggestCatDisplacement = Math.max(biggestCatDisplacement, Math.abs(pose.cat.x - 1330));
+}
+assert(firstAutonomousVisit <= 12,
+  "the employee must automatically start visiting the pets within twelve seconds");
+for (const mood of ["dog:bark", "dog:jump", "dog:walk", "cat:groom", "cat:nap", "cat:walk"]) {
+  assert(seenMood.has(mood), "visible auto-play is missing " + mood);
+}
+assert(biggestDogDisplacement > 20, "puppy must actually walk across the patio");
+assert(biggestCatDisplacement > 7, "cat must actually stroll across its tabletop");
+
 const visits = new ActorsDirector();
 visits.request("dog");
 visits.request("cat");
@@ -128,7 +150,10 @@ for(const p of ["MeshPlane","canonical/dog.webp","canonical/cat.webp","canonical
   "workerTextures[person.action]", "animated/employee/run.webp",
   "animated/employee/pet.webp", "animated/employee/wave.webp",
   "employee.mesh.autoResize = false", "COUNTER_WAISTLINE_Y",
-  "employeeVisibleFraction", "156 * person.scale"])
+  "employeeVisibleFraction", "156 * person.scale",
+  "runLift", "dogJumpHeight", "cat-groom", "cat-nap",
+  "animated/cat/groom.webp", "cat.mesh.autoResize = false",
+  "catPoseAsset"])
   assert(renderer.includes(p),"renderer missing behavior: "+p);
 assert.doesNotMatch(renderer,/pets\/dog-walk\.png|actors\/anime\/idle\.webp/);
 assert.doesNotMatch(renderer,/employee\.holder\.mask\s*=\s*person\.behindCounter\s*\?/,

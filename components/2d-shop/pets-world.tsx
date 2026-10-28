@@ -88,13 +88,14 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         app.destroy(true, { children: true, texture: false, textureSource: false });
       };
       try {
-        const [employeeTexture, dogTexture, catTexture, wavePose, runPose, petPose] = await Promise.all([
+        const [employeeTexture, dogTexture, catTexture, wavePose, runPose, petPose, catGroomPose] = await Promise.all([
           Assets.load(`${artBase}/canonical/employee.webp`),
           Assets.load(`${artBase}/canonical/dog.webp`),
           Assets.load(`${artBase}/canonical/cat.webp`),
           Assets.load(`${artBase}/animated/employee/wave.webp`),
           Assets.load(`${artBase}/animated/employee/run.webp`),
           Assets.load(`${artBase}/animated/employee/pet.webp`),
+          Assets.load(`${artBase}/animated/cat/groom.webp`),
         ]);
         if (disposed) return;
 
@@ -143,6 +144,10 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         // The cat occupies the clear left section of the wooden tabletop;
         // the flower vase and right-hand chair are not a walkable surface.
         const cat = makeActor(catTexture, "cat", 86, 86);
+        // Full-artboard derived grooming illustration from the approved
+        // calico character, on the same 1254×1254 transparent canvas.
+        // Switching mesh texture cannot resize Pixi's geometry/foot anchor.
+        cat.mesh.autoResize = false;
 
         // Pixi v8: a Graphics object ceases to be an active stencil mask when
         // its last masked actor sets `.mask = null`. At that moment it becomes
@@ -190,27 +195,64 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             // transition, not 800 separate frames on a software GPU.
             for (let i = 0; i < 700; i++) {
               pose = director.step(.05, reduced.matches);
-              if (goal === "off-counter" && !pose.worker.behindCounter) break;
+              if (goal === "off-counter" && !pose.worker.behindCounter &&
+                pose.worker.x >= 944 && pose.worker.y >= 911) break;
               if (goal === "petting" && pose.phase === "petting") break;
               if (goal === "home" && startedInVisit && pose.phase === "idle") break;
+              if (goal === "dog-bark" && pose.dog.mood === "bark" &&
+                pose.dog.actionProgress > .3) break;
+              if (goal === "dog-jump" && pose.dog.mood === "jump" &&
+                pose.dog.actionProgress > .38) break;
+              if (goal === "cat-groom" && pose.cat.mood === "groom" &&
+                pose.cat.actionProgress > .3) break;
+              if (goal === "cat-nap" && pose.cat.mood === "nap" &&
+                pose.cat.actionProgress > .3) break;
+              if (goal === "employee-run" && pose.worker.action === "run" &&
+                !pose.worker.behindCounter &&
+                pose.worker.x >= 944 && pose.worker.y >= 911) break;
             }
           }
           for (const p of [dog, cat] as const) {
             const state = pose[p.kind as Animal];
+            if (p.kind === "cat") {
+              const wanted = state.mood === "groom" ? catGroomPose : catTexture;
+              if (p.mesh.texture !== wanted) p.mesh.texture = wanted;
+            }
             // Explicit world surfaces: puppy paws on the courtyard tiles,
             // cat paws ON the wooden outdoor tabletop (not on the ground).
+            // Visible movement must match the director's state. Previously
+            // only mesh points moved (by <3px on screen), which looked like
+            // sliding photos. Use foot-locked world transforms as well:
+            // running bobs, a real airborne jump, a sleepy crouch and
+            // different tail/head rhythms. Keep the floor shadow anchored.
             const dogJump = p.kind === "dog" && state.mood === "jump";
-            const height = dogJump ? Math.sin(state.actionProgress * Math.PI) * 34 : 0;
-            p.holder.position.set(state.x, state.y - height);
-            p.holder.scale.x = state.facing;
+            const jumping = dogJump ? Math.sin(state.actionProgress * Math.PI) * 40 : 0;
+            const walking = state.mood === "walk" || state.mood === "turn";
+            const bounce = walking ? Math.pow(Math.sin(state.gait), 2) *
+              Math.min(4.2, Math.abs(state.speed) / 17) : 0;
+            const excited = state.mood === "happy" || state.mood === "bark";
+            const wag = p.kind === "dog" && excited
+              ? Math.sin(pose.seconds * 11) * .024 : 0;
+            const grooming = p.kind === "cat" && state.mood === "groom";
+            const napping = p.kind === "cat" && state.mood === "nap";
+            const napEase = napping ? Math.min(1, state.actionProgress * 6) : 0;
+            p.holder.position.set(state.x, state.y - jumping - bounce);
+            p.holder.scale.set(state.facing * (1 + napEase * .14),
+              dogJump ? 1 + jumping / 230 : 1 - napEase * .25);
+            p.holder.rotation = walking ? Math.sin(state.gait) * .02
+              : grooming ? Math.sin(pose.seconds * 6) * .027
+              : wag;
             p.holder.zIndex = state.y;
-            p.shadow.y = height;
-            p.shadow.scale.x = dogJump ? 1 - height / 110 : 1;
+            p.shadow.y = jumping + bounce;
+            p.shadow.scale.x = dogJump ? 1 - jumping / 110 : 1;
             p.shadow.alpha = dogJump ? .16 : 1;
             p.heart.alpha = state.mood === "happy" ? .7 + Math.sin(stepTime * 7) * .25 : 0;
             p.actionLabel.alpha = state.mood === "bark" || state.mood === "nap"
               ? state.mood === "bark" ? .8 + Math.sin(stepTime * 18) * .2 : .72 : 0;
             p.actionLabel.y = -p.height - 24 - (dogJump ? 20 : Math.abs(Math.sin(stepTime * 2)) * 4);
+            // During a bark the head bounces and tail wags; during a nap
+            // the cat curls closer to the tabletop, with a breathing cycle.
+            if (napping) p.holder.scale.y += Math.sin(pose.seconds * 1.8) * .01;
             deformVertices(p.original, p.vertices, p.texture.width, p.texture.height,
               { gait: state.gait, speed: state.speed, seconds: pose.seconds,
                 motion: state.mood, actionProgress: state.actionProgress }, p.kind);
@@ -219,7 +261,13 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           if (pose.dog.mood === "bark" && previousDogMood !== "bark") onBarkRef.current?.();
           previousDogMood = pose.dog.mood;
           const person = pose.worker;
-          employee.holder.position.set(person.x, person.y);
+          // A true running pose already has bent legs. Foot-locked strides
+          // now add a vertical rise/fall; petting uses the crouching asset
+          // and strokes instead of moving the whole full-body image sideways.
+          const runningOutside = person.action === "run" && !person.behindCounter;
+          const runLift = runningOutside
+            ? Math.pow(Math.sin(pose.seconds * 9), 2) * 4.5 : 0;
+          employee.holder.position.set(person.x, person.y - runLift);
           // Switch the full illustrated pose — running is a real bent-knee
           // running drawing, petting is an actual crouch/reaching-arm drawing.
           // Deformation alone can no longer fake these body poses.
@@ -238,17 +286,36 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           // let the actual painted tabletop occlude the lower legs as in life.
           const besideCatTable = pose.target === "cat" &&
             person.x >= 1175 && person.y >= 870;
-          const nextMaskHeight = person.behindCounter ? COUNTER_WAISTLINE_Y :
+          // The left exit passes beside foreground stools/planters painted
+          // INTO the immutable background. Full-body rendering at world
+          // y=729 made the worker look as though she ran on the chairs.
+          // Gradually reveal the lower body ONLY on the descent from the
+          // left passage onto the paved ground, and reverse when returning.
+          const inLeftPassage = (pose.phase === "outbound" ||
+            pose.phase === "returning") && person.x < 935;
+          // Foreground chairs and the chalkboard are part of the approved
+          // *background*. The worker passes BEHIND them: her lower silhouette
+          // should not be drawn on top of a stool. Reveal upper torso near the
+          // left exit, then smoothly reveal her feet on the open central tiles.
+          const exitY = Math.max(0, Math.min(1, (person.y - 815) / 95));
+          const exitX = Math.max(0, Math.min(1, (person.x - 825) / 110));
+          const soft = exitX * exitX * (3 - 2 * exitX);
+          const passageMaskHeight = Math.round(COUNTER_WAISTLINE_Y +
+            (790 - COUNTER_WAISTLINE_Y) * exitY +
+            (ARTBOARD.height - 790) * soft * exitY);
+          const nextMaskHeight = inLeftPassage ? passageMaskHeight :
+            person.behindCounter ? COUNTER_WAISTLINE_Y :
             besideCatTable ? 852 : ARTBOARD.height;
           if (nextMaskHeight !== maskHeight) {
             counterMask.clear().rect(0, 0, ARTBOARD.width, nextMaskHeight).fill(0xffffff);
             maskHeight = nextMaskHeight;
           }
-          employee.holder.rotation = person.action === "run" ? Math.sin(pose.seconds * 15) * .023 :
-            person.action === "pet" ? Math.sin(pose.seconds * 6) * .012 : 0;
+          employee.holder.rotation = runningOutside
+            ? Math.sin(pose.seconds * 16) * .028
+            : person.action === "pet" ? Math.sin(pose.seconds * 6) * .015 : 0;
           deformVertices(employee.original, employee.vertices, employee.texture.width,
             employee.texture.height,
-            { gait: pose.seconds * 13, speed: person.action === "run" ? 65 : 0,
+            { gait: pose.seconds * 17, speed: runningOutside ? 85 : 0,
               seconds: pose.seconds, motion: person.action }, "employee");
           employee.buffer.update();
           lastNotification += reviewPaused
@@ -277,9 +344,14 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               host.current.dataset.dogX = String(Math.round(pose.dog.x));
               host.current.dataset.dogY = String(Math.round(pose.dog.y));
               host.current.dataset.dogMood = pose.dog.mood;
+              host.current.dataset.dogJumpHeight = String(Math.round(
+                pose.dog.mood === "jump" ? Math.sin(pose.dog.actionProgress * Math.PI) * 40 : 0));
               host.current.dataset.catX = String(Math.round(pose.cat.x));
               host.current.dataset.catY = String(Math.round(pose.cat.y));
               host.current.dataset.catMood = pose.cat.mood;
+              host.current.dataset.catPoseAsset = pose.cat.mood === "groom"
+                ? "groom" : "canonical";
+              host.current.dataset.workerRunLift = runLift.toFixed(2);
             }
             onMoveRef.current({
               // Hotspot centers match the VISIBLE rendered sprites in the

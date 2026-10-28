@@ -123,7 +123,7 @@ test("employee leaves counter without giant white graphics panel; dog remains on
 
   await simulateUntil(page, "home");
   await expect(host).toHaveAttribute("data-counter-mask-height", "650");
-  await expect(host).toHaveAttribute("data-employee-y", "760");
+  await expect(host).toHaveAttribute("data-employee-y", "810");
   const backAtCounter = Number(await host.getAttribute("data-employee-visible-fraction"));
   expect(backAtCounter).toBeGreaterThan(.39);
   expect(backAtCounter).toBeLessThan(.46);

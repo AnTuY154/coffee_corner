@@ -58,7 +58,7 @@ const LIMITS: Record<Animal, readonly [number, number]> = {
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
 const dist = (a: Vec, b: Vec) => Math.hypot(b.x - a.x, b.y - a.y);
 const smooth = (t: number) => t * t * (3 - 2 * t);
-const preferredSpeed = (who: Animal) => who === "dog" ? 65 : 19;
+const preferredSpeed = (who: Animal) => who === "dog" ? 84 : 26;
 const IS_SPECIAL: ReadonlySet<PetMood> = new Set(["bark", "jump", "groom", "nap"]);
 
 type PetState = PetPose & {
@@ -103,16 +103,19 @@ export function interpolateRoute(points: Vec[], progress: number): Vec {
 export class ActorsDirector {
   private time = 0;
   private random = 0x71e2026;
-  private nextVisitAt = 19;
+  // The original 19s delay made the store look static to a new visitor.
+  // The first autonomous greeting happens after the pets have had time to
+  // demonstrate their own actions. Subsequent visits alternate dog and cat.
+  private nextVisitAt = 11.5;
   private alternate: Animal = "dog";
   private queued: Animal | null = null;
   private visit: Visit | null = null;
   private worker: WorkerPose = { ...HOME, action: "wave", facing: 1, stride: 0, behindCounter: true };
   private pets: Record<Animal, PetState> = {
     dog: { ...INIT.dog, mood: "idle", facing: 1, gait: 0, speed: 0, desired: 0,
-      timer: 1.3, specialAt: 7, specialCount: 0, actionElapsed: 0, actionDuration: 0, actionProgress: 0 },
+      timer: .7, specialAt: 3.3, specialCount: 0, actionElapsed: 0, actionDuration: 0, actionProgress: 0 },
     cat: { ...INIT.cat, mood: "idle", facing: -1, gait: 0, speed: 0, desired: 0,
-      timer: 2.4, specialAt: 5, specialCount: 0, actionElapsed: 0, actionDuration: 0, actionProgress: 0 },
+      timer: 1.5, specialAt: 4.1, specialCount: 0, actionElapsed: 0, actionDuration: 0, actionProgress: 0 },
   };
   private rand() {
     this.random ^= this.random << 13;
@@ -131,6 +134,9 @@ export class ActorsDirector {
   private startVisit(target: Animal) {
     const pet = this.pets[target];
     pet.desired = 0; pet.timer = 15;
+    // During a visit the animal turns toward the arriving employee. This is
+    // state in the SAME simulation as the employee's approaching and pet poses.
+    pet.facing = target === "dog" ? 1 : -1;
     // Meet the cat from the floor NEXT to the table, not on top of it.
     const end: Vec = target === "dog"
       ? { x: clamp(pet.x + 95, 905, 1170), y: DOG_GROUND_Y }
@@ -179,9 +185,12 @@ export class ActorsDirector {
       pet.specialCount++;
       pet.actionElapsed = 0;
       pet.actionProgress = 0;
-      pet.actionDuration = pet.mood === "bark" ? .9 : pet.mood === "jump" ? 1.35
-        : pet.mood === "groom" ? 3.7 : 5.6;
-      pet.specialAt = this.time + (animal === "dog" ? 9 : 10) + this.rand() * 4;
+      pet.actionDuration = pet.mood === "bark" ? 1.2 : pet.mood === "jump" ? 1.3
+        : pet.mood === "groom" ? 3.6 : 4.7;
+      // Frequent but non-repeating-looking activity. A bark and jump are
+      // guaranteed to occur before the employee's next autonomous visit in
+      // ordinary motion mode; cat grooming alternates with a visible nap.
+      pet.specialAt = this.time + (animal === "dog" ? 5 : 5.8) + this.rand() * 1.5;
       pet.speed = 0;
       pet.desired = 0;
       return;
@@ -190,10 +199,10 @@ export class ActorsDirector {
     if (this.time >= pet.specialAt) pet.desired = 0;
     pet.timer -= dt;
     if (pet.timer <= 0 && this.time < pet.specialAt) {
-      pet.timer = (animal === "dog" ? 1.6 : 2.8) + this.rand() * 2.3;
+      pet.timer = (animal === "dog" ? 1.0 : 1.5) + this.rand() * 1.3;
       const [left, right] = LIMITS[animal];
       const direction: 1 | -1 = pet.x > right - 28 ? -1 : pet.x < left + 28 ? 1 : this.rand() < .5 ? -1 : 1;
-      pet.desired = this.rand() < .27 ? 0 : direction * preferredSpeed(animal);
+      pet.desired = this.rand() < .16 ? 0 : direction * preferredSpeed(animal);
     }
     const reversing = pet.speed * pet.desired < 0;
     const acceleration = reversing ? 155 : pet.desired === 0 ? 115 : 77;
@@ -256,7 +265,7 @@ export class ActorsDirector {
           } else {
             this.visit = null;
             this.worker = { ...HOME, action: "idle", facing: 1, stride: 0, behindCounter: true };
-            this.nextVisitAt = this.time + 22 + this.rand() * 13;
+            this.nextVisitAt = this.time + 12 + this.rand() * 5;
             if (this.queued) {
               const target = this.queued;
               this.queued = null;
@@ -269,7 +278,7 @@ export class ActorsDirector {
         this.worker = { ...stop, scale: PATIO_SCALE, action: "pet", facing: visit.target === "dog" ? -1 : 1,
           stride: Math.sin(this.time * 6), behindCounter: false };
         this.pets[visit.target].mood = "happy";
-        if (visit.elapsed >= 3.2) {
+        if (visit.elapsed >= 3.7) {
           visit.phase = "returning";
           visit.elapsed = 0;
           this.pets[visit.target].mood = "idle";
