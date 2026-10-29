@@ -45,6 +45,7 @@ async function auditFixed(page: Page) {
       id, rect(`.ve2d-hotspot[data-target="${id}"]`),
     ]));
     return {
+      viewport: { width: window.innerWidth, height: window.innerHeight },
       stage: rect(".ve2d-stage"),
       image: rect(".ve2d-approved-art"),
       canvas: rect(".ve2d-pixi-pets canvas"),
@@ -53,9 +54,13 @@ async function auditFixed(page: Page) {
   }, Object.keys(fixed));
   // Allow exactly one ResizeObserver turn after changing the viewport.
   await expect.poll(async () => {
-    const { stage, canvas } = await snapshot();
+    const { viewport, stage, image, canvas } = await snapshot();
     return stage && canvas
       ? Math.abs(stage.width - canvas.width) + Math.abs(stage.height - canvas.height)
+        + (viewport.width > 500
+          ? Math.abs(stage.width - Math.min(viewport.width, viewport.height * W / H))
+          : 0)
+        + (image ? Math.abs(stage.width - image.width) : Infinity)
       : Infinity;
   }, { timeout: 8_000, intervals: [100, 150, 300] }).toBeLessThan(2.2);
 

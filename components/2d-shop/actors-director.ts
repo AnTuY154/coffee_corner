@@ -6,7 +6,7 @@
 export const ARTBOARD = { width: 1672, height: 941 } as const;
 export type Animal = "dog" | "cat";
 export type PetMood = "idle" | "walk" | "turn" | "happy" | "bark" | "jump" | "groom" | "nap";
-export type WorkerAction = "idle" | "wave" | "run" | "pet";
+export type WorkerAction = "idle" | "wave" | "talk" | "prepare" | "walk" | "run" | "pet";
 export type Vec = { x: number; y: number };
 export type PetPose = Vec & {
   mood: PetMood; facing: 1 | -1; speed: number; gait: number; actionProgress: number;
@@ -180,7 +180,7 @@ export class ActorsDirector {
     }
     if (this.time >= pet.specialAt && Math.abs(pet.speed) < 5) {
       pet.mood = animal === "dog"
-        ? (pet.specialCount % 2 === 0 ? "bark" : "jump")
+        ? (["bark", "jump", "nap"] as const)[pet.specialCount % 3]
         : (pet.specialCount % 2 === 0 ? "groom" : "nap");
       pet.specialCount++;
       pet.actionElapsed = 0;
@@ -248,7 +248,8 @@ export class ActorsDirector {
         const diffX = next.x - position.x;
         this.worker = {
           ...position, scale: employeeSceneScale(position),
-          action: "run", facing: Math.abs(diffX) > .1 ? (diffX < 0 ? -1 : 1) : this.worker.facing,
+          action: progress < .08 || progress > .92 ? "walk" : "run",
+          facing: Math.abs(diffX) > .1 ? (diffX < 0 ? -1 : 1) : this.worker.facing,
           stride: Math.sin(this.time * 17),
           // Keep her hidden behind the counter while walking toward the
           // LEFT exit; otherwise the full dress reappears the moment her
@@ -287,7 +288,8 @@ export class ActorsDirector {
         }
       }
     } else {
-      this.worker = { ...HOME, action: this.time % 7.4 < 1.7 ? "wave" : "idle",
+      this.worker = { ...HOME, action: this.time % 11 < 1.7 ? "wave"
+        : this.time % 11 < 3.7 ? "talk" : this.time % 11 < 5.7 ? "prepare" : "idle",
         facing: 1, stride: 0, behindCounter: true };
     }
     const snapshot = (animal: Animal): PetPose => {
