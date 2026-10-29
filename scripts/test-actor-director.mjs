@@ -33,8 +33,9 @@ assert(COUNTER_WAISTLINE_Y < start.worker.y,
   "employee feet must remain behind counter, out of the visible stage");
 assert(employeeSceneScale(COUNTER_PORTRAIT) > employeeSceneScale({x:1050,y:918}),
   "scale eases from a counter portrait into natural full-body size");
-let sawDogWalk = false, sawDogBark = false, sawDogJump = false;
+let sawDogWalk = false, sawDogBark = false, sawDogJump = false, sawDogNap = false;
 let sawCatGroom = false, sawCatNap = false, sawCatWalk = false;
+const workerActions = new Set();
 let last = start;
 for (let i = 0; i < 1600; i++) {
   const now = d.step(.05);
@@ -54,13 +55,18 @@ for (let i = 0; i < 1600; i++) {
   if(now.dog.mood === "walk") sawDogWalk = true;
   if(now.dog.mood === "bark") sawDogBark = true;
   if(now.dog.mood === "jump") sawDogJump = true;
+  if(now.dog.mood === "nap") sawDogNap = true;
   if(now.cat.mood === "walk") sawCatWalk = true;
   if(now.cat.mood === "groom") sawCatGroom = true;
   if(now.cat.mood === "nap") sawCatNap = true;
+  workerActions.add(now.worker.action);
   last = now;
 }
 assert(sawDogWalk && sawDogBark && sawDogJump, "dog walks, barks and jumps");
 assert(sawCatWalk && sawCatGroom && sawCatNap, "cat walks on table, grooms and naps");
+assert(sawDogNap, "dog rests during its autonomous cycle");
+for (const action of ["wave", "talk", "prepare", "walk", "run", "pet", "idle"])
+  assert(workerActions.has(action), "worker action never activated: " + action);
 
 // Acceptance: every advertised action must appear during an ordinary page
 // visit, not only after a minute or if the visitor knows a secret click target.

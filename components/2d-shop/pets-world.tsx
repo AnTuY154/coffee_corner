@@ -103,30 +103,39 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         const frames: Record<CharacterId, Record<string, FrameTexture[]>> = {
           employee: {}, dog: {}, cat: {},
         };
-        // Complete sequences only: never flash an empty frame.
-        // Do not issue dozens of missing-image requests until the frame pack is deployed.
-        let installed: Partial<Record<CharacterId, Record<string, number>>> = {};
+        // A count alone does not certify a crop. Only sequences explicitly
+        // reviewed in the manifest may replace the canonical illustrations.
+        type ReviewedManifest = { approved?: Partial<Record<CharacterId, Record<string, number>>> };
+        let approved: NonNullable<ReviewedManifest["approved"]> = {};
         try {
           const response = await fetch(`${artBase}/manifest.json`, { cache: "no-store" });
           if (response.ok) {
-            const parsed: unknown = await response.json();
-            if (parsed && typeof parsed === "object" && !Array.isArray(parsed))
-              installed = parsed as typeof installed;
+            const parsed: ReviewedManifest = await response.json();
+            if (parsed?.approved && typeof parsed.approved === "object")
+              approved = parsed.approved;
           }
         } catch { /* sprite pack is optional */ }
-        await Promise.all((Object.keys(FRAME_SEQUENCES) as CharacterId[]).flatMap(character =>
-          Object.entries(FRAME_SEQUENCES[character]).filter(([action, count]) =>
-            installed[character]?.[action] === count).map(async ([action, count]) => {
-            try {
-              const loaded = await Promise.all(Array.from({ length: count }, (_, i) =>
-                Assets.load(framePath(artBase, character, action, i)) as Promise<FrameTexture>));
-              if (loaded.length === count && loaded.every(t =>
-                t.width === loaded[0].width && t.height === loaded[0].height)) {
+        const loading = new Set<string>();
+        const failed = new Set<string>();
+        function loadAction(character: CharacterId, action: string) {
+          const count = (FRAME_SEQUENCES[character] as Record<string, number>)[action];
+          const key = `${character}/${action}`;
+          if (!count || approved[character]?.[action] !== count ||
+            frames[character][action] || loading.has(key) || failed.has(key)) return;
+          loading.add(key);
+          // Load only the active sequence. The old eager loader requested all
+          // 160 images at once and delayed the entire stage until completion.
+          void Promise.all(Array.from({ length: count }, (_, i) =>
+            Assets.load(framePath(artBase, character, action, i)) as Promise<FrameTexture>))
+            .then(loaded => {
+              if (disposed) return;
+              if (loaded.every(t => t.width === loaded[0].width && t.height === loaded[0].height))
                 frames[character][action] = loaded;
-              }
-            } catch { /* canonical portrait remains the fallback */ }
-          }),
-        ));
+              else failed.add(key);
+            })
+            .catch(() => failed.add(key))
+            .finally(() => loading.delete(key));
+        }
         if (disposed) return;
         const clocks: Record<CharacterId, { action: string; elapsed: number }> = {
           employee: { action: "", elapsed: 0 }, dog: { action: "", elapsed: 0 },
@@ -138,9 +147,9 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           if (clock.action !== action) { clock.action = action; clock.elapsed = 0; }
           else clock.elapsed += delta;
           const sequence = frames[character][action];
-          if (!sequence?.length) return fallback;
+          if (!sequence?.length) { loadAction(character, action); return fallback; }
           const fps = (FRAME_FPS[character] as Record<string, number>)[action] ?? 8;
-          return sequence[animationFrameAt(clock.elapsed, fps, sequence.length)];
+          return sequence[animationFrameAt(clock.elapsed, fps, sequence.length, action !== "jump")];
         }
 
         function makeActor(texture: typeof dogTexture, kind: RigKind, width: number, height: number) {
@@ -148,6 +157,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           const shadow = new Graphics().ellipse(0, -3, width * .35, 9)
             .fill({ color: 0x423b2a, alpha: .2 });
           const mesh = new MeshPlane({ texture, verticesX: 17, verticesY: 17 });
+          mesh.autoResize = false;
           const attr = mesh.geometry.getAttribute("aPosition");
           const original = new Float32Array(attr.buffer.data);
           const vertices = attr.buffer.data as Float32Array;
@@ -181,6 +191,9 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         const workerTextures = {
           idle: employeeTexture,
           wave: wavePose,
+          talk: employeeTexture,
+          prepare: employeeTexture,
+          walk: runPose,
           run: runPose,
           pet: petPose,
         } as const;
@@ -258,10 +271,6 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           }
           for (const p of [dog, cat] as const) {
             const state = pose[p.kind as Animal];
-            if (p.kind === "cat") {
-              const wanted = state.mood === "groom" ? catGroomPose : catTexture;
-              if (p.mesh.texture !== wanted) p.mesh.texture = wanted;
-            }
             const fallbackPose = p.kind === "cat" && state.mood === "groom"
               ? catGroomPose : p.texture;
             const frameAction = petFrameAction(p.kind as Animal, state.mood, state.speed);
@@ -298,7 +307,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             p.shadow.scale.x = dogJump ? 1 - jumping / 110 : 1;
             p.shadow.alpha = dogJump ? .16 : 1;
             p.heart.alpha = state.mood === "happy" ? .7 + Math.sin(stepTime * 7) * .25 : 0;
-            p.actionLabel.alpha = state.mood === "bark" || state.mood === "nap"
+            p.actionLabel.alpha = state.mood === "bark" || (state.mood === "nap" && p.kind === "cat")
               ? state.mood === "bark" ? .8 + Math.sin(stepTime * 18) * .2 : .72 : 0;
             p.actionLabel.y = -p.height - 24 - (dogJump ? 20 : Math.abs(Math.sin(stepTime * 2)) * 4);
             // During a bark the head bounces and tail wags; during a nap
@@ -320,9 +329,10 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           // A true running pose already has bent legs. Foot-locked strides
           // now add a vertical rise/fall; petting uses the crouching asset
           // and strokes instead of moving the whole full-body image sideways.
-          const runningOutside = person.action === "run" && !person.behindCounter;
+          const runningOutside = (person.action === "run" || person.action === "walk") && !person.behindCounter;
           const runLift = runningOutside
-            ? Math.pow(Math.sin(pose.seconds * 9), 2) * 4.5 : 0;
+            ? Math.pow(Math.sin(pose.seconds * (person.action === "run" ? 9 : 6)), 2) *
+              (person.action === "run" ? 4.5 : 2) : 0;
           employee.holder.position.set(person.x, person.y - runLift);
           // Switch the full illustrated pose — running is a real bent-knee
           // running drawing, petting is an actual crouch/reaching-arm drawing.
@@ -335,7 +345,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           // The run and pet source poses reach to the right; mirror when
           // approaching the dog from its right side. At the counter, preserve
           // the original apron writing and the face's approved appearance.
-          const poseFacing = person.action === "run" || person.action === "pet"
+          const poseFacing = person.action === "run" || person.action === "walk" || person.action === "pet"
             ? person.facing : 1;
           employee.holder.scale.set(person.scale * poseFacing, person.scale);
           employee.holder.zIndex = person.y + .1;
@@ -377,7 +387,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           } else deformVertices(employee.original, employee.vertices, employee.texture.width,
             employee.texture.height,
             { gait: pose.seconds * 17, speed: runningOutside ? 85 : 0,
-              seconds: pose.seconds, motion: person.action }, "employee");
+              seconds: pose.seconds, motion: person.action === "talk" || person.action === "prepare"
+                ? "idle" : person.action }, "employee");
           employee.buffer.update();
           lastNotification += reviewPaused
             ? .15 // Publish the held frame promptly for visual assertions.

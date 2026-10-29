@@ -45,7 +45,7 @@ export function petFrameAction(kind: "dog" | "cat",
   return mood;
 }
 
-export function employeeFrameAction(action: "idle" | "wave" | "run" | "pet",
+export function employeeFrameAction(action: "idle" | "wave" | "talk" | "prepare" | "walk" | "run" | "pet",
   target: "dog" | "cat" | null): string {
   return action === "pet" ? (target === "cat" ? "pet_cat" : "pet_dog") : action;
 }
