@@ -277,6 +277,11 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             const nextFrame = frameFor(p.kind as Animal, frameAction, fallbackPose,
               Math.min(Math.max(tick.deltaMS / 1000, 0), .2));
             if (p.mesh.texture !== nextFrame) p.mesh.texture = nextFrame;
+            if (reviewMode && host.current) {
+              host.current.dataset[`${p.kind}Action`] = frameAction;
+              host.current.dataset[`${p.kind}Frame`] = String(
+                frames[p.kind as Animal][frameAction]?.indexOf(nextFrame) ?? -1);
+            }
             // Explicit world surfaces: puppy paws on the courtyard tiles,
             // cat paws ON the wooden outdoor tabletop (not on the ground).
             // Visible movement must match the director's state. Previously
