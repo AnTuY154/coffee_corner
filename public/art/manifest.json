@@ -1,6 +1,12 @@
 {
   "approved": {
+    "employee": {
+      "run": 12
+    },
     "dog": {
+      "walk": 8
+    },
+    "cat": {
       "walk": 8
     }
   }

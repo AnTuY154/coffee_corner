@@ -264,6 +264,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
                 pose.cat.actionProgress > .3) break;
               if (goal === "cat-nap" && pose.cat.mood === "nap" &&
                 pose.cat.actionProgress > .3) break;
+              if (goal === "cat-walk" && pose.cat.mood === "walk" &&
+                Math.abs(pose.cat.speed) > 3) break;
               if (goal === "employee-run" && pose.worker.action === "run" &&
                 !pose.worker.behindCounter &&
                 pose.worker.x >= 944 && pose.worker.y >= 911) break;
@@ -347,6 +349,11 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             workerTextures[person.action], Math.min(Math.max(tick.deltaMS / 1000, 0), .2));
           if (employee.mesh.texture !== requiredTexture)
             employee.mesh.texture = requiredTexture;
+          if (reviewMode && host.current) {
+            host.current.dataset.employeeFrame = String(
+              frames.employee[workerFrame]?.indexOf(requiredTexture) ?? -1);
+            host.current.dataset.employeeFrameAction = workerFrame;
+          }
           // The run and pet source poses reach to the right; mirror when
           // approaching the dog from its right side. At the counter, preserve
           // the original apron writing and the face's approved appearance.
