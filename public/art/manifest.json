@@ -4,7 +4,8 @@
       "run": 12
     },
     "dog": {
-      "walk": 8
+      "walk": 8,
+      "run": 12
     },
     "cat": {
       "walk": 8

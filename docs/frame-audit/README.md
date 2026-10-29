@@ -20,6 +20,7 @@ The source itself overlaps figures and text. Pixels hidden behind a neighboring 
 | --- | ---: | --- | --- |
 | Employee run | 12 | [Contact sheet](employee-run-redraw.png) | [Running outside counter](employee-run-browser.png) |
 | Dog walk | 8 | [Contact sheet](dog-walk-redraw.png) | [Walking in courtyard](dog-walk-browser.png) |
+| Dog run | 12 | [Contact sheet](dog-run-redraw.png) | [Running in courtyard](dog-run-browser.png) |
 | Cat walk | 8 | [Contact sheet](cat-walk-redraw.png) | [Walking on tabletop](cat-walk-browser.png) |
 
-The browser review captured changing indices for all three sequences. Other activities continue using canonical character art and safe existing poses. `public/art/manifest.json` lists only reviewed sequences; the ZIP's count-only manifest cannot activate its unreviewed crops. The full `test:frames` gate remains red until every required sequence has been reviewed. These 28 frames are an intermediate, visually checked subset of the requested 160.
+The browser review captured changing indices for all four sequences. Other activities continue using canonical character art and safe existing poses. `public/art/manifest.json` lists only reviewed sequences; the ZIP's count-only manifest cannot activate its unreviewed crops. The full `test:frames` gate remains red until every required sequence has been reviewed. These 40 frames are an intermediate, visually checked subset of the requested 160.

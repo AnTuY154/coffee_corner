@@ -260,6 +260,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
                 pose.dog.actionProgress > .3) break;
               if (goal === "dog-jump" && pose.dog.mood === "jump" &&
                 pose.dog.actionProgress > .38) break;
+              if (goal === "dog-run" && pose.dog.mood === "walk" &&
+                Math.abs(pose.dog.speed) >= 70) break;
               if (goal === "cat-groom" && pose.cat.mood === "groom" &&
                 pose.cat.actionProgress > .3) break;
               if (goal === "cat-nap" && pose.cat.mood === "nap" &&
