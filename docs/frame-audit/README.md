@@ -24,3 +24,5 @@ The source itself overlaps figures and text. Pixels hidden behind a neighboring 
 | Cat walk | 8 | [Contact sheet](cat-walk-redraw.png) | [Walking on tabletop](cat-walk-browser.png) |
 
 The browser review captured changing indices for all four sequences. Other activities continue using canonical character art and safe existing poses. `public/art/manifest.json` lists only reviewed sequences; the ZIP's count-only manifest cannot activate its unreviewed crops. The full `test:frames` gate remains red until every required sequence has been reviewed. These 40 frames are an intermediate, visually checked subset of the requested 160.
+
+An eight-frame employee walking redraw was also attempted. The first generation repeated nearly the same leg pose across the end of the cycle; the pose-corrected pass changed the employee's face, glasses and shoes. Both were rejected and remain outside `public/art/manifest.json`. The approved run sequence still covers her visible travel at running speed; unsupported walking transitions use the canonical fallback until a consistent walk cycle is available.
