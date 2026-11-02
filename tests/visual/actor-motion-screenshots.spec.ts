@@ -55,7 +55,7 @@ test("the cat grooms itself and visibly curls up to nap on the right table", asy
 });
 test("worker changes from waist-up greeting to full-body RUN and crouching PET", async ({page}) => {
   const host = await setup(page);
-  await expect(host).toHaveAttribute("data-employee-pose-asset", /wave|idle/);
+  await expect(host).toHaveAttribute("data-employee-pose-asset", /wave|idle|talk|prepare/);
   await expect(host).toHaveAttribute("data-counter-mask-height", "650");
   await capture(page, "05-employee-behind-counter");
   await page.locator('.ve2d-hotspot[data-target="dog"]').click();

@@ -24,7 +24,7 @@ export default function AnimationPreviewPage() {
     let cancelled = false;
     fetch(`${artBase}/manifest.json`, { cache: "no-store" })
       .then(response => response.ok ? response.json() : {})
-      .then((data: Installed) => { if (!cancelled) setInstalled(data); })
+      .then((data: { approved?: Installed }) => { if (!cancelled) setInstalled(data.approved ?? {}); })
       .catch(() => { if (!cancelled) setInstalled({}); });
     return () => { cancelled = true; };
   }, [artBase]);
@@ -35,6 +35,8 @@ export default function AnimationPreviewPage() {
     return () => window.clearInterval(timer);
   }, [available, paused, count, fps]);
 
+  useEffect(() => { setLoadError(false); }, [actor, action, frame]);
+
   const selectActor = (value: CharacterId) => {
     setActor(value);
     setAction(Object.keys(FRAME_SEQUENCES[value])[0]);
@@ -42,7 +44,7 @@ export default function AnimationPreviewPage() {
     setLoadError(false);
   };
   const selectAction = (value: string) => { setAction(value); setFrame(0); setLoadError(false); };
-  const src = available
+  const src = available && !loadError
     ? framePath(artBase, actor, action, frame % count)
     : `${artBase}/canonical/${actor === "employee" ? "employee" : actor}.webp`;
 
@@ -65,7 +67,7 @@ export default function AnimationPreviewPage() {
       {/* Uses a normal img on purpose: the diagnostic viewer must work without WebGL. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt={`${actor} / ${action} / frame ${frame + 1}`}
-        onError={() => setLoadError(true)} onLoad={() => setLoadError(false)}
+        onError={() => setLoadError(true)}
         style={{ height: 285, width: 240, objectFit: "contain", transform: mirror ? "scaleX(-1)" : undefined }} />
     </div>
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 16, padding: 16 }}>

@@ -103,44 +103,56 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         const frames: Record<CharacterId, Record<string, FrameTexture[]>> = {
           employee: {}, dog: {}, cat: {},
         };
-        // Complete sequences only: never flash an empty frame.
-        // Do not issue dozens of missing-image requests until the frame pack is deployed.
-        let installed: Partial<Record<CharacterId, Record<string, number>>> = {};
+        // A count alone does not certify a crop. Only sequences explicitly
+        // reviewed in the manifest may replace the canonical illustrations.
+        type ReviewedManifest = { approved?: Partial<Record<CharacterId, Record<string, number>>> };
+        let approved: NonNullable<ReviewedManifest["approved"]> = {};
         try {
           const response = await fetch(`${artBase}/manifest.json`, { cache: "no-store" });
           if (response.ok) {
-            const parsed: unknown = await response.json();
-            if (parsed && typeof parsed === "object" && !Array.isArray(parsed))
-              installed = parsed as typeof installed;
+            const parsed: ReviewedManifest = await response.json();
+            if (parsed?.approved && typeof parsed.approved === "object")
+              approved = parsed.approved;
           }
         } catch { /* sprite pack is optional */ }
-        await Promise.all((Object.keys(FRAME_SEQUENCES) as CharacterId[]).flatMap(character =>
-          Object.entries(FRAME_SEQUENCES[character]).filter(([action, count]) =>
-            installed[character]?.[action] === count).map(async ([action, count]) => {
-            try {
-              const loaded = await Promise.all(Array.from({ length: count }, (_, i) =>
-                Assets.load(framePath(artBase, character, action, i)) as Promise<FrameTexture>));
-              if (loaded.length === count && loaded.every(t =>
-                t.width === loaded[0].width && t.height === loaded[0].height)) {
+        const loading = new Set<string>();
+        const failed = new Set<string>();
+        function loadAction(character: CharacterId, action: string) {
+          const count = (FRAME_SEQUENCES[character] as Record<string, number>)[action];
+          const key = `${character}/${action}`;
+          if (!count || approved[character]?.[action] !== count ||
+            frames[character][action] || loading.has(key) || failed.has(key)) return;
+          loading.add(key);
+          // Load only the active sequence. The old eager loader requested all
+          // 160 images at once and delayed the entire stage until completion.
+          void Promise.all(Array.from({ length: count }, (_, i) =>
+            Assets.load(framePath(artBase, character, action, i)) as Promise<FrameTexture>))
+            .then(loaded => {
+              if (disposed) return;
+              if (loaded.every(t => t.width === loaded[0].width && t.height === loaded[0].height))
                 frames[character][action] = loaded;
-              }
-            } catch { /* canonical portrait remains the fallback */ }
-          }),
-        ));
+              else failed.add(key);
+            })
+            .catch(() => failed.add(key))
+            .finally(() => loading.delete(key));
+        }
         if (disposed) return;
         const clocks: Record<CharacterId, { action: string; elapsed: number }> = {
           employee: { action: "", elapsed: 0 }, dog: { action: "", elapsed: 0 },
           cat: { action: "", elapsed: 0 },
         };
         function frameFor(character: CharacterId, action: string,
-          fallback: FrameTexture, delta: number): FrameTexture {
+          fallback: FrameTexture, delta: number, actionProgress = 0): FrameTexture {
           const clock = clocks[character];
           if (clock.action !== action) { clock.action = action; clock.elapsed = 0; }
           else clock.elapsed += delta;
           const sequence = frames[character][action];
-          if (!sequence?.length) return fallback;
+          if (!sequence?.length) { loadAction(character, action); return fallback; }
+          if (reduced.matches) { clock.elapsed = 0; return sequence[0]; }
+          if (action === "jump")
+            return sequence[animationFrameAt(actionProgress, sequence.length, sequence.length, false)];
           const fps = (FRAME_FPS[character] as Record<string, number>)[action] ?? 8;
-          return sequence[animationFrameAt(clock.elapsed, fps, sequence.length)];
+          return sequence[animationFrameAt(clock.elapsed, fps, sequence.length, action !== "jump")];
         }
 
         function makeActor(texture: typeof dogTexture, kind: RigKind, width: number, height: number) {
@@ -148,6 +160,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           const shadow = new Graphics().ellipse(0, -3, width * .35, 9)
             .fill({ color: 0x423b2a, alpha: .2 });
           const mesh = new MeshPlane({ texture, verticesX: 17, verticesY: 17 });
+          mesh.autoResize = false;
           const attr = mesh.geometry.getAttribute("aPosition");
           const original = new Float32Array(attr.buffer.data);
           const vertices = attr.buffer.data as Float32Array;
@@ -181,6 +194,9 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         const workerTextures = {
           idle: employeeTexture,
           wave: wavePose,
+          talk: employeeTexture,
+          prepare: employeeTexture,
+          walk: runPose,
           run: runPose,
           pet: petPose,
         } as const;
@@ -239,6 +255,15 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             // transition, not 800 separate frames on a software GPU.
             for (let i = 0; i < 700; i++) {
               pose = director.step(.05, reduced.matches);
+              if (goal.startsWith("frame:")) {
+                const [, character, action] = goal.split(":");
+                const current = character === "employee"
+                  ? employeeFrameAction(pose.worker.action, pose.target)
+                  : character === "dog" || character === "cat"
+                    ? petFrameAction(character, pose[character].mood, pose[character].speed) : "";
+                if (current === action && (action !== "jump" ||
+                  (character !== "employee" && pose[character as Animal].actionProgress > .35))) break;
+              }
               if (goal === "off-counter" && !pose.worker.behindCounter &&
                 pose.worker.x >= 944 && pose.worker.y >= 911) break;
               if (goal === "petting" && pose.phase === "petting") break;
@@ -247,27 +272,38 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
                 pose.dog.actionProgress > .3) break;
               if (goal === "dog-jump" && pose.dog.mood === "jump" &&
                 pose.dog.actionProgress > .38) break;
+              if (goal === "dog-run" && pose.dog.mood === "walk" &&
+                Math.abs(pose.dog.speed) >= 70) break;
               if (goal === "cat-groom" && pose.cat.mood === "groom" &&
                 pose.cat.actionProgress > .3) break;
               if (goal === "cat-nap" && pose.cat.mood === "nap" &&
                 pose.cat.actionProgress > .3) break;
+              if (goal === "cat-jump" && pose.cat.mood === "jump" &&
+                pose.cat.actionProgress > .38) break;
+              if (goal === "cat-walk" && pose.cat.mood === "walk" &&
+                Math.abs(pose.cat.speed) > 3) break;
               if (goal === "employee-run" && pose.worker.action === "run" &&
+                !pose.worker.behindCounter &&
+                pose.worker.x >= 944 && pose.worker.y >= 911) break;
+              if (goal === "employee-walk" && pose.worker.action === "walk" &&
                 !pose.worker.behindCounter &&
                 pose.worker.x >= 944 && pose.worker.y >= 911) break;
             }
           }
           for (const p of [dog, cat] as const) {
             const state = pose[p.kind as Animal];
-            if (p.kind === "cat") {
-              const wanted = state.mood === "groom" ? catGroomPose : catTexture;
-              if (p.mesh.texture !== wanted) p.mesh.texture = wanted;
-            }
             const fallbackPose = p.kind === "cat" && state.mood === "groom"
               ? catGroomPose : p.texture;
             const frameAction = petFrameAction(p.kind as Animal, state.mood, state.speed);
             const nextFrame = frameFor(p.kind as Animal, frameAction, fallbackPose,
-              Math.min(Math.max(tick.deltaMS / 1000, 0), .2));
+              Math.min(Math.max(tick.deltaMS / 1000, 0), .2), state.actionProgress);
             if (p.mesh.texture !== nextFrame) p.mesh.texture = nextFrame;
+            if (reviewMode && host.current) {
+              host.current.dataset[`${p.kind}Action`] = frameAction;
+              host.current.dataset[`${p.kind}Progress`] = String(state.actionProgress);
+              host.current.dataset[`${p.kind}Frame`] = String(
+                frames[p.kind as Animal][frameAction]?.indexOf(nextFrame) ?? -1);
+            }
             // Explicit world surfaces: puppy paws on the courtyard tiles,
             // cat paws ON the wooden outdoor tabletop (not on the ground).
             // Visible movement must match the director's state. Previously
@@ -276,7 +312,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             // running bobs, a real airborne jump, a sleepy crouch and
             // different tail/head rhythms. Keep the floor shadow anchored.
             const dogJump = p.kind === "dog" && state.mood === "jump";
-            const jumping = dogJump ? Math.sin(state.actionProgress * Math.PI) * 40 : 0;
+            const jumping = state.mood === "jump"
+              ? Math.sin(state.actionProgress * Math.PI) * (p.kind === "dog" ? 40 : 22) : 0;
             const walking = state.mood === "walk" || state.mood === "turn";
             const bounce = walking ? Math.pow(Math.sin(state.gait), 2) *
               Math.min(4.2, Math.abs(state.speed) / 17) : 0;
@@ -285,10 +322,11 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               ? Math.sin(pose.seconds * 11) * .024 : 0;
             const grooming = p.kind === "cat" && state.mood === "groom";
             const napping = p.kind === "cat" && state.mood === "nap";
-            const napEase = napping ? Math.min(1, state.actionProgress * 6) : 0;
+            const illustrated = !!frames[p.kind as Animal][frameAction]?.length;
+            const napEase = napping && !illustrated ? Math.min(1, state.actionProgress * 6) : 0;
             p.holder.position.set(state.x, state.y - jumping - bounce);
             p.holder.scale.set(state.facing * (1 + napEase * .14),
-              dogJump ? 1 + jumping / 230 : 1 - napEase * .25);
+              dogJump && !illustrated ? 1 + jumping / 230 : 1 - napEase * .25);
             p.holder.rotation = frames[p.kind as Animal][frameAction]?.length ? 0
               : walking ? Math.sin(state.gait) * .02
               : grooming ? Math.sin(pose.seconds * 6) * .027
@@ -298,12 +336,12 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             p.shadow.scale.x = dogJump ? 1 - jumping / 110 : 1;
             p.shadow.alpha = dogJump ? .16 : 1;
             p.heart.alpha = state.mood === "happy" ? .7 + Math.sin(stepTime * 7) * .25 : 0;
-            p.actionLabel.alpha = state.mood === "bark" || state.mood === "nap"
+            p.actionLabel.alpha = state.mood === "bark" || (state.mood === "nap" && p.kind === "cat")
               ? state.mood === "bark" ? .8 + Math.sin(stepTime * 18) * .2 : .72 : 0;
             p.actionLabel.y = -p.height - 24 - (dogJump ? 20 : Math.abs(Math.sin(stepTime * 2)) * 4);
             // During a bark the head bounces and tail wags; during a nap
             // the cat curls closer to the tabletop, with a breathing cycle.
-            if (napping) p.holder.scale.y += Math.sin(pose.seconds * 1.8) * .01;
+            if (napping && !illustrated) p.holder.scale.y += Math.sin(pose.seconds * 1.8) * .01;
             // Full illustrated frames contain their own limb motion. Avoid
             // warping real frames; keep rig deformation for legacy art only.
             if (frames[p.kind as Animal][frameAction]?.length) {
@@ -320,9 +358,10 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           // A true running pose already has bent legs. Foot-locked strides
           // now add a vertical rise/fall; petting uses the crouching asset
           // and strokes instead of moving the whole full-body image sideways.
-          const runningOutside = person.action === "run" && !person.behindCounter;
+          const runningOutside = (person.action === "run" || person.action === "walk") && !person.behindCounter;
           const runLift = runningOutside
-            ? Math.pow(Math.sin(pose.seconds * 9), 2) * 4.5 : 0;
+            ? Math.pow(Math.sin(pose.seconds * (person.action === "run" ? 9 : 6)), 2) *
+              (person.action === "run" ? 4.5 : 2) : 0;
           employee.holder.position.set(person.x, person.y - runLift);
           // Switch the full illustrated pose — running is a real bent-knee
           // running drawing, petting is an actual crouch/reaching-arm drawing.
@@ -332,10 +371,15 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             workerTextures[person.action], Math.min(Math.max(tick.deltaMS / 1000, 0), .2));
           if (employee.mesh.texture !== requiredTexture)
             employee.mesh.texture = requiredTexture;
+          if (reviewMode && host.current) {
+            host.current.dataset.employeeFrame = String(
+              frames.employee[workerFrame]?.indexOf(requiredTexture) ?? -1);
+            host.current.dataset.employeeFrameAction = workerFrame;
+          }
           // The run and pet source poses reach to the right; mirror when
           // approaching the dog from its right side. At the counter, preserve
           // the original apron writing and the face's approved appearance.
-          const poseFacing = person.action === "run" || person.action === "pet"
+          const poseFacing = person.action === "run" || person.action === "walk" || person.action === "pet"
             ? person.facing : 1;
           employee.holder.scale.set(person.scale * poseFacing, person.scale);
           employee.holder.zIndex = person.y + .1;
@@ -377,7 +421,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           } else deformVertices(employee.original, employee.vertices, employee.texture.width,
             employee.texture.height,
             { gait: pose.seconds * 17, speed: runningOutside ? 85 : 0,
-              seconds: pose.seconds, motion: person.action }, "employee");
+              seconds: pose.seconds, motion: person.action === "talk" || person.action === "prepare"
+                ? "idle" : person.action }, "employee");
           employee.buffer.update();
           lastNotification += reviewPaused
             ? .15 // Publish the held frame promptly for visual assertions.
@@ -410,6 +455,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               host.current.dataset.catX = String(Math.round(pose.cat.x));
               host.current.dataset.catY = String(Math.round(pose.cat.y));
               host.current.dataset.catMood = pose.cat.mood;
+              host.current.dataset.catJumpHeight = String(Math.round(
+                pose.cat.mood === "jump" ? Math.sin(pose.cat.actionProgress * Math.PI) * 22 : 0));
               host.current.dataset.catPoseAsset = pose.cat.mood === "groom"
                 ? "groom" : "canonical";
               host.current.dataset.workerRunLift = runLift.toFixed(2);
@@ -417,8 +464,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             onMoveRef.current({
               // Hotspot centers match the VISIBLE rendered sprites in the
               // same pixel artboard, not their feet or an arbitrary offset.
-              dog: { x: pose.dog.x, y: pose.dog.y - 56 },
-              cat: { x: pose.cat.x, y: pose.cat.y - 42 },
+              dog: { x: pose.dog.x, y: dog.holder.y - 56 },
+              cat: { x: pose.cat.x, y: cat.holder.y - 42 },
               clerk: { x: person.x, y: person.y - (person.behindCounter
                 ? 156 * person.scale : 103 * person.scale) },
             });

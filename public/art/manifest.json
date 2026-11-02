@@ -1,0 +1,31 @@
+{
+  "approved": {
+    "employee": {
+      "run": 12,
+      "walk": 8,
+      "idle": 6,
+      "wave": 6,
+      "talk": 6,
+      "prepare": 6,
+      "pet_dog": 8,
+      "pet_cat": 8
+    },
+    "dog": {
+      "walk": 8,
+      "run": 12,
+      "idle": 6,
+      "happy": 8,
+      "jump": 8,
+      "nap": 6
+    },
+    "cat": {
+      "walk": 8,
+      "idle": 6,
+      "run": 8,
+      "happy": 8,
+      "jump": 8,
+      "nap": 6,
+      "groom": 8
+    }
+  }
+}

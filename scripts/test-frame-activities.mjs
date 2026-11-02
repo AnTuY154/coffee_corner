@@ -4,6 +4,9 @@ import { animationFrameAt, employeeFrameAction, petFrameAction, FRAME_SEQUENCES 
 assert.equal(employeeFrameAction("pet","dog"),"pet_dog");
 assert.equal(employeeFrameAction("pet","cat"),"pet_cat");
 assert.equal(employeeFrameAction("run",null),"run");
+for (const action of ["idle", "wave", "talk", "prepare", "walk", "run"]) {
+  assert.equal(employeeFrameAction(action, null), action);
+}
 for (const mood of ["idle","walk","turn","happy","bark","jump","groom","nap"]) {
   for (const animal of ["dog","cat"]) {
     const action = petFrameAction(animal,mood,0);
