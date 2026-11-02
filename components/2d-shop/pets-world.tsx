@@ -271,6 +271,9 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               if (goal === "employee-run" && pose.worker.action === "run" &&
                 !pose.worker.behindCounter &&
                 pose.worker.x >= 944 && pose.worker.y >= 911) break;
+              if (goal === "employee-walk" && pose.worker.action === "walk" &&
+                !pose.worker.behindCounter &&
+                pose.worker.x >= 944 && pose.worker.y >= 911) break;
             }
           }
           for (const p of [dog, cat] as const) {
