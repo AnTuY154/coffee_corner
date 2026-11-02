@@ -252,6 +252,15 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             // transition, not 800 separate frames on a software GPU.
             for (let i = 0; i < 700; i++) {
               pose = director.step(.05, reduced.matches);
+              if (goal.startsWith("frame:")) {
+                const [, character, action] = goal.split(":");
+                const current = character === "employee"
+                  ? employeeFrameAction(pose.worker.action, pose.target)
+                  : character === "dog" || character === "cat"
+                    ? petFrameAction(character, pose[character].mood, pose[character].speed) : "";
+                if (current === action && (action !== "jump" ||
+                  (character !== "employee" && pose[character as Animal].actionProgress > .35))) break;
+              }
               if (goal === "off-counter" && !pose.worker.behindCounter &&
                 pose.worker.x >= 944 && pose.worker.y >= 911) break;
               if (goal === "petting" && pose.phase === "petting") break;
@@ -266,6 +275,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
                 pose.cat.actionProgress > .3) break;
               if (goal === "cat-nap" && pose.cat.mood === "nap" &&
                 pose.cat.actionProgress > .3) break;
+              if (goal === "cat-jump" && pose.cat.mood === "jump" &&
+                pose.cat.actionProgress > .38) break;
               if (goal === "cat-walk" && pose.cat.mood === "walk" &&
                 Math.abs(pose.cat.speed) > 3) break;
               if (goal === "employee-run" && pose.worker.action === "run" &&
@@ -297,7 +308,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             // running bobs, a real airborne jump, a sleepy crouch and
             // different tail/head rhythms. Keep the floor shadow anchored.
             const dogJump = p.kind === "dog" && state.mood === "jump";
-            const jumping = dogJump ? Math.sin(state.actionProgress * Math.PI) * 40 : 0;
+            const jumping = state.mood === "jump"
+              ? Math.sin(state.actionProgress * Math.PI) * (p.kind === "dog" ? 40 : 22) : 0;
             const walking = state.mood === "walk" || state.mood === "turn";
             const bounce = walking ? Math.pow(Math.sin(state.gait), 2) *
               Math.min(4.2, Math.abs(state.speed) / 17) : 0;
@@ -306,10 +318,11 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               ? Math.sin(pose.seconds * 11) * .024 : 0;
             const grooming = p.kind === "cat" && state.mood === "groom";
             const napping = p.kind === "cat" && state.mood === "nap";
-            const napEase = napping ? Math.min(1, state.actionProgress * 6) : 0;
+            const illustrated = !!frames[p.kind as Animal][frameAction]?.length;
+            const napEase = napping && !illustrated ? Math.min(1, state.actionProgress * 6) : 0;
             p.holder.position.set(state.x, state.y - jumping - bounce);
             p.holder.scale.set(state.facing * (1 + napEase * .14),
-              dogJump ? 1 + jumping / 230 : 1 - napEase * .25);
+              dogJump && !illustrated ? 1 + jumping / 230 : 1 - napEase * .25);
             p.holder.rotation = frames[p.kind as Animal][frameAction]?.length ? 0
               : walking ? Math.sin(state.gait) * .02
               : grooming ? Math.sin(pose.seconds * 6) * .027
@@ -324,7 +337,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             p.actionLabel.y = -p.height - 24 - (dogJump ? 20 : Math.abs(Math.sin(stepTime * 2)) * 4);
             // During a bark the head bounces and tail wags; during a nap
             // the cat curls closer to the tabletop, with a breathing cycle.
-            if (napping) p.holder.scale.y += Math.sin(pose.seconds * 1.8) * .01;
+            if (napping && !illustrated) p.holder.scale.y += Math.sin(pose.seconds * 1.8) * .01;
             // Full illustrated frames contain their own limb motion. Avoid
             // warping real frames; keep rig deformation for legacy art only.
             if (frames[p.kind as Animal][frameAction]?.length) {
@@ -438,6 +451,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               host.current.dataset.catX = String(Math.round(pose.cat.x));
               host.current.dataset.catY = String(Math.round(pose.cat.y));
               host.current.dataset.catMood = pose.cat.mood;
+              host.current.dataset.catJumpHeight = String(Math.round(
+                pose.cat.mood === "jump" ? Math.sin(pose.cat.actionProgress * Math.PI) * 22 : 0));
               host.current.dataset.catPoseAsset = pose.cat.mood === "groom"
                 ? "groom" : "canonical";
               host.current.dataset.workerRunLift = runLift.toFixed(2);
@@ -445,8 +460,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             onMoveRef.current({
               // Hotspot centers match the VISIBLE rendered sprites in the
               // same pixel artboard, not their feet or an arbitrary offset.
-              dog: { x: pose.dog.x, y: pose.dog.y - 56 },
-              cat: { x: pose.cat.x, y: pose.cat.y - 42 },
+              dog: { x: pose.dog.x, y: dog.holder.y - 56 },
+              cat: { x: pose.cat.x, y: cat.holder.y - 42 },
               clerk: { x: person.x, y: person.y - (person.behindCounter
                 ? 156 * person.scale : 103 * person.scale) },
             });

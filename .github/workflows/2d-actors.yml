@@ -4,6 +4,10 @@ on:
     paths:
       - "components/2d-shop/**"
       - "public/art/actors/**"
+      - "public/art/frames/**"
+      - "public/art/manifest.json"
+      - "scripts/check-frame-assets.mjs"
+      - "scripts/test-frame-activities.mjs"
       - "scripts/test-actor-director.mjs"
       - ".github/workflows/2d-actors.yml"
   workflow_dispatch:
@@ -19,5 +23,7 @@ jobs:
       - run: npm install --no-audit --no-fund
       - name: Validate independent 2D character actions
         run: npm run test:actors
+      - name: Validate all reviewed transparent animation frames
+        run: npm run test:frames && npm run test:frame-activities
       - name: Type check the complete site
         run: npm run typecheck

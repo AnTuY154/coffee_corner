@@ -25,6 +25,13 @@ for (const [who, actions] of Object.entries(expected)) {
    const bytes=readFileSync(path);
    assert(bytes.length>100 && bytes.toString("ascii",0,4)==="RIFF" &&
      bytes.toString("ascii",8,12)==="WEBP",`Invalid WebP: ${path}`);
+   assert(bytes.toString("ascii",12,16)==="VP8L" && bytes[20]===0x2f,
+     `Expected lossless WebP: ${path}`);
+   const header=bytes.readUInt32LE(21);
+   const width=(header & 0x3fff)+1, height=((header >>> 14) & 0x3fff)+1;
+   assert.equal(width,who==="employee"?384:256,`Unexpected frame width: ${path}`);
+   assert.equal(height,who==="employee"?512:256,`Unexpected frame height: ${path}`);
+   assert(header & 0x10000000,`Missing alpha channel: ${path}`);
    total++;
   }
  }

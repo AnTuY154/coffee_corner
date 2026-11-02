@@ -1,0 +1,212 @@
+[
+  {
+    "sequence": "cat\\groom",
+    "frames": 8,
+    "size": [
+      256,
+      256
+    ],
+    "transparent_border": true,
+    "unique": 8
+  },
+  {
+    "sequence": "cat\\happy",
+    "frames": 8,
+    "size": [
+      256,
+      256
+    ],
+    "transparent_border": true,
+    "unique": 8
+  },
+  {
+    "sequence": "cat\\idle",
+    "frames": 6,
+    "size": [
+      256,
+      256
+    ],
+    "transparent_border": true,
+    "unique": 6
+  },
+  {
+    "sequence": "cat\\jump",
+    "frames": 8,
+    "size": [
+      256,
+      256
+    ],
+    "transparent_border": true,
+    "unique": 8
+  },
+  {
+    "sequence": "cat\\nap",
+    "frames": 6,
+    "size": [
+      256,
+      256
+    ],
+    "transparent_border": true,
+    "unique": 6
+  },
+  {
+    "sequence": "cat\\run",
+    "frames": 8,
+    "size": [
+      256,
+      256
+    ],
+    "transparent_border": true,
+    "unique": 8
+  },
+  {
+    "sequence": "cat\\walk",
+    "frames": 8,
+    "size": [
+      256,
+      256
+    ],
+    "transparent_border": true,
+    "unique": 8
+  },
+  {
+    "sequence": "dog\\happy",
+    "frames": 8,
+    "size": [
+      256,
+      256
+    ],
+    "transparent_border": true,
+    "unique": 8
+  },
+  {
+    "sequence": "dog\\idle",
+    "frames": 6,
+    "size": [
+      256,
+      256
+    ],
+    "transparent_border": true,
+    "unique": 6
+  },
+  {
+    "sequence": "dog\\jump",
+    "frames": 8,
+    "size": [
+      256,
+      256
+    ],
+    "transparent_border": true,
+    "unique": 8
+  },
+  {
+    "sequence": "dog\\nap",
+    "frames": 6,
+    "size": [
+      256,
+      256
+    ],
+    "transparent_border": true,
+    "unique": 6
+  },
+  {
+    "sequence": "dog\\run",
+    "frames": 12,
+    "size": [
+      256,
+      256
+    ],
+    "transparent_border": true,
+    "unique": 12
+  },
+  {
+    "sequence": "dog\\walk",
+    "frames": 8,
+    "size": [
+      256,
+      256
+    ],
+    "transparent_border": true,
+    "unique": 8
+  },
+  {
+    "sequence": "employee\\idle",
+    "frames": 6,
+    "size": [
+      384,
+      512
+    ],
+    "transparent_border": true,
+    "unique": 6
+  },
+  {
+    "sequence": "employee\\pet_cat",
+    "frames": 8,
+    "size": [
+      384,
+      512
+    ],
+    "transparent_border": true,
+    "unique": 8
+  },
+  {
+    "sequence": "employee\\pet_dog",
+    "frames": 8,
+    "size": [
+      384,
+      512
+    ],
+    "transparent_border": true,
+    "unique": 8
+  },
+  {
+    "sequence": "employee\\prepare",
+    "frames": 6,
+    "size": [
+      384,
+      512
+    ],
+    "transparent_border": true,
+    "unique": 6
+  },
+  {
+    "sequence": "employee\\run",
+    "frames": 12,
+    "size": [
+      384,
+      512
+    ],
+    "transparent_border": true,
+    "unique": 12
+  },
+  {
+    "sequence": "employee\\talk",
+    "frames": 6,
+    "size": [
+      384,
+      512
+    ],
+    "transparent_border": true,
+    "unique": 6
+  },
+  {
+    "sequence": "employee\\walk",
+    "frames": 8,
+    "size": [
+      384,
+      512
+    ],
+    "transparent_border": true,
+    "unique": 8
+  },
+  {
+    "sequence": "employee\\wave",
+    "frames": 6,
+    "size": [
+      384,
+      512
+    ],
+    "transparent_border": true,
+    "unique": 6
+  }
+]

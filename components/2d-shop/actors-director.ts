@@ -181,7 +181,7 @@ export class ActorsDirector {
     if (this.time >= pet.specialAt && Math.abs(pet.speed) < 5) {
       pet.mood = animal === "dog"
         ? (["bark", "jump", "nap"] as const)[pet.specialCount % 3]
-        : (pet.specialCount % 2 === 0 ? "groom" : "nap");
+        : (["groom", "nap", "jump"] as const)[pet.specialCount % 3];
       pet.specialCount++;
       pet.actionElapsed = 0;
       pet.actionProgress = 0;
