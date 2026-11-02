@@ -37,6 +37,7 @@ Generation prompt recipe: preserve the approved character identity and watercolo
 Packing only crops isolated cells and normalizes their canvas; it does not invent limb motion. Employee frames use 384×512 and a foot baseline at y=500; crouching poses occupy a shorter portion of that same canvas. Pet frames use 256×256 and y=245. The [pixel validation report](pixel-validation.json) checks transparent borders, consistent dimensions and unique decoded pixel data for every sequence. The real Pixi review test loads every sequence, verifies its frame index and captures the storefront; looping actions must advance frames. Mobile storefront, menu/cart/checkout and actor placement remain covered by the visual suite.
 
 The cat now performs a small 22-world-pixel tabletop hop, returning to the same safe surface. Illustrated nap and jump sequences do not use squash/stretch or mesh deformation.
+Jump frame selection follows the director's normalized action progress so the airborne and landing poses match the physical trajectory. Reduced-motion rendering selects frame zero for every illustrated action; a browser regression check verifies that these frame clocks remain frozen.
 
 Local verification: typecheck, actor choreography, 2D scene wiring, frame activity mapping, all 160 frame paths/headers and production build passed. The full browser suite passed 31 applicable cases with 9 device-specific skips. The final cat-petting size adjustment passed the employee sequence review and cat interaction checks on desktop/mobile (3 cases, 1 device-specific skip).
 

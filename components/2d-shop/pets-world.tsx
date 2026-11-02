@@ -142,12 +142,15 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           cat: { action: "", elapsed: 0 },
         };
         function frameFor(character: CharacterId, action: string,
-          fallback: FrameTexture, delta: number): FrameTexture {
+          fallback: FrameTexture, delta: number, actionProgress = 0): FrameTexture {
           const clock = clocks[character];
           if (clock.action !== action) { clock.action = action; clock.elapsed = 0; }
           else clock.elapsed += delta;
           const sequence = frames[character][action];
           if (!sequence?.length) { loadAction(character, action); return fallback; }
+          if (reduced.matches) { clock.elapsed = 0; return sequence[0]; }
+          if (action === "jump")
+            return sequence[animationFrameAt(actionProgress, sequence.length, sequence.length, false)];
           const fps = (FRAME_FPS[character] as Record<string, number>)[action] ?? 8;
           return sequence[animationFrameAt(clock.elapsed, fps, sequence.length, action !== "jump")];
         }
@@ -293,10 +296,11 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               ? catGroomPose : p.texture;
             const frameAction = petFrameAction(p.kind as Animal, state.mood, state.speed);
             const nextFrame = frameFor(p.kind as Animal, frameAction, fallbackPose,
-              Math.min(Math.max(tick.deltaMS / 1000, 0), .2));
+              Math.min(Math.max(tick.deltaMS / 1000, 0), .2), state.actionProgress);
             if (p.mesh.texture !== nextFrame) p.mesh.texture = nextFrame;
             if (reviewMode && host.current) {
               host.current.dataset[`${p.kind}Action`] = frameAction;
+              host.current.dataset[`${p.kind}Progress`] = String(state.actionProgress);
               host.current.dataset[`${p.kind}Frame`] = String(
                 frames[p.kind as Animal][frameAction]?.indexOf(nextFrame) ?? -1);
             }

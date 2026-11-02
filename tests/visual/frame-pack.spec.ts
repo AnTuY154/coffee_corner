@@ -22,6 +22,11 @@ for (const [character, actions] of Object.entries(FRAME_SEQUENCES)) {
       await expect.poll(() => host.evaluate((el, key) => Number((el as HTMLElement).dataset[key]), `${character}Frame`),
         { timeout: 30_000 }).toBeGreaterThanOrEqual(0);
       await page.locator('.ve2d-stage').screenshot({ path: info.outputPath(`${character}-${action}.png`) });
+      if (action === 'jump') {
+        const progress = Number(await host.evaluate((el, key) => (el as HTMLElement).dataset[key], `${character}Progress`));
+        await expect.poll(() => host.evaluate((el, key) => Number((el as HTMLElement).dataset[key]), `${character}Frame`))
+          .toBe(Math.min(actions[action as keyof typeof actions] - 1, Math.floor(progress * actions[action as keyof typeof actions])));
+      }
       if (action !== 'jump') {
         const first = await host.evaluate((el, key) => (el as HTMLElement).dataset[key], `${character}Frame`);
         await expect.poll(() => host.evaluate((el, key) => (el as HTMLElement).dataset[key], `${character}Frame`)).not.toBe(first);
@@ -29,3 +34,14 @@ for (const [character, actions] of Object.entries(FRAME_SEQUENCES)) {
     }
   });
 }
+
+test('reduced motion freezes illustrated frame clocks', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/?scene-review=1');
+  const host = page.locator('.ve2d-pixi-pets[data-visible="true"]');
+  for (const character of ['employee', 'dog', 'cat'])
+    await expect(host).toHaveAttribute(`data-${character}-frame`, '0', { timeout: 30_000 });
+  await page.waitForTimeout(700);
+  for (const character of ['employee', 'dog', 'cat'])
+    await expect(host).toHaveAttribute(`data-${character}-frame`, '0');
+});
