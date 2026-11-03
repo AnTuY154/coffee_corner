@@ -24,6 +24,21 @@ test("only canonical shop and 3 animated actors, correct 16:9 scene", async ({ p
   await page.screenshot({ path: info.outputPath("vuon-e-canonical-actors.png"), animations: "disabled" });
 });
 
+
+test("previous-generation actor assets are never requested or mounted", async ({ page }) => {
+  const obsoleteRequests: string[] = [];
+  page.on("request", request => {
+    const path = new URL(request.url()).pathname;
+    if (/\/art\/(?:canonical\/(?:employee|dog|cat)\.webp|animated\/(?:employee|cat)\/|actors\/anime\/|layers\/)/.test(path))
+      obsoleteRequests.push(path);
+  });
+  await sceneReady(page);
+  await expect(page.locator('.ve2d-pixi-pets canvas')).toHaveCount(1);
+  await expect(page.locator('.ve2d-motion-sprites, .ve2d-sprite')).toHaveCount(0);
+  await page.waitForTimeout(800);
+  expect(obsoleteRequests).toEqual([]);
+});
+
 test("puppy stays below tabletop cat while their hotspots follow them", async ({ page }) => {
   await sceneReady(page);
   const dog = page.locator('.ve2d-hotspot[data-target="dog"]');
