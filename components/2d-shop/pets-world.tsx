@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import { ActorsDirector, ARTBOARD, COUNTER_WAISTLINE_Y, type Animal } from "./actors-director";
-import { deformVertices, type RigKind } from "./deform-rig";
 import { FRAME_SEQUENCES, FRAME_FPS, animationFrameAt, framePath, petFrameAction, employeeFrameAction, type CharacterId } from "./animation-frames";
 
 export type PetPositions = {
@@ -89,14 +88,12 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         app.destroy(true, { children: true, texture: false, textureSource: false });
       };
       try {
-        const [employeeTexture, dogTexture, catTexture, wavePose, runPose, petPose, catGroomPose] = await Promise.all([
-          Assets.load(`${artBase}/canonical/employee.webp`),
-          Assets.load(`${artBase}/canonical/dog.webp`),
-          Assets.load(`${artBase}/canonical/cat.webp`),
-          Assets.load(`${artBase}/animated/employee/wave.webp`),
-          Assets.load(`${artBase}/animated/employee/run.webp`),
-          Assets.load(`${artBase}/animated/employee/pet.webp`),
-          Assets.load(`${artBase}/animated/cat/groom.webp`),
+        // New actors use only the reviewed frame pack, never previous-generation
+        // static portraits or pre-frame poses while individual cycles load.
+        const [employeeTexture, dogTexture, catTexture] = await Promise.all([
+          Assets.load(framePath(artBase, "employee", "wave", 0)),
+          Assets.load(framePath(artBase, "dog", "idle", 0)),
+          Assets.load(framePath(artBase, "cat", "idle", 0)),
         ]);
         if (disposed) return;
         type FrameTexture = typeof dogTexture;
@@ -155,7 +152,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           return sequence[animationFrameAt(clock.elapsed, fps, sequence.length, action !== "jump")];
         }
 
-        function makeActor(texture: typeof dogTexture, kind: RigKind, width: number, height: number) {
+        function makeActor(texture: typeof dogTexture, kind: CharacterId, width: number, height: number) {
           const holder = new Container();
           const shadow = new Graphics().ellipse(0, -3, width * .35, 9)
             .fill({ color: 0x423b2a, alpha: .2 });
@@ -187,26 +184,13 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         }
 
         const employee = makeActor(employeeTexture, "employee", 155, 208);
-        // All pose images have the canonical employee's 1086x1448 transparent
-        // artboard. Never rebuild the vertex mesh when switching a texture:
-        // this preserves UVs, world size, feet anchoring and hitbox geometry.
+        // A single frame-sourced MeshPlane per character: no duplicate poses.
         employee.mesh.autoResize = false;
-        const workerTextures = {
-          idle: employeeTexture,
-          wave: wavePose,
-          talk: employeeTexture,
-          prepare: employeeTexture,
-          walk: runPose,
-          run: runPose,
-          pet: petPose,
-        } as const;
         const dog = makeActor(dogTexture, "dog", 118, 118);
         // The cat occupies the clear left section of the wooden tabletop;
         // the flower vase and right-hand chair are not a walkable surface.
         const cat = makeActor(catTexture, "cat", 86, 86);
-        // Full-artboard derived grooming illustration from the approved
-        // calico character, on the same 1254×1254 transparent canvas.
-        // Switching mesh texture cannot resize Pixi's geometry/foot anchor.
+        // The cat uses the same approved frame sequence as every other action.
         cat.mesh.autoResize = false;
 
         // Pixi v8: a Graphics object ceases to be an active stencil mask when
@@ -292,10 +276,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           }
           for (const p of [dog, cat] as const) {
             const state = pose[p.kind as Animal];
-            const fallbackPose = p.kind === "cat" && state.mood === "groom"
-              ? catGroomPose : p.texture;
             const frameAction = petFrameAction(p.kind as Animal, state.mood, state.speed);
-            const nextFrame = frameFor(p.kind as Animal, frameAction, fallbackPose,
+            const nextFrame = frameFor(p.kind as Animal, frameAction, p.mesh.texture,
               Math.min(Math.max(tick.deltaMS / 1000, 0), .2), state.actionProgress);
             if (p.mesh.texture !== nextFrame) p.mesh.texture = nextFrame;
             if (reviewMode && host.current) {
@@ -317,20 +299,9 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             const walking = state.mood === "walk" || state.mood === "turn";
             const bounce = walking ? Math.pow(Math.sin(state.gait), 2) *
               Math.min(4.2, Math.abs(state.speed) / 17) : 0;
-            const excited = state.mood === "happy" || state.mood === "bark";
-            const wag = p.kind === "dog" && excited
-              ? Math.sin(pose.seconds * 11) * .024 : 0;
-            const grooming = p.kind === "cat" && state.mood === "groom";
-            const napping = p.kind === "cat" && state.mood === "nap";
-            const illustrated = !!frames[p.kind as Animal][frameAction]?.length;
-            const napEase = napping && !illustrated ? Math.min(1, state.actionProgress * 6) : 0;
             p.holder.position.set(state.x, state.y - jumping - bounce);
-            p.holder.scale.set(state.facing * (1 + napEase * .14),
-              dogJump && !illustrated ? 1 + jumping / 230 : 1 - napEase * .25);
-            p.holder.rotation = frames[p.kind as Animal][frameAction]?.length ? 0
-              : walking ? Math.sin(state.gait) * .02
-              : grooming ? Math.sin(pose.seconds * 6) * .027
-              : wag;
+            p.holder.scale.set(state.facing, 1);
+            p.holder.rotation = 0;
             p.holder.zIndex = state.y;
             p.shadow.y = jumping + bounce;
             p.shadow.scale.x = dogJump ? 1 - jumping / 110 : 1;
@@ -339,17 +310,9 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             p.actionLabel.alpha = state.mood === "bark" || (state.mood === "nap" && p.kind === "cat")
               ? state.mood === "bark" ? .8 + Math.sin(stepTime * 18) * .2 : .72 : 0;
             p.actionLabel.y = -p.height - 24 - (dogJump ? 20 : Math.abs(Math.sin(stepTime * 2)) * 4);
-            // During a bark the head bounces and tail wags; during a nap
-            // the cat curls closer to the tabletop, with a breathing cycle.
-            if (napping && !illustrated) p.holder.scale.y += Math.sin(pose.seconds * 1.8) * .01;
-            // Full illustrated frames contain their own limb motion. Avoid
-            // warping real frames; keep rig deformation for legacy art only.
-            if (frames[p.kind as Animal][frameAction]?.length) {
-              p.vertices.set(p.original);
-              p.buffer.update();
-            } else deformVertices(p.original, p.vertices, p.texture.width, p.texture.height,
-              { gait: state.gait, speed: state.speed, seconds: pose.seconds,
-                motion: state.mood, actionProgress: state.actionProgress }, p.kind);
+            // Approved drawings contain their own limb motion: never warp a
+            // previously generated portrait onto the new frame animation.
+            p.vertices.set(p.original);
             p.buffer.update();
           }
           if (pose.dog.mood === "bark" && previousDogMood !== "bark") onBarkRef.current?.();
@@ -368,7 +331,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           // Deformation alone can no longer fake these body poses.
           const workerFrame = employeeFrameAction(person.action, pose.target);
           const requiredTexture = frameFor("employee", workerFrame,
-            workerTextures[person.action], Math.min(Math.max(tick.deltaMS / 1000, 0), .2));
+            employee.mesh.texture, Math.min(Math.max(tick.deltaMS / 1000, 0), .2));
           if (employee.mesh.texture !== requiredTexture)
             employee.mesh.texture = requiredTexture;
           if (reviewMode && host.current) {
@@ -412,17 +375,8 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             counterMask.clear().rect(0, 0, ARTBOARD.width, nextMaskHeight).fill(0xffffff);
             maskHeight = nextMaskHeight;
           }
-          employee.holder.rotation = frames.employee[workerFrame]?.length ? 0 : runningOutside
-            ? Math.sin(pose.seconds * 16) * .028
-            : person.action === "pet" ? Math.sin(pose.seconds * 6) * .015 : 0;
-          if (frames.employee[workerFrame]?.length) {
-            employee.vertices.set(employee.original);
-            employee.buffer.update();
-          } else deformVertices(employee.original, employee.vertices, employee.texture.width,
-            employee.texture.height,
-            { gait: pose.seconds * 17, speed: runningOutside ? 85 : 0,
-              seconds: pose.seconds, motion: person.action === "talk" || person.action === "prepare"
-                ? "idle" : person.action }, "employee");
+          employee.holder.rotation = 0;
+          employee.vertices.set(employee.original);
           employee.buffer.update();
           lastNotification += reviewPaused
             ? .15 // Publish the held frame promptly for visual assertions.
@@ -458,7 +412,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
               host.current.dataset.catJumpHeight = String(Math.round(
                 pose.cat.mood === "jump" ? Math.sin(pose.cat.actionProgress * Math.PI) * 22 : 0));
               host.current.dataset.catPoseAsset = pose.cat.mood === "groom"
-                ? "groom" : "canonical";
+                ? "groom" : "frame";
               host.current.dataset.workerRunLift = runLift.toFixed(2);
             }
             onMoveRef.current({
@@ -475,7 +429,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
         removeTick = () => app.ticker.remove(ticker);
         onReadyRef.current();
       } catch (error) {
-        console.warn("Vườn É: canonical actor textures could not load", error);
+        console.warn("Vườn É: reviewed actor frame textures could not load", error);
       }
     }
     void start();
