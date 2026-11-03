@@ -164,11 +164,11 @@ for(const p of ["MeshPlane","framePath(artBase, \"employee\", \"wave\", 0)",
 for (const actor of ["employee", "dog", "cat"])
   assert.equal((renderer.match(new RegExp(`const ${actor} = makeActor\\(`, "g")) ?? []).length, 1,
     "exactly one visible Pixi actor for " + actor);
-assert.doesNotMatch(renderer,/canonical\\/(?:employee|dog|cat)\\.webp|animated\\/(?:employee|cat)\\/|workerTextures|catGroomPose|deformVertices/,
+assert.doesNotMatch(renderer,/canonical\/(?:employee|dog|cat)\.webp|animated\/(?:employee|cat)\/|workerTextures|catGroomPose|deformVertices/,
   "old character textures and mesh rig must not be used by the 2D renderer");
-assert.doesNotMatch(renderer,/pets\\/dog-walk\\.png|actors\\/anime\\/idle\\.webp/);
+assert.doesNotMatch(renderer,/pets\/dog-walk\.png|actors\/anime\/idle\.webp/);
 const shop = readFileSync("components/2d-shop/illustrated-shop.tsx", "utf8");
-assert.doesNotMatch(shop,/canonical\\/(?:employee|dog|cat)\\.webp|LEGACY_HOTSPOTS/,
+assert.doesNotMatch(shop,/canonical\/(?:employee|dog|cat)\.webp|LEGACY_HOTSPOTS/,
   "the storefront must not preload or expose old character assets");
 assert.doesNotMatch(renderer,/employee\.holder\.mask\s*=\s*person\.behindCounter\s*\?/,
   "releasing the Pixi stencil reveals a giant white rectangle");
