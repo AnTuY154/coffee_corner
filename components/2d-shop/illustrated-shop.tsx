@@ -17,18 +17,6 @@ type Hotspot = {
 };
 type StoryAction = Exclude<Action, "order">;
 
-/** Fallback hotspots match the existing 1440×810 SVG until the approved art is available. */
-const LEGACY_HOTSPOTS: Hotspot[] = [
-  { id: "sign", name: "Biển hiệu Vườn É", hint: "Nhấn để tìm hiểu về Vườn É nhé!", x: 47, y: 22, w: 33, h: 15, action: "intro", placement: "below" },
-  { id: "clerk", name: "Nhân viên", hint: "Nhấn vào mình để gọi nước ép nhé!", x: 52, y: 50, w: 15, h: 22, action: "order" },
-  { id: "menu", name: "Thực đơn", hint: "Khám phá nước ép theo mùa!", x: 61, y: 51, w: 13, h: 17, action: "order" },
-  { id: "fruits", name: "Trái cây", hint: "Chọn trái cây tươi ngon mỗi ngày!", x: 20, y: 76, w: 16, h: 18, action: "order" },
-  { id: "cooler", name: "Tủ nước ép", hint: "Mở thực đơn đồ uống nhé!", x: 75, y: 56, w: 8, h: 30, action: "order", placement: "left" },
-  { id: "seats", name: "Bàn ghế ngoài hiên", hint: "Chọn một góc ngồi thật xinh!", x: 45, y: 86, w: 28, h: 19, action: "seats" },
-  { id: "tree", name: "Cây xanh", hint: "Khám phá khu vườn nhỏ!", x: 85, y: 23, w: 24, h: 21, action: "garden", placement: "below" },
-  { id: "dog", name: "Chú chó", hint: "Chào người bạn nhỏ của Vườn É!", x: 66, y: 86, w: 11, h: 12, action: "dog" },
-];
-
 /**
  * Pixel-perfect coordinate system: canonical character-free background 1672×941.
  * Hit areas intentionally stop short of neighbouring interactable objects.
@@ -159,7 +147,7 @@ export function IllustratedShop() {
   const artBase = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/art`;
   const compositionSrc = `${artBase}/canonical/shop.webp`;
   const strippedSrc = compositionSrc;
-  const spots = artLoaded ? HOTSPOTS : LEGACY_HOTSPOTS;
+  const spots = artLoaded ? HOTSPOTS : [];
   const sceneReady = spritesReady && petsReady;
   const focusedSpot = spots.find(spot => spot.id === active);
 
@@ -255,7 +243,7 @@ export function IllustratedShop() {
   useEffect(() => () => { void audioContext.current?.close(); audioContext.current = null; }, []);
 
   useEffect(() => {
-    // Load exactly the four canonical source images; no baked-in character is ever displayed.
+    // Preload the clean backdrop and only approved frame sprites, never old actors.
     if (!artLoaded) return;
     let cancelled = false;
     const preload = (url: string) => new Promise<void>((resolve, reject) => {
@@ -266,9 +254,9 @@ export function IllustratedShop() {
     });
     Promise.all([
       preload(strippedSrc),
-      preload(`${artBase}/canonical/employee.webp`),
-      preload(`${artBase}/canonical/dog.webp`),
-      preload(`${artBase}/canonical/cat.webp`),
+      preload(`${artBase}/frames/employee/wave/00.webp`),
+      preload(`${artBase}/frames/dog/idle/00.webp`),
+      preload(`${artBase}/frames/cat/idle/00.webp`),
     ]).then(() => { if (!cancelled) setSpritesReady(true); })
       .catch(() => { if (!cancelled) setSpritesReady(false); });
     return () => { cancelled = true; };
@@ -343,7 +331,7 @@ export function IllustratedShop() {
         {!artLoaded && <div className="ve2d-art-loading" role="status">Vườn É đang mở cửa...</div>}
         <img
           ref={compositionImage}
-          className="ve2d-approved-art" src={sceneReady ? strippedSrc : compositionSrc} width={REF_W} height={REF_H}
+          className="ve2d-approved-art" src={compositionSrc} width={REF_W} height={REF_H}
           alt="" aria-hidden="true" decoding="async" draggable={false}
           data-visible={artLoaded}
           onLoad={() => { setArtLoaded(true); setActive(null); }}
