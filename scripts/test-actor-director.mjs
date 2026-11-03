@@ -152,18 +152,24 @@ for(const [kind,motion] of [["dog","walk"],["dog","bark"],["dog","jump"],
 }
 assert.deepEqual([...original],[0,0,50,50,100,75,120,100],"canonical geometry is immutable");
 const renderer=readFileSync("components/2d-shop/pets-world.tsx","utf8");
-for(const p of ["MeshPlane","canonical/dog.webp","canonical/cat.webp","canonical/employee.webp",
+for(const p of ["MeshPlane","framePath(artBase, \"employee\", \"wave\", 0)",
+  "framePath(artBase, \"dog\", \"idle\", 0)", "framePath(artBase, \"cat\", \"idle\", 0)",
   "state.mood === \"jump\"","state.mood === \"bark\"","state.mood === \"nap\"","onBarkRef",
   "nextMaskHeight","employee.holder.mask = counterMask",
-  "workerTextures[person.action]", "animated/employee/run.webp",
-  "animated/employee/pet.webp", "animated/employee/wave.webp",
-  "employee.mesh.autoResize = false", "COUNTER_WAISTLINE_Y",
-  "employeeVisibleFraction", "156 * person.scale",
-  "runLift", "dogJumpHeight", "cat-groom", "cat-nap",
-  "animated/cat/groom.webp", "cat.mesh.autoResize = false",
+  "employee.mesh.texture","employee.mesh.autoResize = false", "COUNTER_WAISTLINE_Y",
+  "employeeVisibleFraction","156 * person.scale",
+  "runLift","dogJumpHeight","cat-groom","cat-nap","cat.mesh.autoResize = false",
   "catPoseAsset"])
   assert(renderer.includes(p),"renderer missing behavior: "+p);
+for (const actor of ["employee", "dog", "cat"])
+  assert.equal((renderer.match(new RegExp(`const ${actor} = makeActor\\(`, "g")) ?? []).length, 1,
+    "exactly one visible Pixi actor for " + actor);
+assert.doesNotMatch(renderer,/canonical\/(?:employee|dog|cat)\.webp|animated\/(?:employee|cat)\/|workerTextures|catGroomPose|deformVertices/,
+  "old character textures and mesh rig must not be used by the 2D renderer");
 assert.doesNotMatch(renderer,/pets\/dog-walk\.png|actors\/anime\/idle\.webp/);
+const shop = readFileSync("components/2d-shop/illustrated-shop.tsx", "utf8");
+assert.doesNotMatch(shop,/canonical\/(?:employee|dog|cat)\.webp|LEGACY_HOTSPOTS/,
+  "the storefront must not preload or expose old character assets");
 assert.doesNotMatch(renderer,/employee\.holder\.mask\s*=\s*person\.behindCounter\s*\?/,
   "releasing the Pixi stencil reveals a giant white rectangle");
 assert.doesNotMatch(renderer,/employee\.holder\.mask\s*=\s*null/,
