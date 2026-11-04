@@ -248,6 +248,9 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
                 if (current === action && (action !== "jump" ||
                   (character !== "employee" && pose[character as Animal].actionProgress > .35))) break;
               }
+              if (goal === "employee-left-exit" && pose.phase === "outbound" &&
+                pose.worker.action === "run" && !pose.worker.behindCounter &&
+                pose.worker.x <= 325 && pose.worker.y >= 775 && pose.worker.y <= 875) break;
               if (goal === "off-counter" && !pose.worker.behindCounter &&
                 pose.worker.x >= 944 && pose.worker.y >= 911) break;
               if (goal === "petting" && pose.phase === "petting") break;
