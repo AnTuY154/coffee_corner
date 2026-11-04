@@ -61,6 +61,16 @@ test("worker changes from waist-up greeting to full-body RUN and crouching PET",
   await page.locator('.ve2d-hotspot[data-target="dog"]').click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.keyboard.press("Escape");
+  // Regression: the old world-space stencil covered the clerk until x=935,
+  // hiding most of her body even after she reached the left-hand pavement.
+  await advance(page, "employee-left-exit");
+  await expect(host).toHaveAttribute("data-employee-pose-asset", "run");
+  await expect(host).toHaveAttribute("data-counter-mask-height", "941");
+  const leftExitX = Number(await host.getAttribute("data-employee-x"));
+  const leftExitY = Number(await host.getAttribute("data-employee-y"));
+  expect(leftExitX).toBeLessThanOrEqual(325);
+  expect(leftExitY).toBeGreaterThanOrEqual(775);
+  await capture(page, "06-employee-unclipped-left-exit");
   await advance(page, "employee-run");
   await expect(host).toHaveAttribute("data-employee-pose-asset", "run");
   await expect(host).toHaveAttribute("data-counter-mask-height", "941");

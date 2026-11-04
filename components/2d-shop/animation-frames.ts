@@ -10,7 +10,7 @@ export const FRAME_SEQUENCES = {
 } as const;
 
 export const FRAME_FPS = {
-  employee: { idle: 4, wave: 9, talk: 7, run: 14, walk: 10, pet_dog: 10, pet_cat: 10, prepare: 8 },
+  employee: { idle: 4, wave: 9, talk: 7, run: 11, walk: 10, pet_dog: 10, pet_cat: 10, prepare: 8 },
   dog: { idle: 3, walk: 12, run: 14, happy: 8, jump: 12, nap: 3 },
   cat: { idle: 3, walk: 10, run: 12, happy: 7, groom: 9, nap: 2, jump: 11 },
 } as const;

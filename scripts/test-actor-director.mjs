@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { ActorsDirector, ARTBOARD, DOG_GROUND_Y, CAT_TABLE_Y,
   DOG_WALKABLE_X, CAT_WALKABLE_X, interpolateRoute, employeeSceneScale,
-  COUNTER_WAISTLINE_Y, COUNTER_PORTRAIT } from "../components/2d-shop/actors-director.ts";
+  COUNTER_WAISTLINE_Y, COUNTER_PORTRAIT, employeeMaskHeight } from "../components/2d-shop/actors-director.ts";
 import { deformVertices } from "../components/2d-shop/deform-rig.ts";
 
 assert.deepEqual(ARTBOARD, { width: 1672, height: 941 });
@@ -33,6 +33,26 @@ assert(COUNTER_WAISTLINE_Y < start.worker.y,
   "employee feet must remain behind counter, out of the visible stage");
 assert(employeeSceneScale(COUNTER_PORTRAIT) > employeeSceneScale({x:1050,y:918}),
   "scale eases from a counter portrait into natural full-body size");
+
+assert.equal(employeeMaskHeight(start.worker, "idle", null), 650,
+  "stationary cashier must remain waist-up behind the counter");
+const approachingExit = { ...start.worker, x: 395, y: 700, scale: .9, behindCounter: true };
+const nearExit = { ...approachingExit, x: 355 };
+assert(employeeMaskHeight(approachingExit, "outbound", "dog") > 650,
+  "reveal begins before leaving the counter");
+assert(employeeMaskHeight(nearExit, "outbound", "dog") >
+  employeeMaskHeight(approachingExit, "outbound", "dog"),
+  "counter mask opens smoothly near the exit");
+const outside = { ...approachingExit, x: 306, y: 817, behindCounter: false };
+assert.equal(employeeMaskHeight(outside, "outbound", "dog"), 941,
+  "whole running employee remains visible in the LEFT passage");
+assert.equal(employeeMaskHeight(outside, "returning", "dog"), 941,
+  "whole returning employee remains visible on pavement");
+assert.equal(employeeMaskHeight({ ...outside, x: 1260, y: 915 }, "outbound", "cat"), 941,
+  "do not clip employee legs while running toward the cat");
+assert.equal(employeeMaskHeight({ ...outside, x: 1260, y: 915 }, "petting", "cat"), 852,
+  "cat table can still occlude legs when stationary and petting");
+
 let sawDogWalk = false, sawDogBark = false, sawDogJump = false, sawDogNap = false;
 let sawCatGroom = false, sawCatNap = false, sawCatWalk = false, sawCatJump = false;
 const workerActions = new Set();
@@ -96,7 +116,7 @@ const visits = new ActorsDirector();
 visits.request("dog");
 visits.request("cat");
 let metDog = false, metCat = false, returned = false;
-let sawRunPose = false, sawPetPose = false;
+let sawRunPose = false, sawPetPose = false, sawUnclippedExit = false;
 let previousPhase = "", previousPos = visits.step(0);
 for (let i = 0; i < 1800; i++) {
   const state = visits.step(.05);
@@ -104,6 +124,11 @@ for (let i = 0; i < 1800; i++) {
     "no jump at counter exit, grooming or return");
   if (state.worker.action === "run") {
     sawRunPose = true;
+    if (!state.worker.behindCounter) {
+      assert.equal(employeeMaskHeight(state.worker, state.phase, state.target), ARTBOARD.height,
+        "running employee must never be cropped after leaving the counter");
+      if (state.worker.x < 700 && state.worker.y > 770) sawUnclippedExit = true;
+    }
     assert(state.worker.scale <= 1.431 && state.worker.scale >= .894,
       "worker running scale smoothly stays between counter and patio proportions");
   }
@@ -130,6 +155,7 @@ for (let i = 0; i < 1800; i++) {
   previousPos=state;
   if(metDog && metCat && returned) break;
 }
+assert(sawUnclippedExit, "visit must show full employee body in the narrow exit");
 assert(metDog && metCat && returned && sawRunPose && sawPetPose,
   "visits include illustrated running, real crouching and returning to greeting pose");
 const reduced = new ActorsDirector();

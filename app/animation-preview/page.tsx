@@ -9,7 +9,7 @@ type Installed = Partial<Record<CharacterId, Record<string, number>>>;
 export default function AnimationPreviewPage() {
   const [actor, setActor] = useState<CharacterId>("employee");
   const [action, setAction] = useState<string>("run");
-  const [fps, setFps] = useState(12);
+  const [fps, setFps] = useState<number>(FRAME_FPS.employee.run);
   const [paused, setPaused] = useState(false);
   const [mirror, setMirror] = useState(false);
   const [frame, setFrame] = useState(0);
