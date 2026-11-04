@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
-import { animationFrameAt, employeeFrameAction, petFrameAction, FRAME_SEQUENCES } from "../components/2d-shop/animation-frames.ts";
+import { animationFrameAt, employeeFrameAction, petFrameAction, FRAME_SEQUENCES, FRAME_FPS } from "../components/2d-shop/animation-frames.ts";
 
 assert.equal(employeeFrameAction("pet","dog"),"pet_dog");
 assert.equal(employeeFrameAction("pet","cat"),"pet_cat");
 assert.equal(employeeFrameAction("run",null),"run");
+assert.equal(FRAME_FPS.employee.run, 11, "employee run cycle is deliberately slower");
+assert(FRAME_FPS.employee.run < FRAME_FPS.dog.run);
 for (const action of ["idle", "wave", "talk", "prepare", "walk", "run"]) {
   assert.equal(employeeFrameAction(action, null), action);
 }
