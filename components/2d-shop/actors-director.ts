@@ -41,6 +41,24 @@ export function employeeSceneScale(position: Vec): number {
   const distance = Math.hypot(position.x - HOME.x, position.y - HOME.y);
   return HOME.scale + (PATIO_SCALE - HOME.scale) * smoothStep(distance / 200);
 }
+
+// Only clip the lower body while the employee is actually behind the service
+// counter. The old "left passage" check used x < 935, keeping the mask at
+// y=650–790 even after she had reached the pavement, making her vanish.
+// Open the mask near the left exit and close it on the return journey.
+export function employeeMaskHeight(
+  worker: WorkerPose, phase: WorldPose["phase"], target: Animal | null,
+): number {
+  if (phase === "petting" && target === "cat" &&
+      worker.x >= 1175 && worker.y >= 870) return 852;
+  if (!worker.behindCounter) return ARTBOARD.height;
+  if (phase !== "outbound" && phase !== "returning") return COUNTER_WAISTLINE_Y;
+  // Fade from waist-up to full-body as she rounds the counter's left edge.
+  // Full body is already visible BEFORE her ground path bends toward the pets.
+  const reveal = smoothStep((430 - worker.x) / 90);
+  return Math.round(COUNTER_WAISTLINE_Y +
+    (ARTBOARD.height - COUNTER_WAISTLINE_Y) * reveal);
+}
 // Verified against the pixel-space geometry of the approved 1672x941 shop:
 // pavement corridor between the two foreground seating areas is x=855..1100,
 // while the clear LEFT half of the right tabletop is x=1255..1375, y≈843.
@@ -153,7 +171,7 @@ export class ActorsDirector {
       end,
     ];
     const length = path.slice(1).reduce((sum, point, i) => sum + dist(path[i], point), 0);
-    this.visit = { target, phase: "outbound", path, elapsed: 0, duration: length / 230 };
+    this.visit = { target, phase: "outbound", path, elapsed: 0, duration: length / 205 };
     this.alternate = target === "dog" ? "cat" : "dog";
   }
 
