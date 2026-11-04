@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ActorsDirector, ARTBOARD, COUNTER_WAISTLINE_Y, type Animal } from "./actors-director";
+import { ActorsDirector, ARTBOARD, COUNTER_WAISTLINE_Y, employeeMaskHeight, type Animal } from "./actors-director";
 import { FRAME_SEQUENCES, FRAME_FPS, animationFrameAt, framePath, petFrameAction, employeeFrameAction, type CharacterId } from "./animation-frames";
 
 export type PetPositions = {
@@ -323,7 +323,7 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
           // and strokes instead of moving the whole full-body image sideways.
           const runningOutside = (person.action === "run" || person.action === "walk") && !person.behindCounter;
           const runLift = runningOutside
-            ? Math.pow(Math.sin(pose.seconds * (person.action === "run" ? 9 : 6)), 2) *
+            ? Math.pow(Math.sin(pose.seconds * (person.action === "run" ? 8 : 6)), 2) *
               (person.action === "run" ? 4.5 : 2) : 0;
           employee.holder.position.set(person.x, person.y - runLift);
           // Switch the full illustrated pose — running is a real bent-knee
@@ -346,31 +346,10 @@ export function PetsWorld({ artBase, visible, request, onReady, onMove, onBark }
             ? person.facing : 1;
           employee.holder.scale.set(person.scale * poseFacing, person.scale);
           employee.holder.zIndex = person.y + .1;
-          // From the patio the clerk reaches the cat BEHIND the tabletop,
-          // never stepping onto the chairs. Keep the upper body visible, but
-          // let the actual painted tabletop occlude the lower legs as in life.
-          const besideCatTable = pose.target === "cat" &&
-            person.x >= 1175 && person.y >= 870;
-          // The left exit passes beside foreground stools/planters painted
-          // INTO the immutable background. Full-body rendering at world
-          // y=729 made the worker look as though she ran on the chairs.
-          // Gradually reveal the lower body ONLY on the descent from the
-          // left passage onto the paved ground, and reverse when returning.
-          const inLeftPassage = (pose.phase === "outbound" ||
-            pose.phase === "returning") && person.x < 935;
-          // Foreground chairs and the chalkboard are part of the approved
-          // *background*. The worker passes BEHIND them: her lower silhouette
-          // should not be drawn on top of a stool. Reveal upper torso near the
-          // left exit, then smoothly reveal her feet on the open central tiles.
-          const exitY = Math.max(0, Math.min(1, (person.y - 815) / 95));
-          const exitX = Math.max(0, Math.min(1, (person.x - 825) / 110));
-          const soft = exitX * exitX * (3 - 2 * exitX);
-          const passageMaskHeight = Math.round(COUNTER_WAISTLINE_Y +
-            (790 - COUNTER_WAISTLINE_Y) * exitY +
-            (ARTBOARD.height - 790) * soft * exitY);
-          const nextMaskHeight = inLeftPassage ? passageMaskHeight :
-            person.behindCounter ? COUNTER_WAISTLINE_Y :
-            besideCatTable ? 852 : ARTBOARD.height;
+          // The mask follows the actual counter exit, not a huge x<935
+          // rectangle that cropped the employee while she was running in
+          // the courtyard. Keep the full character visible once outside.
+          const nextMaskHeight = employeeMaskHeight(person, pose.phase, pose.target);
           if (nextMaskHeight !== maskHeight) {
             counterMask.clear().rect(0, 0, ARTBOARD.width, nextMaskHeight).fill(0xffffff);
             maskHeight = nextMaskHeight;
