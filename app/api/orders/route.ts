@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { products } from "@/data/catalog";
 export const runtime="nodejs";
@@ -21,12 +22,14 @@ export async function POST(req:NextRequest){
   if(paymentMethod!=="cod"&&paymentMethod!=="transfer")return fail("Phương thức thanh toán không hợp lệ.",400);
   if(!Array.isArray(body.items)||body.items.length===0||body.items.length>24)return fail("Giỏ hàng không hợp lệ.",400);
   const quantities=new Map<string,number>();
-  for(const entry of body.items){if(!entry||typeof entry!=="object")return fail("Sản phẩm không hợp lệ.",400);const id=(entry as {id?:unknown}).id,quantity=(entry as {quantity?:unknown}).quantity;if(typeof id!=="string"||!products.some(p=>p.id===id)||!Number.isInteger(quantity)||typeof quantity!=="number"||quantity<1||quantity>20)return fail("Sản phẩm hoặc số lượng không hợp lệ.",400);quantities.set(id,(quantities.get(id)||0)+quantity);}
+  for(const entry of body.items){if(!entry||typeof entry!=="object")return fail("Sản phẩm không hợp lệ.",400);const id=(entry as {id?:unknown;skuId?:unknown}).skuId??(entry as {id?:unknown}).id,quantity=(entry as {quantity?:unknown}).quantity;if(typeof id!=="string"||!products.some(p=>p.id===id)||!Number.isInteger(quantity)||typeof quantity!=="number"||quantity<1||quantity>20)return fail("Sản phẩm hoặc số lượng không hợp lệ.",400);quantities.set(id,(quantities.get(id)||0)+quantity);}
   const totalQuantity=[...quantities.values()].reduce((s,n)=>s+n,0);
-  if(totalQuantity>40||[...quantities.values()].some(v=>v>20))return fail("Một đơn tối đa 40 ly, mỗi món tối đa 20 ly.",400);
-  const items=[...quantities].map(([id,quantity])=>{const p=products.find(p=>p.id===id)!;return {id,name:p.name,quantity,unitPrice:p.price,lineTotal:p.price*quantity};});
+  if(totalQuantity>40||[...quantities].some(([id,qty])=>qty>(products.find(p=>p.id===id)?.maxQuantity??20)))return fail("Số lượng vượt giới hạn của sản phẩm.",400);
+  const items=[...quantities].map(([id,quantity])=>{const p=products.find(p=>p.id===id)!;return {id,name:p.name,quantity,unitPrice:p.price,lineTotal:p.price*quantity,gramsPerPack:p.gramsPerPack??null,saleUnit:p.saleUnit??"cup"};});
   const subtotal=items.reduce((s,p)=>s+p.lineTotal,0);
+  const canonical=JSON.stringify({customerName,phone,address,note,paymentMethod,items:items.map(({id,quantity})=>({id,quantity})).sort((a,b)=>a.id.localeCompare(b.id))});
+  const inputHash=createHash("sha256").update(canonical).digest("hex");
   const orderId=`VE-${requestId.toUpperCase()}`;
-  const payload={secret,orderId,createdAt:new Date().toISOString(),customerName,phone,address,note,paymentMethod,items,subtotal,deliveryFee:null,status:"NEW_UNCONFIRMED"};
-  try{const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),12000);let response:Response;try{response=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload),signal:controller.signal,cache:"no-store",redirect:"follow"});}finally{clearTimeout(timeout);}if(!response.ok)return fail("Hệ thống nhận đơn đang bận. Vui lòng thử lại.",502);const data=await response.json() as {ok?:boolean;orderId?:string};if(data.ok!==true||data.orderId!==orderId)return fail("Chưa thể xác nhận đã lưu đơn. Vui lòng liên hệ cửa hàng.",502);return NextResponse.json({ok:true,orderId},{status:201});}catch{return fail("Chưa gửi được đơn hàng. Vui lòng thử lại hoặc liên hệ cửa hàng.",502);}
+  const payload={secret,orderId,inputHash,createdAt:new Date().toISOString(),customerName,phone,address,note,paymentMethod,items,subtotal,deliveryFee:null,status:"NEW_UNCONFIRMED"};
+  try{const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),12000);let response:Response;try{response=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload),signal:controller.signal,cache:"no-store",redirect:"follow"});}finally{clearTimeout(timeout);}if(!response.ok)return fail("Hệ thống nhận đơn đang bận. Vui lòng thử lại.",502);const data=await response.json() as {ok?:boolean;orderId?:string;duplicate?:boolean;error?:string;subtotal?:number};if(data.error==="Conflict")return fail("Mã yêu cầu đã được dùng cho một giỏ hàng khác.",409);if(data.error==="NeedsReview")return fail("Đơn cũ cần đối soát. Vui lòng liên hệ cửa hàng.",409);if(data.ok!==true||data.orderId!==orderId)return fail("Chưa thể xác nhận đã lưu đơn. Vui lòng liên hệ cửa hàng.",502);return NextResponse.json({ok:true,orderId,subtotal:data.subtotal??subtotal},{status:data.duplicate?200:201});}catch{return fail("Chưa gửi được đơn hàng. Vui lòng thử lại hoặc liên hệ cửa hàng.",502);}
 }
