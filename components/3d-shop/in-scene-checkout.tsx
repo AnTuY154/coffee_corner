@@ -21,12 +21,19 @@ export function InSceneCheckout({onBack,onReturnToShop,onCompleted}:Props){
   if(sending||!lines.length||isStaticDemo)return;
   setSending(true);setError("");
   try{
-   if(!requestId.current)requestId.current=crypto.randomUUID();
+   // Persist only a request ID/fingerprint, never personal contact fields.
+   const fingerprint=JSON.stringify({form,items:[...lines].sort((a,b)=>a.id.localeCompare(b.id))});
+   let pending:{id:string;fingerprint:string}|null=null;
+   try{const saved=sessionStorage.getItem("vuon-ep-pending-order-v1");if(saved)pending=JSON.parse(saved) as {id:string;fingerprint:string};}catch{}
+   if(!pending||pending.fingerprint!==fingerprint){pending={id:crypto.randomUUID(),fingerprint};}
+   requestId.current=pending.id;
+   try{sessionStorage.setItem("vuon-ep-pending-order-v1",JSON.stringify(pending));}catch{}
    const response=await fetch("/api/orders",{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({...form,items:lines,requestId:requestId.current}),cache:"no-store"});
+    body:JSON.stringify({...form,items:lines.map(({id,quantity})=>({skuId:id,quantity})),requestId:requestId.current}),cache:"no-store"});
    const payload=await response.json() as {ok?:boolean;orderId?:string;error?:string};
    if(!response.ok||!payload.ok||!payload.orderId)throw new Error(payload.error||"Cửa hàng chưa nhận được đơn.");
    setConfirmed(payload.orderId);
+   try{sessionStorage.removeItem("vuon-ep-pending-order-v1");}catch{}
    clear();onCompleted();
   }catch(e){setError(e instanceof Error?e.message:"Không gửi được đơn, vui lòng thử lại.");}
   finally{setSending(false);}
@@ -37,7 +44,7 @@ export function InSceneCheckout({onBack,onReturnToShop,onCompleted}:Props){
   <h3>Cảm ơn bạn đã ghé Vườn Ép!</h3>
   <p>Mã yêu cầu: <strong>{confirmed}</strong></p>
   <p>Cửa hàng sẽ liên hệ để xác nhận đồ uống còn hàng, phí giao hàng và phương thức thanh toán. Chưa có giao dịch thanh toán nào được thực hiện.</p>
-  <button className="ve-menu-checkout" type="button" onClick={onReturnToShop}>Quay lại khu vườn 3D →</button>
+  <button className="ve-menu-checkout" type="button" onClick={onReturnToShop}>Quay lại Vườn É →</button>
  </section>;
  if(isStaticDemo)return <section className="ve-scene-checkout ve-order-demo">
   <button type="button" className="ve-checkout-back" onClick={onBack}>← Quay lại giỏ hàng</button>
