@@ -1,0 +1,13 @@
+{
+  "name": "vuon-e-pixel-garden",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": [],
+  "vars": {
+    "ALLOWED_ORIGINS": "http://localhost:3000"
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "GARDEN", "class_name": "GardenRoom" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["GardenRoom"] }]
+}
