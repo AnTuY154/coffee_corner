@@ -32,6 +32,7 @@ export function PixelGarden() {
   const selfRef=useRef("solo");
   const networkRef=useRef<ReturnType<typeof createGardenNetwork>|null>(null);
   const seqRef=useRef(0);
+  const clockOffsetRef=useRef(0);
   const cameraRef=useRef<{ mode:CameraMode; x:number; y:number; scale:number }>({ mode:"all", x:0,y:0,scale:1 });
   const pendingSeat=useRef<string|null>(null);
   const reducedMotion=useRef(false);
@@ -40,6 +41,7 @@ export function PixelGarden() {
   const [roomStatus,setRoomStatus]=useState<RoomStatus>("solo");
   const [people,setPeople]=useState(1);
   const [camera,setCamera]=useState<CameraMode>("all");
+  useEffect(()=>{if(window.innerWidth<800)setCamera("follow");},[]);
   const [menu,setMenu]=useState<MenuCategory|null>(null);
   const [hover,setHover]=useState<string|null>(null);
   const [notice,setNotice]=useState("");
@@ -55,7 +57,7 @@ export function PixelGarden() {
       case "snapshot":
         if(e.protocolVersion!==1||e.sceneVersion!=="pixel-garden-1"||e.navVersion!=="pixel-nav-1"){setRoomStatus("offline");setNotice("Phiên bản sân chưa tương thích.");return;}
         roster.clear(); for(const actor of e.actors) roster.set(actor.id,actor);
-        selfRef.current=e.selfId; seqRef.current=0; setPeople(roster.size); break;
+        selfRef.current=e.selfId; seqRef.current=0; clockOffsetRef.current=e.serverNow-Date.now(); setPeople(roster.size); break;
       case "joined": roster.set(e.actor.id,e.actor); setPeople(roster.size); break;
       case "left": if(roster.get(e.actorId)?.epoch===e.epoch) {roster.delete(e.actorId);setPeople(roster.size);} break;
       case "moveAccepted": {
@@ -86,7 +88,7 @@ export function PixelGarden() {
     const network=createGardenNetwork({onEvent:handleEvent,onStatus:status=>{
       setRoomStatus(status);
       if(status==="online") setNotice("");
-      if(status==="solo") {actorsRef.current=new Map([["solo",defaultActor()]]);selfRef.current="solo";setPeople(1);}
+      if(status==="solo") {actorsRef.current=new Map([["solo",defaultActor()]]);selfRef.current="solo";clockOffsetRef.current=0;setPeople(1);}
       if(status==="transferred") setNotice("Đã chuyển sang tab mới. Tải lại nếu muốn chơi ở đây.");
     }});
     networkRef.current=network;
@@ -99,7 +101,7 @@ export function PixelGarden() {
     // Explicit local preview; no invented remote participants.
     if(selfRef.current!=="solo")return;
     const actor=actorsRef.current.get("solo")!;
-    const now=Date.now();
+    const now=Date.now()+clockOffsetRef.current;
     const pos=positionAt(actor,now);
     if(intent.type==="stop"){Object.assign(actor,{x:pos.x,y:pos.y,path:[],seq,startAt:now});return;}
     if(intent.type==="stand"){actor.seatId=null;actor.seq=seq;return;}
@@ -145,7 +147,7 @@ export function PixelGarden() {
         const engine:Engine={app:application,world:build.world,update:build.update,graphics:new Map(),frame:new Map(),draw:art.drawGuest,makeGraphics:()=>new PIXI.Graphics()};
         engineRef.current=engine;
         const render=(ticker:import("pixi.js").Ticker)=>{
-          const now=Date.now(),elapsed=ticker.lastTime/1000;
+          const now=Date.now()+clockOffsetRef.current,elapsed=ticker.lastTime/1000;
           build.update(elapsed,reducedMotion.current);
           const roster=actorsRef.current;
           for(const [id, actor] of roster){
@@ -154,7 +156,7 @@ export function PixelGarden() {
             const p=positionAt(actor,now);
             g.position.set(Math.round(p.x),Math.round(p.y));
             g.zIndex=Math.round(p.y);
-            const frame=reducedMotion.current?0:Math.floor(elapsed*7);
+            const frame=(reducedMotion.current?0:Math.floor(elapsed*7)) + (actor.seatId?100000:0) + ({up:0,down:200000,left:400000,right:600000}[actor.facing]);
             if(engine.frame.get(id)!==frame){engine.draw(g,actor,elapsed,!!actor.seatId);engine.frame.set(id,frame);}
           }
           for(const [id,g] of engine.graphics)if(!roster.has(id)){engine.world.removeChild(g);g.destroy();engine.graphics.delete(id);engine.frame.delete(id);}
