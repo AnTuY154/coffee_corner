@@ -125,7 +125,10 @@ export class GardenRoom implements DurableObject {
     let input: ClientIntent;
     try { input = JSON.parse(data) as ClientIntent; } catch { this.emit(ws, { type: "error", code: "badJson", message: "Invalid command" }); return; }
     if (input.type === "resync") {
-      this.emit(ws, { type: "snapshot", protocolVersion: PROTOCOL_VERSION, sceneVersion: SCENE_VERSION, navVersion: NAV_VERSION, selfId: conn.id, serverNow: Date.now(), actors: [...this.actors.values()], seats: this.occupancy() }); return;
+      const now = Date.now();
+      if (now - (this.lastIntent.get(conn.id) ?? 0) < 1500) return;
+      this.lastIntent.set(conn.id, now);
+      this.emit(ws, { type: "snapshot", protocolVersion: PROTOCOL_VERSION, sceneVersion: SCENE_VERSION, navVersion: NAV_VERSION, selfId: conn.id, serverNow: now, actors: [...this.actors.values()], seats: this.occupancy() }); return;
     }
     const actor = this.actors.get(conn.id)!;
     const seq = input.seq;
@@ -191,7 +194,7 @@ export class GardenRoom implements DurableObject {
     this.restore();
     const conn = ws.deserializeAttachment() as ConnectionState | null;
     if (!conn || this.clients.get(conn.id) !== ws) return;
-    this.clients.delete(conn.id); this.actors.delete(conn.id); this.burst.delete(conn.id);
+    this.clients.delete(conn.id); this.actors.delete(conn.id); this.burst.delete(conn.id); this.lastIntent.delete(conn.id);
     this.broadcast({ type: "left", actorId: conn.id, epoch: conn.connectionId });
   }
   async webSocketError(ws: WebSocket) { await this.webSocketClose(ws); }
