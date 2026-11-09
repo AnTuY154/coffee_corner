@@ -39,6 +39,7 @@ jobs:
           test -f out/index.html
           test -f out/3d-shop/index.html
           test -f out/menu/index.html
+          test -f out/pixel-shop/index.html
           test -f out/products/nang-xuan.svg
           test -f out/.nojekyll
       - name: Upload GitHub Pages artifact
