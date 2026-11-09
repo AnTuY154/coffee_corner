@@ -8,6 +8,7 @@ import { SCENE_HEIGHT, SCENE_WIDTH, SPAWN, WALK_SPEED, HOTSPOTS, SEATS, findPath
 import "./pixel-shop.css";
 
 type MenuCategory = "all" | "fruit" | "daily";
+type GardenCommand = {type:"goTo";target:Point}|{type:"direction";direction:Facing}|{type:"stop"}|{type:"sit";seatId:string}|{type:"stand"};
 type CameraMode = "all" | "follow";
 type Engine = {
   app: Application; world: import("pixi.js").Container;
@@ -91,7 +92,7 @@ export function PixelGarden() {
     networkRef.current=network;
     return ()=>{network.close();networkRef.current=null;};
   },[handleEvent]);
-  const send=useCallback((intent:Omit<Extract<ClientIntent,{seq:number}>,"seq">) => {
+  const send=useCallback((intent:GardenCommand) => {
     const seq=++seqRef.current;
     const command={...intent,seq} as ClientIntent;
     if(networkRef.current?.send(command))return;
@@ -139,11 +140,7 @@ export function PixelGarden() {
         await application.init({resizeTo:mount,backgroundColor:0xbde7da,antialias:false,preference:"webgl",resolution:Math.min(window.devicePixelRatio||1,2),autoDensity:true});
         if(disposed){application.destroy(true,{children:true});return;}
         mount.appendChild(application.canvas);
-        application.stage.addChild(art.buildScene().world);
-        const scene=application.stage.children[0] as import("pixi.js").Container;
-        // Preserve the single scene object created above.
         const build=art.buildScene();
-        application.stage.removeChildren();
         application.stage.addChild(build.world);
         const engine:Engine={app:application,world:build.world,update:build.update,graphics:new Map(),frame:new Map(),draw:art.drawGuest,makeGraphics:()=>new PIXI.Graphics()};
         engineRef.current=engine;

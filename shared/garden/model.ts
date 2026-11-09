@@ -88,11 +88,6 @@ class MinQueue {
   data: Node[] = [];
   push(n: Node) {
     const a = this.data; a.push(n);
-    for (let i = a.length - 1; i > 0;) {
-      const p = (i - 1) >> 1;
-      if (a[p].score <= n.score) break;
-      a[i] = a[p]; i = p;
-    }
     let i = a.length - 1;
     while (i > 0) {
       const p = (i - 1) >> 1; if (a[p].score <= n.score) break;
