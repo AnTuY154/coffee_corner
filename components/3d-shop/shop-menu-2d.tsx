@@ -18,7 +18,7 @@ export function ShopMenu2D({ onClose, initialView = "browse", initialCategory = 
   const [cartVisible, setCartVisible] = useState(initialView === "cart");
   const [view, setView] = useState<"browse"|"checkout">("browse");
   const [recent, setRecent] = useState<string | null>(null);
-  const { lines, add, update, remove, count, subtotal } = useCart();
+  const { lines, add, update, remove, count, subtotal, migrationNotice } = useCart();
   const panel = useRef<HTMLElement>(null);
   const firstFocus = useRef<HTMLInputElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
@@ -105,6 +105,7 @@ export function ShopMenu2D({ onClose, initialView = "browse", initialCategory = 
           <div className="ve-menu-basket-top"><div><p className="ve-menu-kicker">GÓC NHỎ CỦA BẠN</p><h3>Giỏ hàng <span>({count})</span></h3></div>
             <button type="button" className="ve-menu-mobile-close" onClick={() => setCartVisible(false)} aria-label="Thu gọn giỏ hàng">✕</button>
           </div>
+          {migrationNotice && <p role="status" className="ve-menu-empty">{migrationNotice}</p>}
           <div className="ve-menu-basket-lines">
             {lines.length === 0 ? <div className="ve-menu-empty-basket"><span aria-hidden="true">🍊</span><p>Giỏ hàng đang trống</p><small>Thêm một chút vitamin tươi mát nhé!</small></div>
             : lines.map(line => {
