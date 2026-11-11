@@ -1,4 +1,5 @@
 import { Container, Graphics, Text } from "pixi.js";
+import { placeKenneyDecorations, type KenneyAtlas } from "./kenney-art";
 import { TABLES, SEATS, HOTSPOTS, type Actor } from "@/shared/garden/model";
 
 const C = {
@@ -61,7 +62,7 @@ function fruitCase(g: Graphics) {
   for(let y=124;y<163;y+=20)pixel(g,322,y,77,4,C.woodLight);
   pixel(g,355,102,3,63,C.white); pixel(g,323,167,77,6,C.wood);
 }
-function paintBackdrop() {
+function paintBackdrop(withKenney: boolean) {
   const g = new Graphics();
   pixel(g,0,0,480,176,C.sky);
   pixel(g,0,0,480,52,C.skyLight);
@@ -103,7 +104,7 @@ function paintBackdrop() {
   pixel(g,204,143,75,6,C.cream);
   fruitCase(g);
   for(let i=0;i<5;i++)pottedPlant(g,58+i*84,162);
-  tree(g,31,131,1.1); tree(g,452,123,1);
+  if (!withKenney) { tree(g,31,131,1.1); tree(g,452,123,1); }
   for(const t of TABLES)table(g,t.x,t.y);
   for(const s of SEATS)chair(g,s.x,s.y,s.id.endsWith("left"));
   pixel(g,285,187,14,12,C.brown);
@@ -115,15 +116,16 @@ const shirts=[0x5b99a7,0xe6a25e,0x9d73aa,0x5eaa78,0xe17f79,0xc4bc72];
 export function drawGuest(g: Graphics, actor: Actor, tick: number, seated: boolean) {
   g.clear();
   const shirt = shirts[actor.shirt % shirts.length];
-  const stride = seated ? 0 : actor.path.length > 1 ? Math.floor(tick * 7) % 2 : 0;
+  const stride = seated ? 0 : actor.path.length > 1 ? [0,2,0,-2][Math.floor(tick*8)%4] : 0;
   const y = seated ? 5 : 0;
+  pixel(g,-5,4,10,2,0x557e61); // foot shadow
   pixel(g,-6,-22+y,12,6,0x5c403b);
   pixel(g,-5,-19+y,10,7,0xf0c59a);
-  pixel(g,-3,-16+y,2,2,C.brown); pixel(g,2,-16+y,2,2,C.brown);
+  if (actor.facing !== "up") {pixel(g,-3,-16+y,2,2,C.brown);pixel(g,2,-16+y,2,2,C.brown);}
   pixel(g,-6,-11+y,12,10,shirt);
   pixel(g,-8,-10+y,3,8,0xf0c59a); pixel(g,5,-10+y,3,8,0xf0c59a);
   if(seated){pixel(g,-5,-2+y,10,4,C.brown);return;}
-  pixel(g,-5,-1+stride,4,5,0x4b555a); pixel(g,1,-1+(1-stride),4,5,0x4b555a);
+  pixel(g,-5,-1+stride,4,5,0x4b555a); pixel(g,1,-1-stride,4,5,0x4b555a);
   if(actor.facing==="up")pixel(g,-4,-20+y,8,4,0x593a35);
   if(actor.facing==="left")pixel(g,-5,-17+y,2,3,0x593a35);
   if(actor.facing==="right")pixel(g,3,-17+y,2,3,0x593a35);
@@ -157,13 +159,20 @@ function cat(g: Graphics, gray: boolean, tick: number) {
   pixel(g,9,-7,2,2,C.brown);pixel(g,-11,-5,4,3,fur);
   if(tick%3===0)pixel(g,-13,-7,4,2,fur);
 }
-export function buildScene() {
+export function buildScene(kenney: KenneyAtlas | null = null) {
   const world = new Container(); world.sortableChildren = true;
-  const backdrop=paintBackdrop(); backdrop.zIndex=0; world.addChild(backdrop);
+  const backdrop=paintBackdrop(!!kenney); backdrop.zIndex=0; world.addChild(backdrop);
+  if (kenney) placeKenneyDecorations(world, kenney);
   const sign=label("VƯỜN É",240,46,15); sign.zIndex=1; world.addChild(sign);
   const menu=label("NƯỚC ÉP",136,130,7);menu.zIndex=2;world.addChild(menu);
   const daily=label("HÔM NAY",450,135,6);daily.zIndex=2;world.addChild(daily);
   const fruit=label("TRÁI CÂY",360,94,7,"#624e32");fruit.zIndex=2;world.addChild(fruit);
+  for (const tablePos of TABLES) {
+    const front=new Graphics();
+    pixel(front,tablePos.x-12,tablePos.y-8,24,4,C.woodLight);
+    front.zIndex=tablePos.y+5;
+    world.addChild(front);
+  }
   const counterFront=new Graphics();pixel(counterFront,193,153,99,20,C.brown);pixel(counterFront,197,157,91,10,C.woodLight);counterFront.zIndex=173;world.addChild(counterFront);
   const employee=new Graphics();employee.x=241;employee.y=158;employee.zIndex=158;world.addChild(employee);
   const animals=[new Graphics(),new Graphics(),new Graphics()];
@@ -171,8 +180,8 @@ export function buildScene() {
   animals[1].position.set(43,209);animals[1].zIndex=211;
   animals[2].position.set(296,224);animals[2].zIndex=226;
   animals.forEach(a=>world.addChild(a));
-  const actors=new Container();actors.sortableChildren=true;actors.zIndex=300;world.addChild(actors);
-  // The actor layer is above static ground props; feet sorting stays inside this layer.
+  // Depth-sort all guests by feet within the world; no always-on-top actor layer.
+  const actors=world;
   let prevStep=-1;
   function update(tick: number, reducedMotion: boolean) {
     const step = reducedMotion ? 0 : Math.floor(tick * 7);
