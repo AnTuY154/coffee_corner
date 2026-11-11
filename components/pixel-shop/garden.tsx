@@ -4,6 +4,7 @@ import type { Application, Graphics } from "pixi.js";
 import { useCart } from "@/components/cart-context";
 import { ShopMenu2D } from "@/components/3d-shop/shop-menu-2d";
 import { createGardenNetwork, type RoomStatus } from "./network";
+import { loadKenneyAtlas } from "./kenney-art";
 import { SCENE_HEIGHT, SCENE_WIDTH, SPAWN, WALK_SPEED, HOTSPOTS, SEATS, findPath, hotspotAt, nearestWalkable, positionAt, facingFromPath, type Actor, type ClientIntent, type Facing, type Point, type ServerEvent } from "@/shared/garden/model";
 import "./pixel-shop.css";
 
@@ -43,7 +44,8 @@ export function PixelGarden() {
   const [camera,setCamera]=useState<CameraMode>("all");
   useEffect(()=>{if(window.innerWidth<800)setCamera("follow");},[]);
   const [menu,setMenu]=useState<MenuCategory|null>(null);
-  const [hover,setHover]=useState<string|null>(null);
+  const [menuInitialView,setMenuInitialView]=useState<"browse"|"cart">("browse");
+  const [hover,setHover]=useState<{ label:string; x:number; y:number }|null>(null);
   const [notice,setNotice]=useState("");
   const [renderError,setRenderError]=useState(false);
   const {count}=useCart();
@@ -142,7 +144,9 @@ export function PixelGarden() {
         await application.init({resizeTo:mount,backgroundColor:0xbde7da,antialias:false,preference:"webgl",resolution:Math.min(window.devicePixelRatio||1,2),autoDensity:true});
         if(disposed){application.destroy(true,{children:true});return;}
         mount.appendChild(application.canvas);
-        const build=art.buildScene();
+        const kenney=await loadKenneyAtlas();
+        if(disposed){application.destroy(true,{children:true});return;}
+        const build=art.buildScene(kenney);
         application.stage.addChild(build.world);
         const engine:Engine={app:application,world:build.world,update:build.update,graphics:new Map(),frame:new Map(),draw:art.drawGuest,makeGraphics:()=>new PIXI.Graphics()};
         engineRef.current=engine;
@@ -171,7 +175,8 @@ export function PixelGarden() {
           }
           const width=mount.clientWidth,height=mount.clientHeight;
           const allScale=Math.min(width/SCENE_WIDTH,height/SCENE_HEIGHT);
-          const scale=cameraRef.current.mode==="follow" && width<800 ? Math.max(allScale,width/215) : allScale;
+          const scale=cameraRef.current.mode==="follow" && width<=800
+            ? Math.max(2,Math.floor(Math.min(width/180,height/225))) : allScale;
           const focus=own?positionAt(own,now):SPAWN;
           let x=(width-SCENE_WIDTH*scale)/2,y=(height-SCENE_HEIGHT*scale)/2;
           if(scale>allScale){
@@ -198,6 +203,7 @@ export function PixelGarden() {
   useEffect(()=>{
     const mapping:Record<string,Facing>={w:"up",arrowup:"up",s:"down",arrowdown:"down",a:"left",arrowleft:"left",d:"right",arrowright:"right"};
     const onDown=(e:KeyboardEvent)=>{
+      if(e.key==="Escape"){setMenu(null);setMenuInitialView("browse");return;}
       if(menuOpenRef.current || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)return;
       const dir=mapping[e.key.toLowerCase()];
       if(!dir||e.repeat)return;
@@ -239,19 +245,26 @@ export function PixelGarden() {
   const onHover=(event:ReactPointerEvent<HTMLDivElement>)=>{
     if(event.pointerType!=="mouse")return;
     const p=worldPoint(event);
-    setHover(p?hotspotAt(p)?.label??null:null);
+    const target=p?hotspotAt(p):undefined;
+    if(!target){setHover(null);return;}
+    const c=cameraRef.current, width=mountRef.current?.clientWidth??480;
+    setHover({
+      label:target.label,
+      x:Math.max(74,Math.min(width-74,c.x+(target.x+target.w/2)*c.scale)),
+      y:Math.max(8,c.y+target.y*c.scale-43)
+    });
   };
   const dpad=(dir:Facing)=><button key={dir} type="button" aria-label={"Đi "+({up:"lên",down:"xuống",left:"trái",right:"phải"}[dir])} onPointerDown={e=>{e.preventDefault();send({type:"direction",direction:dir});}} onPointerUp={e=>{e.preventDefault();send({type:"stop"});}} onPointerCancel={()=>send({type:"stop"})}>{({up:"▲",down:"▼",left:"◀",right:"▶"}[dir])}</button>;
   return <div className="pg-root">
     <header className="pg-header">
       <div><span className="pg-kicker">FRESH PIXEL GARDEN</span><h1>Vườn É <span>✿</span></h1><p>Ghé chơi, chọn nước ép và ngồi giữa khu vườn.</p></div>
-      <div className="pg-heading-actions"><span className="pg-guests" aria-live="polite">● {people}/20 khách</span><button type="button" onClick={()=>setMenu("all")}>Thực đơn</button><button type="button" onClick={()=>setMenu("all")}>Giỏ hàng ({count})</button></div>
+      <div className="pg-heading-actions"><span className="pg-guests" aria-live="polite">● {people}/20 khách</span><button type="button" onClick={()=>setMenu("all")}>Thực đơn</button><button type="button" onClick={()=>{setMenuInitialView("cart");setMenu("all");}}>Giỏ hàng ({count})</button></div>
     </header>
     <div className="pg-status" role="status" aria-live="polite">{roomLabels[roomStatus]}</div>
     <div className="pg-stage-shell">
       <div className="pg-stage" ref={mountRef} onPointerUp={onTap} onPointerMove={onHover} onPointerLeave={()=>setHover(null)} role="application" aria-label="Sân Pixel Art Vườn É, nhấn vào sân để đi hoặc chạm tủ trái cây để mua">
         {renderError && <div className="pg-fallback" role="status"><strong>Đang hiển thị chế độ nhẹ</strong><p>Thiết bị không hỗ trợ WebGL. Bạn vẫn có thể mở thực đơn và đặt món.</p><button type="button" onClick={()=>setMenu("all")}>Mở thực đơn</button></div>}
-        {hover && <div className="pg-tooltip" role="tooltip">{hover} · Nhấn để khám phá</div>}
+        {hover && <div className="pg-tooltip" role="tooltip" style={{left:hover.x,top:hover.y}}>{hover.label} · Nhấn để khám phá</div>}
       </div>
       <div className="pg-game-controls">
         <button type="button" onClick={()=>setCamera(c=>c==="all"?"follow":"all")} aria-pressed={camera==="follow"}>{camera==="all"?"Theo nhân vật":"Toàn sân"}</button>
@@ -267,8 +280,8 @@ export function PixelGarden() {
     <nav className="pg-mobile-nav" aria-label="Mua hàng trên điện thoại">
       <button type="button" onClick={()=>setMenu("all")}>🥤 Nước ép</button>
       <button type="button" onClick={()=>setMenu("fruit")}>🍊 Trái cây</button>
-      <button type="button" onClick={()=>setMenu("all")}>🧺 Giỏ ({count})</button>
+      <button type="button" onClick={()=>{setMenuInitialView("cart");setMenu("all");}}>🧺 Giỏ ({count})</button>
     </nav>
-    {opened&&<ShopMenu2D key={menu} initialCategory={menu} onClose={()=>setMenu(null)}/>}
+    {opened&&<ShopMenu2D key={menu+"-"+menuInitialView} initialCategory={menu} initialView={menuInitialView} onClose={()=>{setMenu(null);setMenuInitialView("browse");}}/>}
   </div>;
 }
