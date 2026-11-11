@@ -15,7 +15,7 @@ export async function loadKenneyAtlas(): Promise<KenneyAtlas | null> {
     const source={farm,town};
     const cache=new Map<string,Texture>();
     return { tile(pack,col,row,columns=1,rows=1) {
-      if (![col,row,columns,rows].every(Number.isInteger) || col<0 || row<0 || columns<1 || rows<1 || (col+columns)*TILE>176 || (row+rows)*TILE>192) {
+      if (![col,row,columns,rows].every(Number.isInteger) || col<0 || row<0 || columns<1 || rows<1 || (col+columns)*TILE>192 || (row+rows)*TILE>176) {
         throw new Error("Kenney tile out of range");
       }
       const key=[pack,col,row,columns,rows].join(":");

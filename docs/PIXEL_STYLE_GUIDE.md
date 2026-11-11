@@ -1,6 +1,6 @@
 # Cozy Garden Café — style guide for /pixel-shop
 
-- Main CC0 art: Kenney Tiny Farm 1.0 and Tiny Town 1.1, each a 16×16 tilesheet.
+- Main CC0 art: Kenney Tiny Farm 1.0 and Tiny Town 1.1, each a 16×16 packed tilesheet.
 - Source and licenses: [ASSET_SOURCES.md](./ASSET_SOURCES.md).
 - Palette: cream #FFEDBD, roof #E38A58, wood #986C4F, grass #80BD77, dark green #326A50, orange #FFA446.
 - Canvas keeps a logical 480×270 map; map model owns 4 hotspots, 5 tables and 15 seating spots.
