@@ -4,7 +4,7 @@ export type Product = {
   id: string; slug: string; name: string; tagline: string; season: SeasonKey;
   months: number[]; price: number; image: string; colors: [string,string];
   ingredients: Ingredient[]; method: "Ép" | "Xay"; steps: string[];
-  flavour: string; description: string; badge?: string;
+  flavour: string; description: string; badge?: string; category?: "juice" | "fresh-fruit"; saleUnit?: "cup" | "pack"; gramsPerPack?: number; maxQuantity?: number;
 };
 export const seasons: Record<SeasonKey,{label:string;subtitle:string;months:string;index:number;emoji:string;description:string}> = {
   spring:{label:"Mùa xuân",subtitle:"Tinh khôi & dịu ngọt",months:"Tháng 1 – 3",index:0,emoji:"🌱",description:"Cam, quýt, bưởi, dâu tây và dưa hấu: những hương vị sáng trong đầu năm."},
@@ -87,6 +87,13 @@ export const products:Product[] = [
   recipe("oi-cam","Thanh Sắc","Ổi · Cam","winter",[10,11,12],42000,["#b5c66d","#e6dfaa"],"Ép",[{name:"Ổi",amount:"160 g"},{name:"Cam",amount:"2 quả"}],"Tươi, thơm, chua dịu","Hương ổi gần gũi hòa cùng cam vàng, đủ sáng cho ngày đông.",ep),
   recipe("dau-cam","Dâu Nắng Đông","Dâu tây · Cam","winter",[12],49000,["#dc6e74","#f4b6a0"],"Xay",[{name:"Dâu tây",amount:"150 g"},{name:"Cam",amount:"140 ml nước ép"}],"Chua ngọt, rực rỡ","Khi dâu Đà Lạt bắt đầu vào mùa, một chút cam sẽ làm vị dâu thêm tươi.",xay,"Giới hạn mùa")
 ];
+// Staging fixture prices, not a production stock or price guarantee.
+export const fruitSkus: Product[] = [
+  {id:"cam-500g",slug:"cam-500g",name:"Cam tươi · gói 500 g",tagline:"Cam tươi theo gói",season:"winter",months:[1,2,11,12],price:25000,image:"/products/cam-500g.svg",colors:["#ffb957","#f7dda2"],ingredients:[{name:"Cam tươi",amount:"500 g"}],method:"Ép",steps:["Rửa sạch.","Đóng gói 500 g."],flavour:"Tươi nguyên quả",description:"Giá dùng thử trong pilot, cần xác nhận trước khi mở bán.",category:"fresh-fruit",saleUnit:"pack",gramsPerPack:500,maxQuantity:10,badge:"Giá thử nghiệm"},
+  {id:"oi-1kg",slug:"oi-1kg",name:"Ổi tươi · gói 1 kg",tagline:"Ổi giòn theo gói",season:"autumn",months:[7,8,9],price:45000,image:"/products/oi-1kg.svg",colors:["#a4cc89","#d9e9b9"],ingredients:[{name:"Ổi",amount:"1.000 g"}],method:"Ép",steps:["Rửa sạch.","Đóng gói 1 kg."],flavour:"Giòn, thanh mát",description:"Giá dùng thử trong pilot, cần xác nhận trước khi mở bán.",category:"fresh-fruit",saleUnit:"pack",gramsPerPack:1000,maxQuantity:10,badge:"Giá thử nghiệm"},
+  {id:"dua-hau-1kg",slug:"dua-hau-1kg",name:"Dưa hấu · gói 1 kg",tagline:"Dưa hấu theo gói",season:"spring",months:[1,2,3],price:30000,image:"/products/dua-hau-1kg.svg",colors:["#eb7f79","#f7c4a4"],ingredients:[{name:"Dưa hấu",amount:"1.000 g"}],method:"Ép",steps:["Rửa sạch.","Đóng gói 1 kg."],flavour:"Ngọt mát",description:"Giá dùng thử trong pilot, cần xác nhận trước khi mở bán.",category:"fresh-fruit",saleUnit:"pack",gramsPerPack:1000,maxQuantity:10,badge:"Giá thử nghiệm"}
+];
+products.push(...fruitSkus);
 export const getProduct=(slug:string)=>products.find(p=>p.slug===slug);
 export const currency=(n:number)=>new Intl.NumberFormat("vi-VN",{style:"currency",currency:"VND",maximumFractionDigits:0}).format(n);
 export const currentSeason=(month:number):SeasonKey=>month<=3?"spring":month<=6?"summer":month<=9?"autumn":"winter";

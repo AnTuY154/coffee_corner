@@ -1,0 +1,61 @@
+name: Pixel Shop desktop and mobile screenshots
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "components/pixel-shop/**"
+      - "public/pixel-shop/**"
+      - "tests/visual/pixel-capture.spec.ts"
+      - ".github/workflows/pixel-screenshots.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  real-browser-screenshots:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:pixel-assets
+      - run: npm run build
+      - name: Capture desktop + mobile Chromium from running Next.js
+        run: npx playwright test tests/visual/pixel-capture.spec.ts --config=playwright.config.ts
+      - name: Upload original browser captures (also on failure)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pixel-shop-desktop-mobile-screenshots
+          path: |
+            qa-captures/*.png
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+      - name: Publish PNG evidence to source PR branch for visual review
+        if: success() && github.event_name == 'pull_request'
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add qa-captures/
+          if ! git diff --cached --quiet; then
+            git commit -m "test(pixel-shop): capture desktop and mobile browser screenshots [skip ci]"
+            # PR can receive other commits while browsers are capturing.
+            # Rebase only the screenshot commit on the current branch head.
+            # The Next.js build may modify tracked generated files; discard them
+            # after committing screenshots so the rebase only contains the PNG commit.
+            git reset --hard HEAD
+            git fetch origin "${{ github.event.pull_request.head.ref }}"
+            git rebase FETCH_HEAD
+            git push origin HEAD:"${{ github.event.pull_request.head.ref }}"
+          fi
