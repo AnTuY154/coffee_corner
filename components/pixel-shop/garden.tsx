@@ -6,6 +6,7 @@ import { ShopMenu2D } from "@/components/3d-shop/shop-menu-2d";
 import { createGardenNetwork, type RoomStatus } from "./network";
 import { loadKenneyAtlas } from "./kenney-art";
 import { loadReferenceAssets, buildReferenceScene } from "./reference-scene";
+import { guestVisualDepth } from "./pet-motion";
 import { SCENE_HEIGHT, SCENE_WIDTH, SCENE_VERSION, NAV_VERSION, SPAWN, WALK_SPEED, HOTSPOTS, SEATS, findPath, hotspotAt, nearestWalkable, positionAt, facingFromPath, type Actor, type ClientIntent, type Facing, type Point, type ServerEvent } from "@/shared/garden/model";
 import "./pixel-shop.css";
 
@@ -42,6 +43,7 @@ export function PixelGarden() {
   const menuOpenRef=useRef(false);
   const [roomStatus,setRoomStatus]=useState<RoomStatus>("solo");
   const [people,setPeople]=useState(1);
+  const [seatedAt,setSeatedAt]=useState<string|null>(null);
   const [camera,setCamera]=useState<CameraMode>("all");
   useEffect(()=>{if(window.innerWidth<800)setCamera("follow");},[]);
   const [menu,setMenu]=useState<MenuCategory|null>(null);
@@ -61,7 +63,7 @@ export function PixelGarden() {
       case "snapshot":
         if(e.protocolVersion!==1||e.sceneVersion!==SCENE_VERSION||e.navVersion!==NAV_VERSION){setRoomStatus("offline");setNotice("Phiên bản sân chưa tương thích.");return;}
         roster.clear(); for(const actor of e.actors) roster.set(actor.id,actor);
-        selfRef.current=e.selfId; seqRef.current=0; clockOffsetRef.current=e.serverNow-Date.now(); setPeople(roster.size); break;
+        selfRef.current=e.selfId; seqRef.current=0; clockOffsetRef.current=e.serverNow-Date.now(); setPeople(roster.size);setSeatedAt(roster.get(e.selfId)?.seatId??null);break;
       case "joined": roster.set(e.actor.id,e.actor); setPeople(roster.size); break;
       case "left": if(roster.get(e.actorId)?.epoch===e.epoch) {roster.delete(e.actorId);setPeople(roster.size);} break;
       case "moveAccepted": {
@@ -79,10 +81,10 @@ export function PixelGarden() {
       case "seated":{
         const actor=roster.get(e.actorId),seat=SEATS.find(s=>s.id===e.seatId);
         if(actor&&seat){Object.assign(actor,{x:seat.x,y:seat.y,path:[],seatId:seat.id,facing:seat.facing,seq:e.seq});}
-        if(e.actorId===selfRef.current)pendingSeat.current=null;
+        if(e.actorId===selfRef.current){pendingSeat.current=null;setSeatedAt(e.seatId);}
         break;
       }
-      case "stood": {const actor=roster.get(e.actorId);if(actor){actor.seatId=null;actor.seq=e.seq;}break;}
+      case "stood": {const actor=roster.get(e.actorId);if(actor){const previous=SEATS.find(seat=>seat.id===actor.seatId);actor.seatId=null;actor.seq=e.seq;actor.path=[];if(previous){actor.x=previous.approach.x;actor.y=previous.approach.y;}}if(e.actorId===selfRef.current)setSeatedAt(null);break;}
       case "seatBusy": setNotice("Ghế này đã có khách, hãy chọn ghế khác nhé.");pendingSeat.current=null;break;
       case "error": setNotice(e.message);break;
     }
@@ -92,7 +94,7 @@ export function PixelGarden() {
     const network=createGardenNetwork({onEvent:handleEvent,onStatus:status=>{
       setRoomStatus(status);
       if(status==="online") setNotice("");
-      if(status==="solo") {actorsRef.current=new Map([["solo",defaultActor()]]);selfRef.current="solo";clockOffsetRef.current=0;setPeople(1);}
+      if(status==="solo") {actorsRef.current=new Map([["solo",defaultActor()]]);selfRef.current="solo";clockOffsetRef.current=0;setPeople(1);setSeatedAt(null);}
       if(status==="transferred") setNotice("Đã chuyển sang tab mới. Tải lại nếu muốn chơi ở đây.");
     }});
     networkRef.current=network;
@@ -108,11 +110,11 @@ export function PixelGarden() {
     const now=Date.now()+clockOffsetRef.current;
     const pos=positionAt(actor,now);
     if(intent.type==="stop"){Object.assign(actor,{x:pos.x,y:pos.y,path:[],seq,startAt:now});return;}
-    if(intent.type==="stand"){actor.seatId=null;actor.seq=seq;return;}
+    if(intent.type==="stand"){const seat=SEATS.find(s=>s.id===actor.seatId);Object.assign(actor,{seatId:null,seq,path:[],startAt:now,x:seat?.approach.x??pos.x,y:seat?.approach.y??pos.y});setSeatedAt(null);return;}
     if(intent.type==="sit"){
       const seat=SEATS.find(s=>s.id===(intent as {seatId:string}).seatId);
       if(seat&&Math.hypot(pos.x-seat.approach.x,pos.y-seat.approach.y)<=24){
-        Object.assign(actor,{x:seat.x,y:seat.y,path:[],seatId:seat.id,facing:seat.facing,seq});
+        Object.assign(actor,{x:seat.x,y:seat.y,path:[],seatId:seat.id,facing:seat.facing,seq});setSeatedAt(seat.id);
       }
       return;
     }
@@ -162,7 +164,8 @@ export function PixelGarden() {
             if(!g){g=engine.makeGraphics();engine.world.addChild(g);engine.graphics.set(id,g);}
             const p=positionAt(actor,now);
             g.position.set(Math.round(p.x),Math.round(p.y));
-            g.zIndex=Math.round(p.y);
+            // Foreground table WebPs are opaque in places; do not hide visitors when seated.
+            g.zIndex=guestVisualDepth(p.y,actor.seatId);
             const frame=(reducedMotion.current?0:Math.floor(elapsed*7)) + (actor.seatId?100000:0) + ({up:0,down:200000,left:400000,right:600000}[actor.facing]);
             if(engine.frame.get(id)!==frame){engine.draw(g,actor,elapsed,!!actor.seatId);engine.frame.set(id,frame);}
           }
@@ -278,6 +281,7 @@ export function PixelGarden() {
         <div>{dpad("up")}</div><div>{dpad("left")}{dpad("down")}{dpad("right")}</div>
       </div>
     </div>
+    {seatedAt&&<button type="button" className="pg-stand-action" onClick={()=>send({type:"stand"})}>↥ Đứng dậy</button>}
     <div className="pg-help">Desktop: WASD / phím mũi tên hoặc click để đi. Mobile: chạm mặt đất hoặc dùng phím điều hướng. Chạm ghế để ngồi.</div>
     {notice && <div className="pg-notice" role="status">{notice}<button type="button" onClick={()=>setNotice("")} aria-label="Đóng thông báo">✕</button></div>}
     <nav className="pg-mobile-nav" aria-label="Mua hàng trên điện thoại">
