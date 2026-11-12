@@ -25,6 +25,7 @@ declare global {
     __VUONE_PIXEL_QA__?: {
       snapshot:()=>PixelMotionQASnapshot;
       setGuestVisible:(visible:boolean)=>boolean;
+      freezeDecorations:(frozen:boolean)=>void;
       goTo:(x:number,y:number)=>void;
       seedSeat:(seatId:string)=>void;
       reset:()=>void;
@@ -65,6 +66,7 @@ export function PixelGarden() {
   const cameraRef=useRef<{ mode:CameraMode; x:number; y:number; scale:number }>({ mode:"all", x:0,y:0,scale:1 });
   const pendingSeat=useRef<string|null>(null);
   const reducedMotion=useRef(false);
+  const qaFreezeDecorations=useRef(false);
   const pressed=useRef(new Set<string>());
   const menuOpenRef=useRef(false);
   const [roomStatus,setRoomStatus]=useState<RoomStatus>("solo");
@@ -204,6 +206,7 @@ export function PixelGarden() {
                 scene:{width:SCENE_WIDTH,height:SCENE_HEIGHT,camera:cameraRef.current.mode}
               };
             },
+            freezeDecorations:frozen=>{qaFreezeDecorations.current=frozen;},
             setGuestVisible:visible=>{
               const sprite=engine.graphics.get(selfRef.current);
               if(!sprite)return false;
@@ -232,7 +235,7 @@ export function PixelGarden() {
           if(qaEnabled && Number.isFinite(ticker.deltaMS) && ticker.deltaMS>0){
             framesMs.push(ticker.deltaMS);if(framesMs.length>180)framesMs.shift();
           }
-          build.update(elapsed,reducedMotion.current);
+          build.update(elapsed,reducedMotion.current||qaFreezeDecorations.current);
           const roster=actorsRef.current;
           for(const [id, actor] of roster){
             let g=engine.graphics.get(id);
