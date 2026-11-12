@@ -100,9 +100,9 @@ function woodenCrate(g:Graphics,x:number,y:number,fill=DETAIL.caramel) {
 }
 function tilePath(g:Graphics) {
   // A lush tiled terrace, with a quiet centre aisle for the walking avatar.
-  pixel(g,0,170,480,100,0x90bd79);
+  pixel(g,0,170,480,150,0x90bd79);
   pixel(g,0,175,480,4,0x709e70);
-  for(let row=0;row<6;row++)for(let col=0;col<20;col++) {
+  for(let row=0;row<9;row++)for(let col=0;col<20;col++) {
     const x=col*25 + (row%2)*12, y=181+row*17;
     const tint=(row+col)%5===0 ? 0xbed39a : ((row+col)%3===0 ? 0xa4c68b : 0x9ac187);
     pixel(g,x,y,23,15,tint);
@@ -110,13 +110,13 @@ function tilePath(g:Graphics) {
     pixel(g,x+1,y+13,20,1,0x81ac77);
   }
   // Irregular warm cobbles create a visible path between the counter and entrance.
-  for(let row=0;row<6;row++)for(let col=0;col<3;col++){
+  for(let row=0;row<9;row++)for(let col=0;col<3;col++){
     const x=205+col*23+(row%2?10:0),y=178+row*16;
     pixel(g,x,y,20,12,((col+row)%3===0)?0xf8e6c4:0xe9d6b4);
     pixel(g,x+2,y+2,14,1,DETAIL.cream);
   }
   for(let i=0;i<53;i++){
-    const x=(i*83+9)%480, y=179+(i*19)%89;
+    const x=(i*83+9)%480, y=179+(i*19)%134;
     if(x>193 && x<294)continue;
     pixel(g,x,y,2,1,i%3===0?DETAIL.lime:0x608f5e);
   }
@@ -125,8 +125,8 @@ function terraceDetails(g:Graphics) {
   // Border hedge and flower beds are outside walkable paths.
   for(let x=6;x<480;x+=18){
     if(x>185 && x<302)continue;
-    leafCluster(g,x,268, x%3 ? DETAIL.moss : DETAIL.pine,x);
-    if(x%3===0)bloom(g,x+5,258,x%2?DETAIL.pink:DETAIL.gold);
+    leafCluster(g,x,317, x%3 ? DETAIL.moss : DETAIL.pine,x);
+    if(x%3===0)bloom(g,x+5,307,x%2?DETAIL.pink:DETAIL.gold);
   }
   for(const t of TABLES){
     // Bistro table linen and fruit drinks give seats an obvious purpose.
@@ -148,10 +148,10 @@ function terraceDetails(g:Graphics) {
   // Charming narrow wooden garden fence, distant from the active seats.
   for(let x=0;x<480;x+=10){
     if(x>192 && x<302)continue;
-    pixel(g,x,266,3,7,DETAIL.caramel);
+    pixel(g,x,316,3,7,DETAIL.caramel);
   }
-  pixel(g,0,268,195,2,DETAIL.caramel);
-  pixel(g,301,268,179,2,DETAIL.caramel);
+  pixel(g,0,318,195,2,DETAIL.caramel);
+  pixel(g,301,318,179,2,DETAIL.caramel);
 }
 function paintCafeDetails(g:Graphics){
   // Sky gradient bands, birds and sun rays on either side of the sign.
