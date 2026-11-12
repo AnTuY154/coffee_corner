@@ -6,12 +6,41 @@ import { ShopMenu2D } from "@/components/3d-shop/shop-menu-2d";
 import { createGardenNetwork, type RoomStatus } from "./network";
 import { loadKenneyAtlas } from "./kenney-art";
 import { loadReferenceAssets, buildReferenceScene } from "./reference-scene";
+import { guestVisualDepth,depthScaleAt } from "./pet-motion";
 import { SCENE_HEIGHT, SCENE_WIDTH, SCENE_VERSION, NAV_VERSION, SPAWN, WALK_SPEED, HOTSPOTS, SEATS, findPath, hotspotAt, nearestWalkable, positionAt, facingFromPath, type Actor, type ClientIntent, type Facing, type Point, type ServerEvent } from "@/shared/garden/model";
 import "./pixel-shop.css";
 
 type MenuCategory = "all" | "fruit" | "daily";
 type GardenCommand = {type:"goTo";target:Point}|{type:"direction";direction:Facing}|{type:"stop"}|{type:"sit";seatId:string}|{type:"stand"};
 type CameraMode = "all" | "follow";
+type PixelMotionQASnapshot = {
+  time:number; self:{x:number;y:number;scale:number;seatId:string|null;zIndex:number;visible:boolean;renderable:boolean;alpha:number;moving:boolean}|null;
+  staff:{x:number;y:number;zIndex:number}|null;
+  pets:{name:string;x:number;y:number;zIndex:number;visible:boolean}[];
+  framesMs:number[];
+  scene:{width:number;height:number;camera:"all"|"follow"};
+};
+declare global {
+  interface Window {
+    __VUONE_PIXEL_QA__?: {
+      snapshot:()=>PixelMotionQASnapshot;
+      setGuestVisible:(visible:boolean)=>boolean;
+      freezeDecorations:(frozen:boolean)=>void;
+      goTo:(x:number,y:number)=>void;
+      seedSeat:(seatId:string)=>void;
+      seedAt:(x:number,y:number)=>void;
+      reset:()=>void;
+    };
+  }
+}
+const qaEnabled=process.env.NEXT_PUBLIC_PIXEL_MOTION_QA==="1";
+function isWalking(actor:Actor,now:number):boolean{
+  if(actor.seatId||actor.path.length<2)return false;
+  const distance=actor.path.slice(1).reduce((sum,p,index)=>{
+    const from=actor.path[index];return sum+Math.hypot(p[0]-from[0],p[1]-from[1]);
+  },0);
+  return distance>Math.max(0,(now-actor.startAt)/1000)*actor.speed+0.5;
+}
 type Engine = {
   app: Application; world: import("pixi.js").Container;
   update: (tick: number, reducedMotion: boolean) => void;
@@ -38,10 +67,13 @@ export function PixelGarden() {
   const cameraRef=useRef<{ mode:CameraMode; x:number; y:number; scale:number }>({ mode:"all", x:0,y:0,scale:1 });
   const pendingSeat=useRef<string|null>(null);
   const reducedMotion=useRef(false);
+  const qaFreezeDecorations=useRef(false);
   const pressed=useRef(new Set<string>());
+  const dpadHeldTimer=useRef<ReturnType<typeof setInterval>|null>(null);
   const menuOpenRef=useRef(false);
   const [roomStatus,setRoomStatus]=useState<RoomStatus>("solo");
   const [people,setPeople]=useState(1);
+  const [seatedAt,setSeatedAt]=useState<string|null>(null);
   const [camera,setCamera]=useState<CameraMode>("all");
   useEffect(()=>{if(window.innerWidth<800)setCamera("follow");},[]);
   const [menu,setMenu]=useState<MenuCategory|null>(null);
@@ -61,7 +93,7 @@ export function PixelGarden() {
       case "snapshot":
         if(e.protocolVersion!==1||e.sceneVersion!==SCENE_VERSION||e.navVersion!==NAV_VERSION){setRoomStatus("offline");setNotice("Phiên bản sân chưa tương thích.");return;}
         roster.clear(); for(const actor of e.actors) roster.set(actor.id,actor);
-        selfRef.current=e.selfId; seqRef.current=0; clockOffsetRef.current=e.serverNow-Date.now(); setPeople(roster.size); break;
+        selfRef.current=e.selfId; seqRef.current=0; clockOffsetRef.current=e.serverNow-Date.now(); setPeople(roster.size);setSeatedAt(roster.get(e.selfId)?.seatId??null);break;
       case "joined": roster.set(e.actor.id,e.actor); setPeople(roster.size); break;
       case "left": if(roster.get(e.actorId)?.epoch===e.epoch) {roster.delete(e.actorId);setPeople(roster.size);} break;
       case "moveAccepted": {
@@ -79,10 +111,10 @@ export function PixelGarden() {
       case "seated":{
         const actor=roster.get(e.actorId),seat=SEATS.find(s=>s.id===e.seatId);
         if(actor&&seat){Object.assign(actor,{x:seat.x,y:seat.y,path:[],seatId:seat.id,facing:seat.facing,seq:e.seq});}
-        if(e.actorId===selfRef.current)pendingSeat.current=null;
+        if(e.actorId===selfRef.current){pendingSeat.current=null;setSeatedAt(e.seatId);}
         break;
       }
-      case "stood": {const actor=roster.get(e.actorId);if(actor){actor.seatId=null;actor.seq=e.seq;}break;}
+      case "stood": {const actor=roster.get(e.actorId);if(actor){const previous=SEATS.find(seat=>seat.id===actor.seatId);actor.seatId=null;actor.seq=e.seq;actor.path=[];if(previous){actor.x=previous.approach.x;actor.y=previous.approach.y;}}if(e.actorId===selfRef.current)setSeatedAt(null);break;}
       case "seatBusy": setNotice("Ghế này đã có khách, hãy chọn ghế khác nhé.");pendingSeat.current=null;break;
       case "error": setNotice(e.message);break;
     }
@@ -92,7 +124,7 @@ export function PixelGarden() {
     const network=createGardenNetwork({onEvent:handleEvent,onStatus:status=>{
       setRoomStatus(status);
       if(status==="online") setNotice("");
-      if(status==="solo") {actorsRef.current=new Map([["solo",defaultActor()]]);selfRef.current="solo";clockOffsetRef.current=0;setPeople(1);}
+      if(status==="solo") {actorsRef.current=new Map([["solo",defaultActor()]]);selfRef.current="solo";clockOffsetRef.current=0;setPeople(1);setSeatedAt(null);}
       if(status==="transferred") setNotice("Đã chuyển sang tab mới. Tải lại nếu muốn chơi ở đây.");
     }});
     networkRef.current=network;
@@ -108,11 +140,11 @@ export function PixelGarden() {
     const now=Date.now()+clockOffsetRef.current;
     const pos=positionAt(actor,now);
     if(intent.type==="stop"){Object.assign(actor,{x:pos.x,y:pos.y,path:[],seq,startAt:now});return;}
-    if(intent.type==="stand"){actor.seatId=null;actor.seq=seq;return;}
+    if(intent.type==="stand"){const seat=SEATS.find(s=>s.id===actor.seatId);Object.assign(actor,{seatId:null,seq,path:[],startAt:now,x:seat?.approach.x??pos.x,y:seat?.approach.y??pos.y});setSeatedAt(null);return;}
     if(intent.type==="sit"){
       const seat=SEATS.find(s=>s.id===(intent as {seatId:string}).seatId);
       if(seat&&Math.hypot(pos.x-seat.approach.x,pos.y-seat.approach.y)<=24){
-        Object.assign(actor,{x:seat.x,y:seat.y,path:[],seatId:seat.id,facing:seat.facing,seq});
+        Object.assign(actor,{x:seat.x,y:seat.y,path:[],seatId:seat.id,facing:seat.facing,seq});setSeatedAt(seat.id);
       }
       return;
     }
@@ -143,7 +175,13 @@ export function PixelGarden() {
         if(disposed)return;
         const application=new PIXI.Application();
         app=application;
-        await application.init({resizeTo:mount,backgroundColor:0xbde7da,antialias:false,preference:"webgl",resolution:Math.min(window.devicePixelRatio||1,2),autoDensity:true});
+        // Static pixel-art is already high quality at ~800x540 internal px.
+        // Painting a 2x/3x retina-sized WebGL canvas on software GPUs caused
+        // 50-125ms frame stalls. Cap the render surface, not the CSS layout or
+        // scene geometry: camera/world coordinates remain identical.
+        const renderResolution=Math.max(0.4,Math.min(1,
+          800/Math.max(1,mount.clientWidth),540/Math.max(1,mount.clientHeight)));
+        await application.init({resizeTo:mount,backgroundColor:0xbde7da,antialias:false,preference:"webgl",resolution:renderResolution,autoDensity:true});
         if(disposed){application.destroy(true,{children:true});return;}
         mount.appendChild(application.canvas);
         const [kenney,reference]=await Promise.all([loadKenneyAtlas(),loadReferenceAssets()]);
@@ -153,18 +191,91 @@ export function PixelGarden() {
         application.stage.addChild(build.world);
         const engine:Engine={app:application,world:build.world,update:build.update,graphics:new Map(),frame:new Map(),draw:art.drawGuest,makeGraphics:()=>new PIXI.Graphics()};
         engineRef.current=engine;
+        const framesMs:number[]=[];
+        let lastActualFrameTime=0;
+        if(qaEnabled){
+          // Exposed only in purpose-built QA builds, never on normal production.
+          window.__VUONE_PIXEL_QA__={
+            snapshot:()=>{
+              const own=actorsRef.current.get(selfRef.current);
+              const sprite=engine.graphics.get(selfRef.current);
+              const staff=engine.world.children.find(child=>child.label==="staff:stationary");
+              return {
+                time:performance.now(),
+                self:own&&sprite?{
+                  x:sprite.position.x,y:sprite.position.y,scale:sprite.scale.x,seatId:own.seatId,
+                  zIndex:sprite.zIndex,visible:sprite.visible,renderable:sprite.renderable,alpha:sprite.alpha,
+                  moving:isWalking(own,Date.now()+clockOffsetRef.current)
+                }:null,
+                staff:staff?{x:staff.position.x,y:staff.position.y,zIndex:staff.zIndex}:null,
+                pets:engine.world.children.filter(child=>child.label?.startsWith("pet:"))
+                  .map(child=>({name:child.label,x:child.position.x,y:child.position.y,
+                    zIndex:child.zIndex,visible:child.visible})),
+                framesMs:[...framesMs],
+                scene:{width:SCENE_WIDTH,height:SCENE_HEIGHT,camera:cameraRef.current.mode}
+              };
+            },
+            freezeDecorations:frozen=>{qaFreezeDecorations.current=frozen;},
+            setGuestVisible:visible=>{
+              const sprite=engine.graphics.get(selfRef.current);
+              if(!sprite)return false;
+              sprite.visible=visible;
+              return true;
+            },
+            goTo:(x,y)=>send({type:"goTo",target:{x,y}}),
+            seedAt:(x,y)=>{
+              if(selfRef.current!=="solo")return;
+              const own=actorsRef.current.get("solo");
+              if(!own||!Number.isFinite(x)||!Number.isFinite(y))return;
+              Object.assign(own,{x,y,seatId:null,path:[],startAt:Date.now(),facing:"down"});
+              setSeatedAt(null);
+            },
+            seedSeat:seatId=>{
+              if(selfRef.current!=="solo")return;
+              const seat=SEATS.find(s=>s.id===seatId);
+              const own=actorsRef.current.get("solo");
+              if(!seat||!own)return;
+              Object.assign(own,{x:seat.x,y:seat.y,seatId:seat.id,
+                path:[],startAt:Date.now(),facing:seat.facing});
+              setSeatedAt(seat.id);
+            },
+            reset:()=>{
+              if(selfRef.current!=="solo")return;
+              actorsRef.current.set("solo",defaultActor());
+              setSeatedAt(null);
+            }
+          };
+        }
         const render=(ticker:import("pixi.js").Ticker)=>{
           const now=Date.now()+clockOffsetRef.current,elapsed=ticker.lastTime/1000;
-          build.update(elapsed,reducedMotion.current);
+          if(qaEnabled){
+            // Wall time instead of Ticker.deltaMS: Pixi clamps deltaMS, which can
+            // otherwise conceal a real frame stall on slow virtual GPUs.
+            const actual=performance.now();
+            const duration=actual-lastActualFrameTime;
+            if(lastActualFrameTime>0 && duration>0 && Number.isFinite(duration)){
+              framesMs.push(duration);if(framesMs.length>180)framesMs.shift();
+            }
+            lastActualFrameTime=actual;
+          }
+          build.update(elapsed,reducedMotion.current||qaFreezeDecorations.current);
           const roster=actorsRef.current;
           for(const [id, actor] of roster){
             let g=engine.graphics.get(id);
             if(!g){g=engine.makeGraphics();engine.world.addChild(g);engine.graphics.set(id,g);}
             const p=positionAt(actor,now);
             g.position.set(Math.round(p.x),Math.round(p.y));
-            g.zIndex=Math.round(p.y);
-            const frame=(reducedMotion.current?0:Math.floor(elapsed*7)) + (actor.seatId?100000:0) + ({up:0,down:200000,left:400000,right:600000}[actor.facing]);
-            if(engine.frame.get(id)!==frame){engine.draw(g,actor,elapsed,!!actor.seatId);engine.frame.set(id,frame);}
+            g.scale.set(depthScaleAt(p.y));
+            // Foreground table WebPs are opaque in places; do not hide visitors when seated.
+            g.zIndex=guestVisualDepth(p.y,actor.seatId);
+            const walking=isWalking(actor,now);
+            // Avoid the idle moonwalk: only advance walk frames while the interpolated path is in motion.
+            const frame=(walking&&!reducedMotion.current?Math.floor(elapsed*7):0)
+              +(actor.seatId?100000:0)+({up:0,down:200000,left:400000,right:600000}[actor.facing]);
+            if(engine.frame.get(id)!==frame){
+              engine.draw(g,walking?actor:{...actor,path:[]},elapsed,!!actor.seatId);
+              engine.frame.set(id,frame);
+            }
           }
           for(const [id,g] of engine.graphics)if(!roster.has(id)){engine.world.removeChild(g);g.destroy();engine.graphics.delete(id);engine.frame.delete(id);}
           const own=roster.get(selfRef.current);
@@ -199,30 +310,60 @@ export function PixelGarden() {
     return()=>{
       disposed=true;resizeObserver?.disconnect();
       if(app){if(tickHandler)app.ticker.remove(tickHandler);app.destroy(true,{children:true});}
+      if(qaEnabled)delete window.__VUONE_PIXEL_QA__;
       engineRef.current=null;
     };
   },[send]);
 
   useEffect(()=>{
     const mapping:Record<string,Facing>={w:"up",arrowup:"up",s:"down",arrowdown:"down",a:"left",arrowleft:"left",d:"right",arrowright:"right"};
+    // Send held-direction updates at ~3 Hz, below the Durable Object's
+    // 12-intents/second burst limit. The renderer still interpolates at
+    // every frame; this only refreshes the 48/64-pixel path target.
+    let repeat:ReturnType<typeof setInterval>|null=null;
+    const stopRepeating=()=>{if(repeat!==null){clearInterval(repeat);repeat=null;}};
+    const currentDirection=():Facing|null=>{
+      const last=[...pressed.current].at(-1);
+      return last?mapping[last]??null:null;
+    };
     const onDown=(e:KeyboardEvent)=>{
       if(e.key==="Escape"){setMenu(null);setMenuInitialView("browse");return;}
-      if(menuOpenRef.current || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)return;
-      const dir=mapping[e.key.toLowerCase()];
-      if(!dir||e.repeat)return;
-      e.preventDefault();pressed.current.add(e.key.toLowerCase());
+      if(menuOpenRef.current||e.target instanceof HTMLInputElement||e.target instanceof HTMLTextAreaElement)return;
+      const key=e.key.toLowerCase(),dir=mapping[key];
+      if(!dir)return;
+      e.preventDefault();
+      if(pressed.current.has(key))return;
+      pressed.current.add(key);
       send({type:"direction",direction:dir});
+      if(repeat===null)repeat=setInterval(()=>{
+        if(menuOpenRef.current)return;
+        const held=currentDirection();
+        if(held)send({type:"direction",direction:held});
+      },320);
     };
     const onUp=(e:KeyboardEvent)=>{
-      if(!mapping[e.key.toLowerCase()])return;
-      pressed.current.delete(e.key.toLowerCase());
-      send({type:"stop"});
+      const key=e.key.toLowerCase();
+      if(!mapping[key])return;
+      e.preventDefault();
+      pressed.current.delete(key);
+      const held=currentDirection();
+      if(held)send({type:"direction",direction:held});
+      else {stopRepeating();send({type:"stop"});}
     };
-    const onBlur=()=>{pressed.current.clear();send({type:"stop"});};
+    const onBlur=()=>{pressed.current.clear();stopRepeating();send({type:"stop"});};
     window.addEventListener("keydown",onDown);window.addEventListener("keyup",onUp);
     window.addEventListener("blur",onBlur);
-    return()=>{window.removeEventListener("keydown",onDown);window.removeEventListener("keyup",onUp);window.removeEventListener("blur",onBlur);};
+    return()=>{
+      window.removeEventListener("keydown",onDown);window.removeEventListener("keyup",onUp);
+      window.removeEventListener("blur",onBlur);
+      stopRepeating();
+    };
   },[send]);
+  useEffect(()=>()=>{if(dpadHeldTimer.current!==null)clearInterval(dpadHeldTimer.current);},[]);
+  const stopDpad=()=>{
+    if(dpadHeldTimer.current!==null){clearInterval(dpadHeldTimer.current);dpadHeldTimer.current=null;}
+    send({type:"stop"});
+  };
 
   const worldPoint=(event:ReactPointerEvent<HTMLElement>):Point|null=>{
     const mount=mountRef.current;
@@ -257,7 +398,16 @@ export function PixelGarden() {
       y:Math.max(8,c.y+target.y*c.scale-43)
     });
   };
-  const dpad=(dir:Facing)=><button key={dir} type="button" aria-label={"Đi "+({up:"lên",down:"xuống",left:"trái",right:"phải"}[dir])} onPointerDown={e=>{e.preventDefault();send({type:"direction",direction:dir});}} onPointerUp={e=>{e.preventDefault();send({type:"stop"});}} onPointerCancel={()=>send({type:"stop"})}>{({up:"▲",down:"▼",left:"◀",right:"▶"}[dir])}</button>;
+  const dpad=(dir:Facing)=><button key={dir} type="button" aria-label={"Đi "+({up:"lên",down:"xuống",left:"trái",right:"phải"}[dir])}
+    onPointerDown={e=>{
+      e.preventDefault();
+      try{e.currentTarget.setPointerCapture(e.pointerId);}catch{}
+      if(dpadHeldTimer.current!==null)clearInterval(dpadHeldTimer.current);
+      send({type:"direction",direction:dir});
+      dpadHeldTimer.current=setInterval(()=>send({type:"direction",direction:dir}),320);
+    }}
+    onPointerUp={e=>{e.preventDefault();stopDpad();}}
+    onPointerCancel={stopDpad}>{({up:"▲",down:"▼",left:"◀",right:"▶"}[dir])}</button>;
   return <div className="pg-root">
     <header className="pg-header">
       <div className="pg-brand"><span className="pg-mark" aria-hidden="true">🍊</span><div><span className="pg-kicker">VƯỜN É · COZY PIXEL CAFÉ</span><h1>Vườn É <span>✿</span></h1><p>Một khu vườn nhỏ, thật nhiều điều ngọt lành.</p></div></div>
@@ -278,6 +428,7 @@ export function PixelGarden() {
         <div>{dpad("up")}</div><div>{dpad("left")}{dpad("down")}{dpad("right")}</div>
       </div>
     </div>
+    {seatedAt&&<button type="button" className="pg-stand-action" onClick={()=>send({type:"stand"})}>↥ Đứng dậy</button>}
     <div className="pg-help">Desktop: WASD / phím mũi tên hoặc click để đi. Mobile: chạm mặt đất hoặc dùng phím điều hướng. Chạm ghế để ngồi.</div>
     {notice && <div className="pg-notice" role="status">{notice}<button type="button" onClick={()=>setNotice("")} aria-label="Đóng thông báo">✕</button></div>}
     <nav className="pg-mobile-nav" aria-label="Mua hàng trên điện thoại">

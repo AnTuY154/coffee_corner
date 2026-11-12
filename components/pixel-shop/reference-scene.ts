@@ -4,9 +4,10 @@
  * World is 480x320, preserving source image's original 3:2 perspective.
  * Drawing, shopping hotspots and the server's authoritative navigation stay separate.
  */
-import { Assets, Container, Graphics, Sprite, type Texture } from "pixi.js";
+import { Assets, Container, Graphics, Rectangle, Sprite, Texture } from "pixi.js";
 import { SCENE_WIDTH, SCENE_HEIGHT } from "@/shared/garden/model";
 import { drawGuest, drawStaff, drawDog, drawCat } from "./art";
+import { PET_ROUTES, petRouteAt, depthScaleAt } from "./pet-motion";
 
 export const REFERENCE_LAYERS = [
   {name:"roof-sign",file:"roof-sign.webp",bbox:[562,113,1045,226],z:5},
@@ -48,40 +49,54 @@ export function buildReferenceScene(assets:ReferenceAssets){
   const image=new Sprite(assets.base);image.width=SCENE_WIDTH;image.height=SCENE_HEIGHT;image.zIndex=-1000;
   world.addChild(image);
   const unit=SCENE_WIDTH/1536;
+  // Background already includes umbrellas, tables and chairs; an entire PNG
+  // duplicated in front of a guest can cover the head. Only the lower chair
+  // and tabletop region should be permitted to occlude a passing visitor.
+  // Cutoff values use source-image pixels, not the 480x320 world.
+  const tableForegroundY:Record<string,number>={
+    "table-left":700,"table-center":738,"table-right":700,
+    "table-back-left":826,"table-back-right":826
+  };
   for(const layer of REFERENCE_LAYERS){
     const tex=assets.parts.get(layer.name);if(!tex)continue;
-    const item=new Sprite(tex);
     const [x0,y0,x1,y1]=layer.bbox;
-    item.position.set(x0*unit,y0*unit);
-    item.width=(x1-x0)*unit;item.height=(y1-y0)*unit;
+    const cutoff=tableForegroundY[layer.name];
+    // A frame is a cheap GPU texture view. Cropping the five furniture
+    // sprites once avoids five costly per-frame stencil masks, especially
+    // on headless Chromium software WebGL.
+    const frame=cutoff===undefined?tex
+      :new Texture({source:tex.source,frame:new Rectangle(0,cutoff-y0,x1-x0,y1-cutoff)});
+    const item=new Sprite(frame);
+    item.position.set(x0*unit,(cutoff??y0)*unit);
+    item.width=(x1-x0)*unit;item.height=(y1-(cutoff??y0))*unit;
     item.zIndex=layer.z;item.label="pixel:"+layer.name;
     world.addChild(item);
   }
   // All character and table layers share a single depth-sorted Pixi world.
-  const employee=new Graphics();employee.position.set(249,181);employee.zIndex=210;world.addChild(employee);
-  const dog=new Graphics();dog.position.set(417,279);dog.zIndex=279;world.addChild(dog);
-  const cat=new Graphics();cat.position.set(104,286);cat.zIndex=286;world.addChild(cat);
-  const grayCat=new Graphics();grayCat.position.set(348,252);grayCat.zIndex=252;world.addChild(grayCat);
+  const employee=new Graphics();employee.position.set(249,181);employee.zIndex=210;employee.label="staff:stationary";world.addChild(employee);
+  // One stable barista pose behind the foreground counter. No waves, exits or pet interactions.
+  drawStaff(employee,false,false,1);employee.scale.set(1.05);
+  const dog=new Graphics();dog.label="pet:dog";world.addChild(dog);
+  const cat=new Graphics();cat.label="pet:ginger-cat";world.addChild(cat);
+  const grayCat=new Graphics();grayCat.label="pet:gray-cat";world.addChild(grayCat);
   const lights=new Graphics();lights.zIndex=16;world.addChild(lights);
   const bulbs=[[17,61],[31,48],[46,37],[61,32],[80,41],[181,96],[233,96],[278,96],[318,94],[349,91]];
   let previous=-1;
   function update(tick:number,reducedMotion:boolean){
-    const step=reducedMotion?0:Math.floor(tick*5);
-    if(step===previous)return;previous=step;
-    const cycle=reducedMotion?0:tick%28;
-    const outside=cycle>=13&&cycle<25;
-    if(!outside){employee.position.set(249,181);employee.zIndex=210;}
-    else if(cycle<17){
-      const p=(cycle-13)/4;employee.position.set(246-63*p,183+38*p);employee.zIndex=215+32*p;
-    }else if(cycle<21){
-      const p=(cycle-17)/4;employee.position.set(183+57*p,221+54*p);employee.zIndex=275;
-    }else{
-      const p=(cycle-21)/4;employee.position.set(240+9*p,275-94*p);employee.zIndex=275-65*p;
+    const time=reducedMotion?0:tick;
+    const dogPose=petRouteAt(time,PET_ROUTES.dog,11);
+    const gingerPose=petRouteAt(time,PET_ROUTES.ginger,7,13);
+    const grayPose=petRouteAt(time,PET_ROUTES.gray,6,37);
+    for(const [sprite,pose] of [[dog,dogPose],[cat,gingerPose],[grayCat,grayPose]] as const){
+      sprite.position.set(pose.x,pose.y);
+      const scale=depthScaleAt(pose.y);
+      sprite.scale.set(pose.direction*scale,scale);
+      // User-facing animals stay visible when crossing transparent furniture overlays.
+      sprite.zIndex=320+Math.round(pose.y);
     }
-    drawStaff(employee,!outside&&step%8<3,cycle>18&&cycle<20,step);
-    employee.scale.set(outside?1.15:1.05);
-    drawDog(dog,step);dog.x=417+(reducedMotion?0:Math.sin(tick*.55)*14);
-    drawCat(cat,false,step);drawCat(grayCat,true,step);
+    const step=reducedMotion?0:Math.floor(tick*6);
+    if(step===previous)return;previous=step;
+    drawDog(dog,step);drawCat(cat,false,step);drawCat(grayCat,true,step);
     lights.clear();
     for(let i=0;i<bulbs.length;i++){
       const [x,y]=bulbs[i],pulse=reducedMotion?.3:.23+.1*(1+Math.sin(tick*2+i));

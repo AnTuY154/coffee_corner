@@ -155,3 +155,9 @@
   .pg-stage[data-art-mode="reference"]{height:min(69dvh,620px);aspect-ratio:auto;}
 }
 /* Scene fallback is deliberate: the app never silently fakes reference fidelity. */
+
+/* Persistent seat action: stay accessible when the avatar sits behind furniture. */
+.pg-stand-action{display:block;margin:14px auto 0;min-height:42px;padding:9px 20px;border:2px solid #42785c;border-radius:13px;background:#fff1cd;color:#24533d;font:800 14px ui-rounded,system-ui,sans-serif;box-shadow:0 4px 0 #a3c09e;cursor:pointer}
+.pg-stand-action:hover{background:#ffe4a1}
+.pg-stand-action:focus-visible{outline:3px solid #e98c54;outline-offset:3px}
+@media(max-width:800px){.pg-stand-action{position:fixed;right:12px;bottom:calc(83px + env(safe-area-inset-bottom));z-index:49;margin:0;padding:9px 15px;min-height:42px;font-size:12px;box-shadow:0 3px 10px #244b3933}}

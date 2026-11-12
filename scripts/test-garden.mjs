@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { PET_ROUTES, petRouteAt, guestVisualDepth, depthScaleAt } from "../components/pixel-shop/pet-motion.ts";
 import { SPAWN, HOTSPOTS, SEATS, OBSTACLES, isWalkable, findPath, positionAt, hotspotAt, nearestWalkable, facingFromPath } from "../shared/garden/model.ts";
 assert.equal(SEATS.length, 15);
 assert.equal(new Set(SEATS.map(s => s.id)).size, 15);
@@ -17,3 +18,23 @@ assert.deepEqual(positionAt({x:80,y:128,path:[[80,128],[80,160],[120,160]],start
 assert.equal(facingFromPath([[0,0],[20,0]],"up"),"right");
 assert.ok(OBSTACLES.length >= 5);
 console.log("PASS: 15 seats, hotspot anchors, navigation and authoritative path interpolation.");
+
+// Visual layering regression: topmost reference table foreground is at z=295.
+for(const seat of SEATS){
+  assert.ok(guestVisualDepth(seat.y,seat.id)>295,seat.id+" must draw above furniture");
+  assert.equal(guestVisualDepth(seat.y,null),Math.round(seat.y));
+}
+// Decorative animals move on local routes; no server actors or seat changes.
+for(const [kind,route] of Object.entries(PET_ROUTES)){
+  assert.ok(route.length>=4,kind+" must have a visible multi-stop patrol");
+  for(const point of route) assert.ok(isWalkable(point),kind+" route must avoid tables");
+  const start=petRouteAt(0,route,8),moved=petRouteAt(2,route,8);
+  assert.notDeepEqual([start.x,start.y],[moved.x,moved.y],kind+" should actually move");
+  assert.deepEqual(petRouteAt(2,route,8),moved,kind+" animation must be deterministic");
+  const stopped=petRouteAt(5,route,0);
+  assert.equal(stopped.moving,false,kind+" should respect reduced motion");
+}
+assert.ok(depthScaleAt(216)<depthScaleAt(308),"visitors become larger as they approach camera");
+assert.ok(depthScaleAt(230)<depthScaleAt(300),"upward movement gets smaller, down larger");
+assert.ok(depthScaleAt(216)>=0.8 && depthScaleAt(308)<=1.1,"perspective stays subtle");
+console.log("PASS: 2.5D perspective, seated guest visibility and independent pet patrols.");
