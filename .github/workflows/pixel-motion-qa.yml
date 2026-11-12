@@ -1,0 +1,67 @@
+name: Pixel Motion Reviewer — Chromium 2.5D QA
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "components/pixel-shop/**"
+      - "shared/garden/**"
+      - "tests/visual/pixel-motion-qa.spec.ts"
+      - "scripts/test-garden.mjs"
+      - ".github/agents/pixel-motion-reviewer.agent.md"
+      - ".github/workflows/pixel-motion-qa.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  motion-review:
+    name: Independent Pixel Motion QA (Ubuntu Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CI: "1"
+      NEXT_PUBLIC_PIXEL_MOTION_QA: "1"
+    steps:
+      - name: Checkout exact PR commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install application dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install real Chromium browser
+        run: npx playwright install --with-deps chromium
+      - name: Check source reference assets
+        run: npm run test:reference-art:required
+      - name: Check shared navigation / all seats / pet routes
+        run: npm run test:garden:unit
+      - name: Static type check
+        run: npm run typecheck
+      - name: Build QA-instrumented production Next.js
+        run: npm run build
+      - name: Run Pixel Motion reviewer twice without retries
+        run: npx playwright test tests/visual/pixel-motion-qa.spec.ts --config=playwright.config.ts --repeat-each=2 --retries=0
+      - name: Upload independent QA evidence even if failing
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pixel-motion-qa-chromium-${{ github.run_id }}
+          path: |
+            qa-captures/motion-metrics-*.json
+            qa-captures/seat-visibility-*.json
+            qa-captures/seat-qa-*.png
+            test-results/
+            playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Publish QA checklist
+        if: always()
+        run: |
+          echo "### Independent Pixel Motion QA" >> "$GITHUB_STEP_SUMMARY"
+          echo "World: 480x320. Desktop 1536x1024; Mobile 390x844." >> "$GITHUB_STEP_SUMMARY"
+          echo "Gates: actual reference art, staff static, three pets move, all fifteen visible seats, up/down paths, Pixi frame time." >> "$GITHUB_STEP_SUMMARY"
+          echo "Chromium tests run twice with zero retries. Inspect the attached artifact for per-seat pixel-diff and FPS metrics." >> "$GITHUB_STEP_SUMMARY"
