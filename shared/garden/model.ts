@@ -1,12 +1,12 @@
 /** Shared deterministic geometry and protocol. Never use CSS pixels as room coordinates. */
 export const SCENE_WIDTH = 480;
-export const SCENE_HEIGHT = 270;
+export const SCENE_HEIGHT = 320;
 export const TILE_SIZE = 16;
 export const GRID_STEP = 4;
 export const WALK_SPEED = 32;
 export const PROTOCOL_VERSION = 1;
-export const SCENE_VERSION = "pixel-garden-1";
-export const NAV_VERSION = "pixel-nav-1";
+export const SCENE_VERSION = "pixel-garden-2";
+export const NAV_VERSION = "pixel-nav-2";
 
 export type Point = { x: number; y: number };
 export type PathPoint = [number, number];
@@ -37,19 +37,29 @@ export type ServerEvent =
   | { type: "seatBusy"; seatId: string; seq: number }
   | { type: "error"; code: string; message: string };
 
-export const SPAWN: Point = { x: 238, y: 249 };
+export const SPAWN: Point = { x: 238, y: 301 };
+/**
+ * Layout mapped directly from the user-supplied 1536x1024 reference:
+ * X = sourceX * 480/1536, Y = sourceY * 320/1024.
+ * Preserve stable hotspot and seat IDs while upgrading map geometry.
+ */
 export const HOTSPOTS: Hotspot[] = [
-  { id: "menu-board", x: 99, y: 117, w: 66, h: 31, label: "Nước ép & sinh tố", action: "menu" },
-  { id: "counter", x: 194, y: 126, w: 94, h: 49, label: "Gọi món tại quầy", action: "counter" },
-  { id: "fruit-case", x: 324, y: 105, w: 74, h: 62, label: "Trái cây tươi", action: "fruit" },
-  { id: "daily-board", x: 425, y: 119, w: 48, h: 33, label: "Gợi ý hôm nay", action: "daily" }
+  { id: "menu-board", x: 303, y: 93, w: 78, h: 49, label: "Nước ép & sinh tố", action: "menu" },
+  { id: "fruit-case", x: 320, y: 144, w: 61, h: 34, label: "Trái cây tươi", action: "fruit" },
+  { id: "daily-board", x: 273, y: 174, w: 58, h: 17, label: "Gợi ý hôm nay", action: "daily" },
+  { id: "counter", x: 203, y: 165, w: 179, h: 47, label: "Gọi món tại quầy", action: "counter" }
 ];
-const tables = [65, 142, 219, 340, 414];
-export const TABLES = tables.map((x, i) => ({ id: "table-" + (i + 1), x, y: 217 }));
+export const TABLES = [
+  { id: "table-1", x: 58, y: 233 },
+  { id: "table-2", x: 135, y: 274 },
+  { id: "table-3", x: 235, y: 246 },
+  { id: "table-4", x: 336, y: 274 },
+  { id: "table-5", x: 419, y: 233 }
+] as const;
 export const SEATS: Seat[] = TABLES.flatMap(({ id, x, y }) => [
-  { id: id + "-left", x: x - 21, y: y + 4, approach: { x: x - 27, y: y + 14 }, facing: "right" as const },
-  { id: id + "-right", x: x + 21, y: y + 4, approach: { x: x + 27, y: y + 14 }, facing: "left" as const },
-  { id: id + "-bottom", x, y: y + 22, approach: { x, y: y + 27 }, facing: "up" as const }
+  { id: id + "-left", x: x - 20, y: y + 3, approach: { x: x - 30, y: y + 12 }, facing: "right" as const },
+  { id: id + "-right", x: x + 20, y: y + 3, approach: { x: x + 30, y: y + 12 }, facing: "left" as const },
+  { id: id + "-bottom", x, y: y + 18, approach: { x, y: y + 23 }, facing: "up" as const }
 ]);
 type Rect = { x: number; y: number; w: number; h: number };
 export const OBSTACLES: Rect[] = [
@@ -57,7 +67,7 @@ export const OBSTACLES: Rect[] = [
   { x: 284, y: 185, w: 15, h: 15 }
 ];
 const finitePoint = (p: Point) => Number.isFinite(p?.x) && Number.isFinite(p?.y);
-export const validPoint = (p: Point) => finitePoint(p) && p.x >= 12 && p.x <= 468 && p.y >= 179 && p.y <= 258;
+export const validPoint = (p: Point) => finitePoint(p) && p.x >= 12 && p.x <= 468 && p.y >= 216 && p.y <= 308;
 export function isWalkable(p: Point, radius = 4): boolean {
   return validPoint(p) && !OBSTACLES.some(r => p.x + radius > r.x && p.x - radius < r.x + r.w && p.y + radius > r.y && p.y - radius < r.y + r.h);
 }
@@ -65,7 +75,7 @@ export const hotspotAt = (p: Point) => HOTSPOTS.find(h => p.x >= h.x && p.x <= h
 export function nearestWalkable(point: Point): Point | null {
   if (!finitePoint(point)) return null;
   const x = Math.max(12, Math.min(468, Math.round(point.x / GRID_STEP) * GRID_STEP));
-  const y = Math.max(180, Math.min(256, Math.round(point.y / GRID_STEP) * GRID_STEP));
+  const y = Math.max(216, Math.min(308, Math.round(point.y / GRID_STEP) * GRID_STEP));
   if (isWalkable({ x, y })) return { x, y };
   for (let radius = GRID_STEP; radius < 72; radius += GRID_STEP) {
     for (let dx = -radius; dx <= radius; dx += GRID_STEP) {
