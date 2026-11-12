@@ -172,6 +172,47 @@ test.describe("Pixel 2.5D movement QA agent — real browser",()=>{
       JSON.stringify(checks,null,2));
     expect(errors).toEqual([]);
   });
+  test("held keyboard or mobile D-pad moves continuously rather than stopping after 48px",async({page},testInfo)=>{
+    test.setTimeout(90000);
+    const mobile=testInfo.project.name.startsWith("mobile");
+    const errors=await launch(page,mobile);
+    await page.evaluate(()=>window.__VUONE_PIXEL_QA__?.seedAt(300,290));
+    await expect.poll(async()=> (await snapshot(page)).self?.y).toBe(290);
+    if(mobile){
+      await page.getByRole("button",{name:"Đi lên"}).dispatchEvent("pointerdown",{pointerId:7,pointerType:"touch",isPrimary:true,button:0});
+    }else{
+      await page.keyboard.down("ArrowUp");
+    }
+    const upward=await telemetryFor(page,2500);
+    verifySmooth(upward,"held-up");
+    const afterUp=await snapshot(page);
+    expect(afterUp.self?.y??0,"must travel farther than a single 48px tap while held").toBeLessThan(235);
+    if(mobile){
+      await page.getByRole("button",{name:"Đi lên"}).dispatchEvent("pointerup",{pointerId:7,pointerType:"touch",isPrimary:true,button:0});
+    }else{
+      await page.keyboard.up("ArrowUp");
+    }
+    await page.waitForTimeout(180);
+    const stopped=await snapshot(page);
+    await page.waitForTimeout(220);
+    const stable=await snapshot(page);
+    expect(Math.abs((stable.self?.y??0)-(stopped.self?.y??0)),"released controls must stop").toBeLessThan(3);
+    if(mobile){
+      await page.getByRole("button",{name:"Đi xuống"}).dispatchEvent("pointerdown",{pointerId:8,pointerType:"touch",isPrimary:true,button:0});
+    }else{
+      await page.keyboard.down("ArrowDown");
+    }
+    const downward=await telemetryFor(page,2000);
+    verifySmooth(downward,"held-down");
+    const afterDown=await snapshot(page);
+    expect((afterDown.self?.y??0)-(afterUp.self?.y??0),"down must move toward camera").toBeGreaterThan(30);
+    if(mobile){
+      await page.getByRole("button",{name:"Đi xuống"}).dispatchEvent("pointerup",{pointerId:8,pointerType:"touch",isPrimary:true,button:0});
+    }else{
+      await page.keyboard.up("ArrowDown");
+    }
+    expect(errors).toEqual([]);
+  });
   test("all 15 seats render a real non-occluded avatar and staff stays fixed",async({page},testInfo)=>{
     test.setTimeout(120_000);
     const errors=await launch(page,testInfo.project.name.startsWith("mobile"));
