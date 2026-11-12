@@ -13,6 +13,32 @@ import "./pixel-shop.css";
 type MenuCategory = "all" | "fruit" | "daily";
 type GardenCommand = {type:"goTo";target:Point}|{type:"direction";direction:Facing}|{type:"stop"}|{type:"sit";seatId:string}|{type:"stand"};
 type CameraMode = "all" | "follow";
+type PixelMotionQASnapshot = {
+  time:number; self:{x:number;y:number;seatId:string|null;zIndex:number;visible:boolean;renderable:boolean;alpha:number;moving:boolean}|null;
+  staff:{x:number;y:number;zIndex:number}|null;
+  pets:{name:string;x:number;y:number;zIndex:number;visible:boolean}[];
+  framesMs:number[];
+  scene:{width:number;height:number;camera:"all"|"follow"};
+};
+declare global {
+  interface Window {
+    __VUONE_PIXEL_QA__?: {
+      snapshot:()=>PixelMotionQASnapshot;
+      setGuestVisible:(visible:boolean)=>boolean;
+      goTo:(x:number,y:number)=>void;
+      seedSeat:(seatId:string)=>void;
+      reset:()=>void;
+    };
+  }
+}
+const qaEnabled=process.env.NEXT_PUBLIC_PIXEL_MOTION_QA==="1";
+function isWalking(actor:Actor,now:number):boolean{
+  if(actor.seatId||actor.path.length<2)return false;
+  const distance=actor.path.slice(1).reduce((sum,p,index)=>{
+    const from=actor.path[index];return sum+Math.hypot(p[0]-from[0],p[1]-from[1]);
+  },0);
+  return distance>Math.max(0,(now-actor.startAt)/1000)*actor.speed+0.5;
+}
 type Engine = {
   app: Application; world: import("pixi.js").Container;
   update: (tick: number, reducedMotion: boolean) => void;
@@ -155,8 +181,57 @@ export function PixelGarden() {
         application.stage.addChild(build.world);
         const engine:Engine={app:application,world:build.world,update:build.update,graphics:new Map(),frame:new Map(),draw:art.drawGuest,makeGraphics:()=>new PIXI.Graphics()};
         engineRef.current=engine;
+        const framesMs:number[]=[];
+        if(qaEnabled){
+          // Exposed only in purpose-built QA builds, never on normal production.
+          window.__VUONE_PIXEL_QA__={
+            snapshot:()=>{
+              const own=actorsRef.current.get(selfRef.current);
+              const sprite=engine.graphics.get(selfRef.current);
+              const staff=engine.world.children.find(child=>child.label==="staff:stationary");
+              return {
+                time:performance.now(),
+                self:own&&sprite?{
+                  x:sprite.position.x,y:sprite.position.y,seatId:own.seatId,
+                  zIndex:sprite.zIndex,visible:sprite.visible,renderable:sprite.renderable,alpha:sprite.alpha,
+                  moving:isWalking(own,Date.now()+clockOffsetRef.current)
+                }:null,
+                staff:staff?{x:staff.position.x,y:staff.position.y,zIndex:staff.zIndex}:null,
+                pets:engine.world.children.filter(child=>child.label?.startsWith("pet:"))
+                  .map(child=>({name:child.label,x:child.position.x,y:child.position.y,
+                    zIndex:child.zIndex,visible:child.visible})),
+                framesMs:[...framesMs],
+                scene:{width:SCENE_WIDTH,height:SCENE_HEIGHT,camera:cameraRef.current.mode}
+              };
+            },
+            setGuestVisible:visible=>{
+              const sprite=engine.graphics.get(selfRef.current);
+              if(!sprite)return false;
+              sprite.visible=visible;
+              return true;
+            },
+            goTo:(x,y)=>send({type:"goTo",target:{x,y}}),
+            seedSeat:seatId=>{
+              if(selfRef.current!=="solo")return;
+              const seat=SEATS.find(s=>s.id===seatId);
+              const own=actorsRef.current.get("solo");
+              if(!seat||!own)return;
+              Object.assign(own,{x:seat.x,y:seat.y,seatId:seat.id,
+                path:[],startAt:Date.now(),facing:seat.facing});
+              setSeatedAt(seat.id);
+            },
+            reset:()=>{
+              if(selfRef.current!=="solo")return;
+              actorsRef.current.set("solo",defaultActor());
+              setSeatedAt(null);
+            }
+          };
+        }
         const render=(ticker:import("pixi.js").Ticker)=>{
           const now=Date.now()+clockOffsetRef.current,elapsed=ticker.lastTime/1000;
+          if(qaEnabled && Number.isFinite(ticker.deltaMS) && ticker.deltaMS>0){
+            framesMs.push(ticker.deltaMS);if(framesMs.length>180)framesMs.shift();
+          }
           build.update(elapsed,reducedMotion.current);
           const roster=actorsRef.current;
           for(const [id, actor] of roster){
@@ -166,8 +241,14 @@ export function PixelGarden() {
             g.position.set(Math.round(p.x),Math.round(p.y));
             // Foreground table WebPs are opaque in places; do not hide visitors when seated.
             g.zIndex=guestVisualDepth(p.y,actor.seatId);
-            const frame=(reducedMotion.current?0:Math.floor(elapsed*7)) + (actor.seatId?100000:0) + ({up:0,down:200000,left:400000,right:600000}[actor.facing]);
-            if(engine.frame.get(id)!==frame){engine.draw(g,actor,elapsed,!!actor.seatId);engine.frame.set(id,frame);}
+            const walking=isWalking(actor,now);
+            // Avoid the idle moonwalk: only advance walk frames while the interpolated path is in motion.
+            const frame=(walking&&!reducedMotion.current?Math.floor(elapsed*7):0)
+              +(actor.seatId?100000:0)+({up:0,down:200000,left:400000,right:600000}[actor.facing]);
+            if(engine.frame.get(id)!==frame){
+              engine.draw(g,walking?actor:{...actor,path:[]},elapsed,!!actor.seatId);
+              engine.frame.set(id,frame);
+            }
           }
           for(const [id,g] of engine.graphics)if(!roster.has(id)){engine.world.removeChild(g);g.destroy();engine.graphics.delete(id);engine.frame.delete(id);}
           const own=roster.get(selfRef.current);
@@ -202,6 +283,7 @@ export function PixelGarden() {
     return()=>{
       disposed=true;resizeObserver?.disconnect();
       if(app){if(tickHandler)app.ticker.remove(tickHandler);app.destroy(true,{children:true});}
+      if(qaEnabled)delete window.__VUONE_PIXEL_QA__;
       engineRef.current=null;
     };
   },[send]);
