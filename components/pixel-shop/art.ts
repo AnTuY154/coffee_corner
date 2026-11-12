@@ -62,6 +62,236 @@ function fruitCase(g: Graphics) {
   for(let y=124;y<163;y+=20)pixel(g,322,y,77,4,C.woodLight);
   pixel(g,355,102,3,63,C.white); pixel(g,323,167,77,6,C.wood);
 }
+
+/**
+ * Cozy Garden Café art direction.
+ * Drawn in native 480x270 pixel space so the existing A* navmesh,
+ * four commerce hotspots and fifteen seats never shift.
+ * Kenney CC0 atlas props are composited over this self-authored foundation.
+ */
+const DETAIL = {
+  ink: 0x29483d, pine: 0x2c694d, moss: 0x478c65, lime: 0xa2ca78,
+  peach: 0xf5b785, tile: 0xf3dbc4, clay: 0xd8785a, caramel: 0x92563f,
+  gold: 0xfbd87e, pink: 0xf1a5a0, lilac: 0xb39ace, cream: 0xfff5d8,
+  blue: 0x82c8c0, blueDark: 0x4a9e94, pot: 0xb56c4c
+};
+function leafCluster(g: Graphics, x:number, y:number, color:number, variant=0) {
+  pixel(g,x-8,y-6,5,5,color); pixel(g,x-4,y-11,8,7,color);
+  pixel(g,x+2,y-8,7,6,color); pixel(g,x-10,y,9,5,color);
+  pixel(g,x-2,y-2,11,6,color);
+  pixel(g,x+(variant%3),y-8,3,3,DETAIL.lime);
+  pixel(g,x-5,y-3,3,2,DETAIL.lime);
+}
+function bloom(g: Graphics, x:number, y:number, color:number) {
+  pixel(g,x-1,y-4,2,5,DETAIL.moss);
+  pixel(g,x-3,y-7,2,3,color);pixel(g,x+1,y-7,2,3,color);
+  pixel(g,x-1,y-9,2,3,color);pixel(g,x-1,y-6,2,2,DETAIL.gold);
+}
+function hangingPlanter(g:Graphics,x:number,y:number) {
+  pixel(g,x,y,1,13,DETAIL.caramel);
+  pixel(g,x-4,y+11,9,5,DETAIL.clay);
+  leafCluster(g,x,y+11,DETAIL.pine,x);
+  pixel(g,x-3,y+14,6,2,DETAIL.pot);
+}
+function woodenCrate(g:Graphics,x:number,y:number,fill=DETAIL.caramel) {
+  pixel(g,x,y,17,12,DETAIL.ink);
+  pixel(g,x+2,y+2,13,8,fill);
+  pixel(g,x+5,y+2,2,8,DETAIL.gold);pixel(g,x+11,y+2,2,8,DETAIL.gold);
+}
+function tilePath(g:Graphics) {
+  // A lush tiled terrace, with a quiet centre aisle for the walking avatar.
+  pixel(g,0,170,480,100,0x90bd79);
+  pixel(g,0,175,480,4,0x709e70);
+  for(let row=0;row<6;row++)for(let col=0;col<20;col++) {
+    const x=col*25 + (row%2)*12, y=181+row*17;
+    const tint=(row+col)%5===0 ? 0xbed39a : ((row+col)%3===0 ? 0xa4c68b : 0x9ac187);
+    pixel(g,x,y,23,15,tint);
+    pixel(g,x+2,y+1,18,1,0xb1cc98);
+    pixel(g,x+1,y+13,20,1,0x81ac77);
+  }
+  // Irregular warm cobbles create a visible path between the counter and entrance.
+  for(let row=0;row<6;row++)for(let col=0;col<3;col++){
+    const x=205+col*23+(row%2?10:0),y=178+row*16;
+    pixel(g,x,y,20,12,((col+row)%3===0)?0xf8e6c4:0xe9d6b4);
+    pixel(g,x+2,y+2,14,1,DETAIL.cream);
+  }
+  for(let i=0;i<53;i++){
+    const x=(i*83+9)%480, y=179+(i*19)%89;
+    if(x>193 && x<294)continue;
+    pixel(g,x,y,2,1,i%3===0?DETAIL.lime:0x608f5e);
+  }
+}
+function terraceDetails(g:Graphics) {
+  // Border hedge and flower beds are outside walkable paths.
+  for(let x=6;x<480;x+=18){
+    if(x>185 && x<302)continue;
+    leafCluster(g,x,268, x%3 ? DETAIL.moss : DETAIL.pine,x);
+    if(x%3===0)bloom(g,x+5,258,x%2?DETAIL.pink:DETAIL.gold);
+  }
+  for(const t of TABLES){
+    // Bistro table linen and fruit drinks give seats an obvious purpose.
+    pixel(g,t.x-16,t.y+3,32,2,0x769d6c);
+    pixel(g,t.x-12,t.y-11,24,2,DETAIL.cream);
+    pixel(g,t.x-9,t.y-10,9,2,DETAIL.tile);
+    pixel(g,t.x-1,t.y-19,4,5,DETAIL.gold);
+    pixel(g,t.x,t.y-20,1,3,DETAIL.pink);
+    pixel(g,t.x+5,t.y-12,4,3,0xf8e3b0);
+    pixel(g,t.x+6,t.y-14,2,3,DETAIL.clay);
+  }
+  // Flower pots do not change game collisions.
+  for(const [x,y] of [[17,188],[462,190],[15,247],[466,248],[115,185],[365,184]]){
+    pixel(g,x-4,y-1,9,8,DETAIL.caramel);
+    pixel(g,x-5,y-3,11,3,DETAIL.clay);
+    leafCluster(g,x,y-2,DETAIL.pine,x);
+    bloom(g,x+3,y-9, x%2 ? DETAIL.pink:DETAIL.gold);
+  }
+  // Charming narrow wooden garden fence, distant from the active seats.
+  for(let x=0;x<480;x+=10){
+    if(x>192 && x<302)continue;
+    pixel(g,x,266,3,7,DETAIL.caramel);
+  }
+  pixel(g,0,268,195,2,DETAIL.caramel);
+  pixel(g,301,268,179,2,DETAIL.caramel);
+}
+function paintCafeDetails(g:Graphics){
+  // Sky gradient bands, birds and sun rays on either side of the sign.
+  pixel(g,0,0,480,28,0xd9f5db);
+  pixel(g,0,28,480,26,0xbcebe3);
+  for(let i=0;i<5;i++){
+    const x=12+i*14;
+    pixel(g,x,14+(i%2)*4,16,3,DETAIL.cream);
+    pixel(g,x+4,11+(i%2)*4,8,3,DETAIL.cream);
+  }
+  for(let i=0;i<4;i++){
+    const x=385+i*17;
+    pixel(g,x,23+(i%2)*4,17,3,DETAIL.cream);
+    pixel(g,x+4,20+(i%2)*4,8,3,DETAIL.cream);
+  }
+  pixel(g,355,17,22,3,0xf9ddb1);pixel(g,361,11,10,16,0xf9ddb1);
+  pixel(g,363,13,6,12,DETAIL.gold);
+  for(const [x,y] of [[91,19],[105,27],[335,40],[386,46]]){
+    pixel(g,x,y,5,1,DETAIL.pine);pixel(g,x+5,y-2,5,1,DETAIL.pine);
+  }
+  // Timber storefront with two-toned masonry and vertical timber ribs.
+  pixel(g,55,89,359,77,0xe7bb92);
+  pixel(g,61,94,346,67,0xffe9c7);
+  for(let i=0;i<14;i++){
+    const x=62+i*25;
+    pixel(g,x,94,1,65,0xf2d0a6);
+  }
+  pixel(g,55,97,360,3,DETAIL.cream);
+  pixel(g,57,160,357,5,0xb77b55);
+  pixel(g,62,162,350,2,DETAIL.gold);
+  // Awning: fabric and scalloped fringe with proper depth.
+  pixel(g,39,65,394,4,DETAIL.ink);
+  pixel(g,43,68,386,22,0xf5b887);
+  for(let i=0;i<12;i++){
+    const x=43+i*32;
+    pixel(g,x,67,16,22,i%2===0?0xffe8ae:0xe98e70);
+    pixel(g,x+1,88,14,4,i%2===0?0xffe8ae:0xe98e70);
+    pixel(g,x+3,91,10,2,i%2===0?0xffe8ae:0xe98e70);
+  }
+  pixel(g,41,64,389,3,DETAIL.caramel);
+  pixel(g,42,93,388,2,DETAIL.caramel);
+  // Trim posts and warm-lit windows.
+  for(const x of [65,171,311,407]){
+    pixel(g,x,97,5,68,DETAIL.caramel);
+    pixel(g,x+1,97,2,63,0xd49c68);
+  }
+  pixel(g,175,99,134,55,0xb17f5b);
+  pixel(g,181,102,122,48,0xd7c29e);
+  for(let i=0;i<4;i++){
+    const x=184+i*30;
+    pixel(g,x,104,26,44,0xffe3a6);
+    pixel(g,x+2,106,22,22,0xfaf1ca);
+    pixel(g,x+2,130,22,15,0xcbe4c8);
+  }
+  // Hanging lamps and vine garlands beneath the awning.
+  for(const x of [188,302]){
+    pixel(g,x,95,1,15,DETAIL.caramel);
+    pixel(g,x-5,110,11,3,DETAIL.ink);
+    pixel(g,x-4,113,9,4,DETAIL.gold);
+    pixel(g,x-2,116,5,2,0xf8eac7);
+  }
+  for(let i=0;i<25;i++){
+    const x=72+i*13, y=95+Math.floor(Math.sin(i/3)*3);
+    pixel(g,x,y,4,2,DETAIL.pine);
+    pixel(g,x-1,y+2,3,5,i%2?DETAIL.moss:DETAIL.lime);
+    if(i%6===0)bloom(g,x+2,y+8,DETAIL.pink);
+  }
+  // Left menu chalkboard and a tiny lemon-juice illustration.
+  pixel(g,100,113,67,40,DETAIL.caramel);
+  pixel(g,104,117,59,31,DETAIL.ink);
+  pixel(g,109,123,11,11,DETAIL.gold);
+  pixel(g,113,121,4,3,DETAIL.lime);
+  pixel(g,109,136,45,1,0xd1d89e);
+  pixel(g,109,139,36,1,0xd1d89e);
+  pixel(g,109,142,43,1,0xd1d89e);
+  // Menu hotspot remains x99..165, y117..148.
+  // Right shop chalkboard stays inside the existing daily-board hotspot.
+  pixel(g,426,115,47,39,DETAIL.caramel);
+  pixel(g,430,119,40,31,DETAIL.ink);
+  pixel(g,434,124,30,1,DETAIL.gold);
+  for(let i=0;i<3;i++){
+    pixel(g,435,129+i*6,19+i*3,2,DETAIL.cream);
+    pixel(g,458,129+i*6,5,2,DETAIL.pink);
+  }
+  // Wooden service counter front + objects behind it.
+  pixel(g,191,130,103,44,DETAIL.ink);
+  pixel(g,194,132,97,40,DETAIL.caramel);
+  pixel(g,197,134,91,21,0xb77f56);
+  pixel(g,191,151,103,4,0xf1ba84);
+  for(let i=0;i<9;i++) {
+    const x=198+i*10;
+    pixel(g,x,156,6,13,i%2 ? 0xa66f51 : 0xbd835d);
+    pixel(g,x+1,156,2,13,0xd49a6a);
+  }
+  pixel(g,194,169,97,4,DETAIL.ink);
+  // Blender, carafe and fruit bowls sit behind the counter top.
+  pixel(g,201,124,10,13,DETAIL.blueDark);
+  pixel(g,203,119,6,7,0xd9f0dc);
+  pixel(g,204,118,4,2,DETAIL.cream);
+  pixel(g,201,135,11,3,DETAIL.ink);
+  pixel(g,278,128,9,8,DETAIL.clay);
+  pixel(g,276,127,12,2,DETAIL.cream);
+  for(const x of [278,282,285])pixel(g,x,123,4,5, x%2 ? DETAIL.gold:DETAIL.pink);
+  // Fruit stand outer body is locked to the original interaction bounds.
+  pixel(g,316,96,88,78,DETAIL.ink);
+  pixel(g,319,99,82,71,DETAIL.caramel);
+  pixel(g,321,102,78,65,0xebd9ae);
+  for(let row=0;row<3;row++){
+    const y=106+row*20;
+    pixel(g,323,y,74,17,row%2?0xa0c2a4:0x8ebc9f);
+    for(let col=0;col<8;col++){
+      const x=327+col*9;
+      const colors=[DETAIL.gold,DETAIL.pink,DETAIL.clay,DETAIL.lime];
+      pixel(g,x,y+4+(col%2),7,7,colors[(row+col)%4]);
+      pixel(g,x+1,y+4,3,2,DETAIL.cream);
+      pixel(g,x+4,y+1,2,3,DETAIL.pine);
+    }
+    pixel(g,321,y+17,78,3,DETAIL.caramel);
+  }
+  pixel(g,358,102,2,64,DETAIL.cream);
+  pixel(g,320,168,81,6,DETAIL.ink);
+  // Sign board gets ornamental timber trim but is left readable.
+  pixel(g,181,22,118,46,DETAIL.ink);
+  pixel(g,185,25,110,39,DETAIL.caramel);
+  pixel(g,189,29,102,32,DETAIL.cream);
+  pixel(g,194,32,92,26,DETAIL.pine);
+  pixel(g,200,34,81,2,DETAIL.moss);
+  pixel(g,199,56,83,2,DETAIL.gold);
+  pixel(g,183,64,114,3,DETAIL.ink);
+  // Vines on the corners add a lush cafe feel without blocking the counter.
+  for(let i=0;i<6;i++){
+    const y=107+i*10;
+    leafCluster(g,61+(i%2)*4,y, i%3 ? DETAIL.pine : DETAIL.moss,i);
+    leafCluster(g,417-(i%2)*5,y, i%3 ? DETAIL.moss : DETAIL.pine,i+2);
+  }
+  for(const x of [75,391])hangingPlanter(g,x,94);
+  woodenCrate(g,74,149);
+  woodenCrate(g,391,151,DETAIL.clay);
+}
+
 function paintBackdrop(withKenney: boolean) {
   const g = new Graphics();
   pixel(g,0,0,480,176,C.sky);
@@ -104,11 +334,14 @@ function paintBackdrop(withKenney: boolean) {
   pixel(g,204,143,75,6,C.cream);
   fruitCase(g);
   for(let i=0;i<5;i++)pottedPlant(g,58+i*84,162);
-  if (!withKenney) { tree(g,31,131,1.1); tree(g,452,123,1); }
+  tilePath(g);
+  paintCafeDetails(g);
+  if (!withKenney) { tree(g,20,152,1.05); tree(g,462,147,1.05); }
   for(const t of TABLES)table(g,t.x,t.y);
   for(const s of SEATS)chair(g,s.x,s.y,s.id.endsWith("left"));
   pixel(g,285,187,14,12,C.brown);
   pixel(g,287,184,10,6,C.wood);
+  terraceDetails(g);
   return g;
 }
 const shirts=[0x5b99a7,0xe6a25e,0x9d73aa,0x5eaa78,0xe17f79,0xc4bc72];
