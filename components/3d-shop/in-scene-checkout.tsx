@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useCart } from "@/components/cart-context";
 import { products, currency } from "@/data/catalog";
 
@@ -16,24 +16,40 @@ export function InSceneCheckout({onBack,onReturnToShop,onCompleted}:Props){
  const [confirmed,setConfirmed]=useState<string|null>(null);
  const requestId=useRef<string|null>(null);
  const isStaticDemo=process.env.NEXT_PUBLIC_GITHUB_PAGES_DEMO==="1";
+ // Older checkout builds accidentally stored the raw address/phone inside a
+ // session-only order fingerprint. Remove that obsolete record on mount.
+ useEffect(()=>{try{sessionStorage.removeItem("vuon-ep-pending-order-v1");}catch{}},[]);
+
  async function submit(event:FormEvent<HTMLFormElement>){
   event.preventDefault();
   if(sending||!lines.length||isStaticDemo)return;
   setSending(true);setError("");
   try{
-   // Persist only a request ID/fingerprint, never personal contact fields.
-   const fingerprint=JSON.stringify({form,items:[...lines].sort((a,b)=>a.id.localeCompare(b.id))});
+   // Never write customer details to browser storage. Hash the complete order
+   // only in memory, then persist a SHA-256 digest and the retry request ID.
+   const canonical=JSON.stringify({form,items:[...lines].sort((a,b)=>a.id.localeCompare(b.id))});
+   const hash=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(canonical));
+   const fingerprint=Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,"0")).join("");
    let pending:{id:string;fingerprint:string}|null=null;
-   try{const saved=sessionStorage.getItem("vuon-ep-pending-order-v1");if(saved)pending=JSON.parse(saved) as {id:string;fingerprint:string};}catch{}
+   try{
+    const saved=sessionStorage.getItem("vuon-ep-pending-order-v2");
+    if(saved){
+     const item=JSON.parse(saved) as {id?:unknown;fingerprint?:unknown};
+     if(typeof item.id==="string" && /^[0-9a-f-]{36}$/i.test(item.id) &&
+        typeof item.fingerprint==="string" && /^[a-f0-9]{64}$/.test(item.fingerprint)){
+      pending={id:item.id,fingerprint:item.fingerprint};
+     }
+    }
+   }catch{}
    if(!pending||pending.fingerprint!==fingerprint){pending={id:crypto.randomUUID(),fingerprint};}
    requestId.current=pending.id;
-   try{sessionStorage.setItem("vuon-ep-pending-order-v1",JSON.stringify(pending));}catch{}
+   try{sessionStorage.setItem("vuon-ep-pending-order-v2",JSON.stringify(pending));}catch{}
    const response=await fetch("/api/orders",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({...form,items:lines.map(({id,quantity})=>({skuId:id,quantity})),requestId:requestId.current}),cache:"no-store"});
    const payload=await response.json() as {ok?:boolean;orderId?:string;error?:string};
    if(!response.ok||!payload.ok||!payload.orderId)throw new Error(payload.error||"Cửa hàng chưa nhận được đơn.");
    setConfirmed(payload.orderId);
-   try{sessionStorage.removeItem("vuon-ep-pending-order-v1");}catch{}
+   try{sessionStorage.removeItem("vuon-ep-pending-order-v2");}catch{}
    clear();onCompleted();
   }catch(e){setError(e instanceof Error?e.message:"Không gửi được đơn, vui lòng thử lại.");}
   finally{setSending(false);}
