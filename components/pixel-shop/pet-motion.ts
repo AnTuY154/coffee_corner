@@ -28,3 +28,13 @@ export function petRouteAt(seconds:number,route:readonly PetPoint[],speed:number
 export function guestVisualDepth(footY:number,seatId:string|null):number {
   return seatId?320+Math.round(footY):Math.round(footY);
 }
+
+/**
+ * Simulated depth in the front-facing 3/4 view. Characters farther up the
+ * garden are subtly smaller, while their feet always stay on the ground point.
+ * This is 2.5D scaling, not an actual 3D Y-axis rotation.
+ */
+export function depthScaleAt(footY:number):number {
+  const t=Math.max(0,Math.min(1,(footY-216)/92));
+  return 0.83+0.23*t;
+}
