@@ -7,6 +7,7 @@
 import { Assets, Container, Graphics, Sprite, type Texture } from "pixi.js";
 import { SCENE_WIDTH, SCENE_HEIGHT } from "@/shared/garden/model";
 import { drawGuest, drawStaff, drawDog, drawCat } from "./art";
+import { PET_ROUTES, petRouteAt } from "./pet-motion";
 
 export const REFERENCE_LAYERS = [
   {name:"roof-sign",file:"roof-sign.webp",bbox:[562,113,1045,226],z:5},
@@ -58,30 +59,28 @@ export function buildReferenceScene(assets:ReferenceAssets){
     world.addChild(item);
   }
   // All character and table layers share a single depth-sorted Pixi world.
-  const employee=new Graphics();employee.position.set(249,181);employee.zIndex=210;world.addChild(employee);
-  const dog=new Graphics();dog.position.set(417,279);dog.zIndex=279;world.addChild(dog);
-  const cat=new Graphics();cat.position.set(104,286);cat.zIndex=286;world.addChild(cat);
-  const grayCat=new Graphics();grayCat.position.set(348,252);grayCat.zIndex=252;world.addChild(grayCat);
+  const employee=new Graphics();employee.position.set(249,181);employee.zIndex=210;employee.label="staff:stationary";world.addChild(employee);
+  // One stable barista pose behind the foreground counter. No waves, exits or pet interactions.
+  drawStaff(employee,false,false,1);employee.scale.set(1.05);
+  const dog=new Graphics();dog.label="pet:dog";world.addChild(dog);
+  const cat=new Graphics();cat.label="pet:ginger-cat";world.addChild(cat);
+  const grayCat=new Graphics();grayCat.label="pet:gray-cat";world.addChild(grayCat);
   const lights=new Graphics();lights.zIndex=16;world.addChild(lights);
   const bulbs=[[17,61],[31,48],[46,37],[61,32],[80,41],[181,96],[233,96],[278,96],[318,94],[349,91]];
   let previous=-1;
   function update(tick:number,reducedMotion:boolean){
-    const step=reducedMotion?0:Math.floor(tick*5);
-    if(step===previous)return;previous=step;
-    const cycle=reducedMotion?0:tick%28;
-    const outside=cycle>=13&&cycle<25;
-    if(!outside){employee.position.set(249,181);employee.zIndex=210;}
-    else if(cycle<17){
-      const p=(cycle-13)/4;employee.position.set(246-63*p,183+38*p);employee.zIndex=215+32*p;
-    }else if(cycle<21){
-      const p=(cycle-17)/4;employee.position.set(183+57*p,221+54*p);employee.zIndex=275;
-    }else{
-      const p=(cycle-21)/4;employee.position.set(240+9*p,275-94*p);employee.zIndex=275-65*p;
+    const time=reducedMotion?0:tick;
+    const dogPose=petRouteAt(time,PET_ROUTES.dog,11);
+    const gingerPose=petRouteAt(time,PET_ROUTES.ginger,7,13);
+    const grayPose=petRouteAt(time,PET_ROUTES.gray,6,37);
+    for(const [sprite,pose] of [[dog,dogPose],[cat,gingerPose],[grayCat,grayPose]] as const){
+      sprite.position.set(pose.x,pose.y);sprite.scale.x=pose.direction;
+      // User-facing animals stay visible when crossing transparent furniture overlays.
+      sprite.zIndex=320+Math.round(pose.y);
     }
-    drawStaff(employee,!outside&&step%8<3,cycle>18&&cycle<20,step);
-    employee.scale.set(outside?1.15:1.05);
-    drawDog(dog,step);dog.x=417+(reducedMotion?0:Math.sin(tick*.55)*14);
-    drawCat(cat,false,step);drawCat(grayCat,true,step);
+    const step=reducedMotion?0:Math.floor(tick*6);
+    if(step===previous)return;previous=step;
+    drawDog(dog,step);drawCat(cat,false,step);drawCat(grayCat,true,step);
     lights.clear();
     for(let i=0;i<bulbs.length;i++){
       const [x,y]=bulbs[i],pulse=reducedMotion?.3:.23+.1*(1+Math.sin(tick*2+i));
