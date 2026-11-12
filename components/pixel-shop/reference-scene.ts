@@ -4,7 +4,7 @@
  * World is 480x320, preserving source image's original 3:2 perspective.
  * Drawing, shopping hotspots and the server's authoritative navigation stay separate.
  */
-import { Assets, Container, Graphics, Sprite, type Texture } from "pixi.js";
+import { Assets, Container, Graphics, Rectangle, Sprite, Texture } from "pixi.js";
 import { SCENE_WIDTH, SCENE_HEIGHT } from "@/shared/garden/model";
 import { drawGuest, drawStaff, drawDog, drawCat } from "./art";
 import { PET_ROUTES, petRouteAt, depthScaleAt } from "./pet-motion";
@@ -59,18 +59,17 @@ export function buildReferenceScene(assets:ReferenceAssets){
   };
   for(const layer of REFERENCE_LAYERS){
     const tex=assets.parts.get(layer.name);if(!tex)continue;
-    const item=new Sprite(tex);
     const [x0,y0,x1,y1]=layer.bbox;
-    item.position.set(x0*unit,y0*unit);
-    item.width=(x1-x0)*unit;item.height=(y1-y0)*unit;
-    item.zIndex=layer.z;item.label="pixel:"+layer.name;
     const cutoff=tableForegroundY[layer.name];
-    if(cutoff!==undefined){
-      const lowerMask=new Graphics().rect(x0*unit,cutoff*unit,(x1-x0)*unit,(y1-cutoff)*unit).fill(0xffffff);
-      lowerMask.label="occluder:"+layer.name;
-      world.addChild(lowerMask);
-      item.mask=lowerMask;
-    }
+    // A frame is a cheap GPU texture view. Cropping the five furniture
+    // sprites once avoids five costly per-frame stencil masks, especially
+    // on headless Chromium software WebGL.
+    const frame=cutoff===undefined?tex
+      :new Texture({source:tex.source,frame:new Rectangle(0,cutoff-y0,x1-x0,y1-cutoff)});
+    const item=new Sprite(frame);
+    item.position.set(x0*unit,(cutoff??y0)*unit);
+    item.width=(x1-x0)*unit;item.height=(y1-(cutoff??y0))*unit;
+    item.zIndex=layer.z;item.label="pixel:"+layer.name;
     world.addChild(item);
   }
   // All character and table layers share a single depth-sorted Pixi world.
