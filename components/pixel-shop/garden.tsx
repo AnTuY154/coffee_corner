@@ -69,6 +69,7 @@ export function PixelGarden() {
   const reducedMotion=useRef(false);
   const qaFreezeDecorations=useRef(false);
   const pressed=useRef(new Set<string>());
+  const dpadHeldTimer=useRef<ReturnType<typeof setInterval>|null>(null);
   const menuOpenRef=useRef(false);
   const [roomStatus,setRoomStatus]=useState<RoomStatus>("solo");
   const [people,setPeople]=useState(1);
@@ -310,24 +311,53 @@ export function PixelGarden() {
 
   useEffect(()=>{
     const mapping:Record<string,Facing>={w:"up",arrowup:"up",s:"down",arrowdown:"down",a:"left",arrowleft:"left",d:"right",arrowright:"right"};
+    // Send held-direction updates at ~3 Hz, below the Durable Object's
+    // 12-intents/second burst limit. The renderer still interpolates at
+    // every frame; this only refreshes the 48/64-pixel path target.
+    let repeat:ReturnType<typeof setInterval>|null=null;
+    const stopRepeating=()=>{if(repeat!==null){clearInterval(repeat);repeat=null;}};
+    const currentDirection=():Facing|null=>{
+      const last=[...pressed.current].at(-1);
+      return last?mapping[last]??null:null;
+    };
     const onDown=(e:KeyboardEvent)=>{
       if(e.key==="Escape"){setMenu(null);setMenuInitialView("browse");return;}
-      if(menuOpenRef.current || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)return;
-      const dir=mapping[e.key.toLowerCase()];
-      if(!dir||e.repeat)return;
-      e.preventDefault();pressed.current.add(e.key.toLowerCase());
+      if(menuOpenRef.current||e.target instanceof HTMLInputElement||e.target instanceof HTMLTextAreaElement)return;
+      const key=e.key.toLowerCase(),dir=mapping[key];
+      if(!dir)return;
+      e.preventDefault();
+      if(pressed.current.has(key))return;
+      pressed.current.add(key);
       send({type:"direction",direction:dir});
+      if(repeat===null)repeat=setInterval(()=>{
+        if(menuOpenRef.current)return;
+        const held=currentDirection();
+        if(held)send({type:"direction",direction:held});
+      },320);
     };
     const onUp=(e:KeyboardEvent)=>{
-      if(!mapping[e.key.toLowerCase()])return;
-      pressed.current.delete(e.key.toLowerCase());
-      send({type:"stop"});
+      const key=e.key.toLowerCase();
+      if(!mapping[key])return;
+      e.preventDefault();
+      pressed.current.delete(key);
+      const held=currentDirection();
+      if(held)send({type:"direction",direction:held});
+      else {stopRepeating();send({type:"stop"});}
     };
-    const onBlur=()=>{pressed.current.clear();send({type:"stop"});};
+    const onBlur=()=>{pressed.current.clear();stopRepeating();send({type:"stop"});};
     window.addEventListener("keydown",onDown);window.addEventListener("keyup",onUp);
     window.addEventListener("blur",onBlur);
-    return()=>{window.removeEventListener("keydown",onDown);window.removeEventListener("keyup",onUp);window.removeEventListener("blur",onBlur);};
+    return()=>{
+      window.removeEventListener("keydown",onDown);window.removeEventListener("keyup",onUp);
+      window.removeEventListener("blur",onBlur);
+      stopRepeating();
+    };
   },[send]);
+  useEffect(()=>()=>{if(dpadHeldTimer.current!==null)clearInterval(dpadHeldTimer.current);},[]);
+  const stopDpad=()=>{
+    if(dpadHeldTimer.current!==null){clearInterval(dpadHeldTimer.current);dpadHeldTimer.current=null;}
+    send({type:"stop"});
+  };
 
   const worldPoint=(event:ReactPointerEvent<HTMLElement>):Point|null=>{
     const mount=mountRef.current;
@@ -362,7 +392,16 @@ export function PixelGarden() {
       y:Math.max(8,c.y+target.y*c.scale-43)
     });
   };
-  const dpad=(dir:Facing)=><button key={dir} type="button" aria-label={"Đi "+({up:"lên",down:"xuống",left:"trái",right:"phải"}[dir])} onPointerDown={e=>{e.preventDefault();send({type:"direction",direction:dir});}} onPointerUp={e=>{e.preventDefault();send({type:"stop"});}} onPointerCancel={()=>send({type:"stop"})}>{({up:"▲",down:"▼",left:"◀",right:"▶"}[dir])}</button>;
+  const dpad=(dir:Facing)=><button key={dir} type="button" aria-label={"Đi "+({up:"lên",down:"xuống",left:"trái",right:"phải"}[dir])}
+    onPointerDown={e=>{
+      e.preventDefault();
+      try{e.currentTarget.setPointerCapture(e.pointerId);}catch{}
+      if(dpadHeldTimer.current!==null)clearInterval(dpadHeldTimer.current);
+      send({type:"direction",direction:dir});
+      dpadHeldTimer.current=setInterval(()=>send({type:"direction",direction:dir}),320);
+    }}
+    onPointerUp={e=>{e.preventDefault();stopDpad();}}
+    onPointerCancel={stopDpad}>{({up:"▲",down:"▼",left:"◀",right:"▶"}[dir])}</button>;
   return <div className="pg-root">
     <header className="pg-header">
       <div className="pg-brand"><span className="pg-mark" aria-hidden="true">🍊</span><div><span className="pg-kicker">VƯỜN É · COZY PIXEL CAFÉ</span><h1>Vườn É <span>✿</span></h1><p>Một khu vườn nhỏ, thật nhiều điều ngọt lành.</p></div></div>
