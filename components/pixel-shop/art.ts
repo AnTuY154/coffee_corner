@@ -1,7 +1,7 @@
 import { Container, Graphics, Text } from "pixi.js";
 import { placeKenneyDecorations, type KenneyAtlas } from "./kenney-art";
 import { TABLES, SEATS, HOTSPOTS, type Actor } from "@/shared/garden/model";
-import { PET_ROUTES, petRouteAt } from "./pet-motion";
+import { PET_ROUTES, petRouteAt, depthScaleAt } from "./pet-motion";
 
 const C = {
   sky: 0xbbe7df, skyLight: 0xe0f3dd, cream: 0xffedbd, wall: 0xf7d49e,
@@ -508,7 +508,9 @@ export function buildScene(kenney: KenneyAtlas | null = null) {
     const ginger=petRouteAt(time,PET_ROUTES.ginger,7,13);
     const dog=petRouteAt(time,PET_ROUTES.dog,11);
     for(const [sprite,pose] of [[animals[0],gray],[animals[1],ginger],[animals[2],dog]] as const){
-      sprite.position.set(pose.x,pose.y);sprite.scale.x=pose.direction;
+      sprite.position.set(pose.x,pose.y);
+      const scale=depthScaleAt(pose.y);
+      sprite.scale.set(pose.direction*scale,scale);
       sprite.zIndex=320+Math.round(pose.y);
     }
     const step=reducedMotion?0:Math.floor(tick*6);
