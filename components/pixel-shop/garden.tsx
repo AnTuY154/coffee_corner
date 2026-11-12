@@ -6,7 +6,7 @@ import { ShopMenu2D } from "@/components/3d-shop/shop-menu-2d";
 import { createGardenNetwork, type RoomStatus } from "./network";
 import { loadKenneyAtlas } from "./kenney-art";
 import { loadReferenceAssets, buildReferenceScene } from "./reference-scene";
-import { guestVisualDepth } from "./pet-motion";
+import { guestVisualDepth,depthScaleAt } from "./pet-motion";
 import { SCENE_HEIGHT, SCENE_WIDTH, SCENE_VERSION, NAV_VERSION, SPAWN, WALK_SPEED, HOTSPOTS, SEATS, findPath, hotspotAt, nearestWalkable, positionAt, facingFromPath, type Actor, type ClientIntent, type Facing, type Point, type ServerEvent } from "@/shared/garden/model";
 import "./pixel-shop.css";
 
@@ -14,7 +14,7 @@ type MenuCategory = "all" | "fruit" | "daily";
 type GardenCommand = {type:"goTo";target:Point}|{type:"direction";direction:Facing}|{type:"stop"}|{type:"sit";seatId:string}|{type:"stand"};
 type CameraMode = "all" | "follow";
 type PixelMotionQASnapshot = {
-  time:number; self:{x:number;y:number;seatId:string|null;zIndex:number;visible:boolean;renderable:boolean;alpha:number;moving:boolean}|null;
+  time:number; self:{x:number;y:number;scale:number;seatId:string|null;zIndex:number;visible:boolean;renderable:boolean;alpha:number;moving:boolean}|null;
   staff:{x:number;y:number;zIndex:number}|null;
   pets:{name:string;x:number;y:number;zIndex:number;visible:boolean}[];
   framesMs:number[];
@@ -194,7 +194,7 @@ export function PixelGarden() {
               return {
                 time:performance.now(),
                 self:own&&sprite?{
-                  x:sprite.position.x,y:sprite.position.y,seatId:own.seatId,
+                  x:sprite.position.x,y:sprite.position.y,scale:sprite.scale.x,seatId:own.seatId,
                   zIndex:sprite.zIndex,visible:sprite.visible,renderable:sprite.renderable,alpha:sprite.alpha,
                   moving:isWalking(own,Date.now()+clockOffsetRef.current)
                 }:null,
@@ -242,6 +242,7 @@ export function PixelGarden() {
             if(!g){g=engine.makeGraphics();engine.world.addChild(g);engine.graphics.set(id,g);}
             const p=positionAt(actor,now);
             g.position.set(Math.round(p.x),Math.round(p.y));
+            g.scale.set(depthScaleAt(p.y));
             // Foreground table WebPs are opaque in places; do not hide visitors when seated.
             g.zIndex=guestVisualDepth(p.y,actor.seatId);
             const walking=isWalking(actor,now);
