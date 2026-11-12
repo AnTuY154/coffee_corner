@@ -1,6 +1,7 @@
 import { Container, Graphics, Text } from "pixi.js";
 import { placeKenneyDecorations, type KenneyAtlas } from "./kenney-art";
 import { TABLES, SEATS, HOTSPOTS, type Actor } from "@/shared/garden/model";
+import { PET_ROUTES, petRouteAt } from "./pet-motion";
 
 const C = {
   sky: 0xbbe7df, skyLight: 0xe0f3dd, cream: 0xffedbd, wall: 0xf7d49e,
@@ -497,23 +498,22 @@ export function buildScene(kenney: KenneyAtlas | null = null) {
   animals.forEach(a=>world.addChild(a));
   // Depth-sort all guests by feet within the world; no always-on-top actor layer.
   const actors=world;
+  // The fallback also keeps the barista fixed behind the counter at all times.
+  drawStaff(employee,false,false,1);employee.label="staff:stationary";
+  animals[0].label="pet:gray-cat";animals[1].label="pet:ginger-cat";animals[2].label="pet:dog";
   let prevStep=-1;
-  function update(tick: number, reducedMotion: boolean) {
-    const step = reducedMotion ? 0 : Math.floor(tick * 7);
-    if(step===prevStep) return;
-    prevStep=step;
-    const cycle = reducedMotion ? 0 : tick % 24;
-    const outside = cycle > 12 && cycle < 21;
-    if (cycle < 12) {employee.x=241;employee.y=158;employee.zIndex=158;}
-    else if(cycle<15) {employee.x=241-(cycle-12)*18;employee.y=158+(cycle-12)*10;employee.zIndex=191;}
-    else if(cycle<18) {employee.x=187+(cycle-15)*34;employee.y=188+(cycle-15)*5;employee.zIndex=211;}
-    else if(cycle<21) {employee.x=289-(cycle-18)*15;employee.y=203-(cycle-18)*16;employee.zIndex=201;}
-    else {employee.x=241;employee.y=158;employee.zIndex=158;}
-    drawStaff(employee, !outside && step%7<3, cycle>=16 && cycle<18,step);
-    animals[2].x=296+(reducedMotion?0:Math.sin(tick/2)*10);
-    drawDog(animals[2],step);
-    drawCat(animals[0],true,step);
-    drawCat(animals[1],false,step);
+  function update(tick:number,reducedMotion:boolean) {
+    const time=reducedMotion?0:tick;
+    const gray=petRouteAt(time,PET_ROUTES.gray,6,37);
+    const ginger=petRouteAt(time,PET_ROUTES.ginger,7,13);
+    const dog=petRouteAt(time,PET_ROUTES.dog,11);
+    for(const [sprite,pose] of [[animals[0],gray],[animals[1],ginger],[animals[2],dog]] as const){
+      sprite.position.set(pose.x,pose.y);sprite.scale.x=pose.direction;
+      sprite.zIndex=320+Math.round(pose.y);
+    }
+    const step=reducedMotion?0:Math.floor(tick*6);
+    if(step===prevStep)return;prevStep=step;
+    drawCat(animals[0],true,step);drawCat(animals[1],false,step);drawDog(animals[2],step);
   }
   update(0,false);
   return { world, actors, update };
