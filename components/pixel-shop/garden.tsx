@@ -185,6 +185,7 @@ export function PixelGarden() {
         const engine:Engine={app:application,world:build.world,update:build.update,graphics:new Map(),frame:new Map(),draw:art.drawGuest,makeGraphics:()=>new PIXI.Graphics()};
         engineRef.current=engine;
         const framesMs:number[]=[];
+        let lastActualFrameTime=0;
         if(qaEnabled){
           // Exposed only in purpose-built QA builds, never on normal production.
           window.__VUONE_PIXEL_QA__={
@@ -240,8 +241,15 @@ export function PixelGarden() {
         }
         const render=(ticker:import("pixi.js").Ticker)=>{
           const now=Date.now()+clockOffsetRef.current,elapsed=ticker.lastTime/1000;
-          if(qaEnabled && Number.isFinite(ticker.deltaMS) && ticker.deltaMS>0){
-            framesMs.push(ticker.deltaMS);if(framesMs.length>180)framesMs.shift();
+          if(qaEnabled){
+            // Wall time instead of Ticker.deltaMS: Pixi clamps deltaMS, which can
+            // otherwise conceal a real frame stall on slow virtual GPUs.
+            const actual=performance.now();
+            const duration=actual-lastActualFrameTime;
+            if(lastActualFrameTime>0 && duration>0 && Number.isFinite(duration)){
+              framesMs.push(duration);if(framesMs.length>180)framesMs.shift();
+            }
+            lastActualFrameTime=actual;
           }
           build.update(elapsed,reducedMotion.current||qaFreezeDecorations.current);
           const roster=actorsRef.current;
