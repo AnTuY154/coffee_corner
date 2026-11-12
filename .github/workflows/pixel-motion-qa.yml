@@ -11,6 +11,11 @@ on:
       - ".github/agents/pixel-motion-reviewer.agent.md"
       - ".github/workflows/pixel-motion-qa.yml"
 
+# New commits must supersede an outdated, expensive Chromium QA run.
+concurrency:
+  group: pixel-motion-qa-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
