@@ -93,7 +93,14 @@ function verifySmooth(samples:QASnapshot[],label:string){
     expect(distance,label+" teleported between frames").toBeLessThanOrEqual(32*deltaMs/1000+5);
     if(b.self?.moving)movingSamples++;
   }
-  expect(movingSamples,label+" never began moving").toBeGreaterThan(4);
+  // On software-rendered CI the browser may advance several frames between
+  // Playwright polls. Require observed movement + continuous bounded deltas,
+  // not a fixed number of host-side snapshots.
+  const displaced=Math.hypot(
+    (samples.at(-1)?.self?.x??0)-(samples[0].self?.x??0),
+    (samples.at(-1)?.self?.y??0)-(samples[0].self?.y??0));
+  expect(displaced,label+" failed to change world position").toBeGreaterThan(20);
+  expect(movingSamples,label+" did not enter a walking state").toBeGreaterThanOrEqual(2);
 }
 test.describe("Pixel 2.5D movement QA agent — real browser",()=>{
   test("up/down paths remain smooth and all decorative pets move",async({page},testInfo)=>{
