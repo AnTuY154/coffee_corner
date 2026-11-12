@@ -5,7 +5,8 @@ import { useCart } from "@/components/cart-context";
 import { ShopMenu2D } from "@/components/3d-shop/shop-menu-2d";
 import { createGardenNetwork, type RoomStatus } from "./network";
 import { loadKenneyAtlas } from "./kenney-art";
-import { SCENE_HEIGHT, SCENE_WIDTH, SPAWN, WALK_SPEED, HOTSPOTS, SEATS, findPath, hotspotAt, nearestWalkable, positionAt, facingFromPath, type Actor, type ClientIntent, type Facing, type Point, type ServerEvent } from "@/shared/garden/model";
+import { loadReferenceAssets, buildReferenceScene } from "./reference-scene";
+import { SCENE_HEIGHT, SCENE_WIDTH, SCENE_VERSION, NAV_VERSION, SPAWN, WALK_SPEED, HOTSPOTS, SEATS, findPath, hotspotAt, nearestWalkable, positionAt, facingFromPath, type Actor, type ClientIntent, type Facing, type Point, type ServerEvent } from "@/shared/garden/model";
 import "./pixel-shop.css";
 
 type MenuCategory = "all" | "fruit" | "daily";
@@ -48,6 +49,7 @@ export function PixelGarden() {
   const [hover,setHover]=useState<{ label:string; x:number; y:number }|null>(null);
   const [notice,setNotice]=useState("");
   const [renderError,setRenderError]=useState(false);
+  const [artMode,setArtMode]=useState<"loading"|"reference"|"fallback">("loading");
   const {count}=useCart();
   const opened=menu!==null;
   menuOpenRef.current=opened;
@@ -57,7 +59,7 @@ export function PixelGarden() {
     const roster=actorsRef.current;
     switch(e.type) {
       case "snapshot":
-        if(e.protocolVersion!==1||e.sceneVersion!=="pixel-garden-1"||e.navVersion!=="pixel-nav-1"){setRoomStatus("offline");setNotice("Phiên bản sân chưa tương thích.");return;}
+        if(e.protocolVersion!==1||e.sceneVersion!==SCENE_VERSION||e.navVersion!==NAV_VERSION){setRoomStatus("offline");setNotice("Phiên bản sân chưa tương thích.");return;}
         roster.clear(); for(const actor of e.actors) roster.set(actor.id,actor);
         selfRef.current=e.selfId; seqRef.current=0; clockOffsetRef.current=e.serverNow-Date.now(); setPeople(roster.size); break;
       case "joined": roster.set(e.actor.id,e.actor); setPeople(roster.size); break;
@@ -144,9 +146,10 @@ export function PixelGarden() {
         await application.init({resizeTo:mount,backgroundColor:0xbde7da,antialias:false,preference:"webgl",resolution:Math.min(window.devicePixelRatio||1,2),autoDensity:true});
         if(disposed){application.destroy(true,{children:true});return;}
         mount.appendChild(application.canvas);
-        const kenney=await loadKenneyAtlas();
+        const [kenney,reference]=await Promise.all([loadKenneyAtlas(),loadReferenceAssets()]);
         if(disposed){application.destroy(true,{children:true});return;}
-        const build=art.buildScene(kenney);
+        setArtMode(reference?"reference":"fallback");
+        const build=reference?buildReferenceScene(reference):art.buildScene(kenney);
         application.stage.addChild(build.world);
         const engine:Engine={app:application,world:build.world,update:build.update,graphics:new Map(),frame:new Map(),draw:art.drawGuest,makeGraphics:()=>new PIXI.Graphics()};
         engineRef.current=engine;
@@ -262,7 +265,7 @@ export function PixelGarden() {
     </header>
     <div className="pg-status" role="status" aria-live="polite">{roomLabels[roomStatus]}</div>
     <div className="pg-stage-shell">
-      <div className="pg-stage" ref={mountRef} onPointerUp={onTap} onPointerMove={onHover} onPointerLeave={()=>setHover(null)} role="application" aria-label="Sân Pixel Art Vườn É, nhấn vào sân để đi hoặc chạm tủ trái cây để mua">
+      <div className="pg-stage" data-art-mode={artMode} ref={mountRef} onPointerUp={onTap} onPointerMove={onHover} onPointerLeave={()=>setHover(null)} role="application" aria-label="Sân Pixel Art Vườn É, nhấn vào sân để đi hoặc chạm tủ trái cây để mua">
         {renderError && <div className="pg-fallback" role="status"><strong>Đang hiển thị chế độ nhẹ</strong><p>Thiết bị không hỗ trợ WebGL. Bạn vẫn có thể mở thực đơn và đặt món.</p><button type="button" onClick={()=>setMenu("all")}>Mở thực đơn</button></div>}
         {hover && <div className="pg-tooltip" role="tooltip" style={{left:hover.x,top:hover.y}}>{hover.label} · Nhấn để khám phá</div>}
       </div>
