@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { PET_ROUTES, petRouteAt, guestVisualDepth } from "../components/pixel-shop/pet-motion.ts";
+import { PET_ROUTES, petRouteAt, guestVisualDepth, depthScaleAt } from "../components/pixel-shop/pet-motion.ts";
 import { SPAWN, HOTSPOTS, SEATS, OBSTACLES, isWalkable, findPath, positionAt, hotspotAt, nearestWalkable, facingFromPath } from "../shared/garden/model.ts";
 assert.equal(SEATS.length, 15);
 assert.equal(new Set(SEATS.map(s => s.id)).size, 15);
@@ -34,4 +34,7 @@ for(const [kind,route] of Object.entries(PET_ROUTES)){
   const stopped=petRouteAt(5,route,0);
   assert.equal(stopped.moving,false,kind+" should respect reduced motion");
 }
-console.log("PASS: static guest seat visibility over 12 reference overlays and independent pet patrols.");
+assert.ok(depthScaleAt(216)<depthScaleAt(308),"visitors become larger as they approach camera");
+assert.ok(depthScaleAt(230)<depthScaleAt(300),"upward movement gets smaller, down larger");
+assert.ok(depthScaleAt(216)>=0.8 && depthScaleAt(308)<=1.1,"perspective stays subtle");
+console.log("PASS: 2.5D perspective, seated guest visibility and independent pet patrols.");
