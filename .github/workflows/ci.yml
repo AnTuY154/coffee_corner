@@ -17,6 +17,7 @@ jobs:
       - run: npm run check:catalog
       - run: npm run test:orders
       - run: npm run test:pixel-assets
+      - run: npm run test:reference-art
       - run: npm run test:garden:unit
       - run: npm run test:3d
       - run: npm run test:immersive
