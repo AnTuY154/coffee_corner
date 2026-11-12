@@ -28,6 +28,7 @@ declare global {
       freezeDecorations:(frozen:boolean)=>void;
       goTo:(x:number,y:number)=>void;
       seedSeat:(seatId:string)=>void;
+      seedAt:(x:number,y:number)=>void;
       reset:()=>void;
     };
   }
@@ -214,6 +215,13 @@ export function PixelGarden() {
               return true;
             },
             goTo:(x,y)=>send({type:"goTo",target:{x,y}}),
+            seedAt:(x,y)=>{
+              if(selfRef.current!=="solo")return;
+              const own=actorsRef.current.get("solo");
+              if(!own||!Number.isFinite(x)||!Number.isFinite(y))return;
+              Object.assign(own,{x,y,seatId:null,path:[],startAt:Date.now(),facing:"down"});
+              setSeatedAt(null);
+            },
             seedSeat:seatId=>{
               if(selfRef.current!=="solo")return;
               const seat=SEATS.find(s=>s.id===seatId);
