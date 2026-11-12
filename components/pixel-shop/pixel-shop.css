@@ -138,3 +138,20 @@
   .pg-root .ve-menu-header{padding:12px 18px}
   .pg-root .ve-menu-brand h2{font-size:21px}
 }
+
+/* User reference is a 3:2 illustration, not the previous 16:9 480x270 mockup.
+   Cap desktop stage width by available viewport height: no cropped roof/tables. */
+@media (min-width:801px) {
+  .pg-stage-shell{width:min(calc(100% - 32px),1324px,calc((100dvh - 174px)*1.5));}
+  .pg-stage{height:auto;aspect-ratio:3/2;min-height:0;max-height:none;}
+}
+.pg-stage[data-art-mode="reference"]{
+  background:#7cc7da;
+  image-rendering:auto;
+}
+.pg-stage[data-art-mode="reference"] canvas{image-rendering:auto;}
+.pg-stage[data-art-mode="fallback"] canvas{image-rendering:pixelated;}
+@media (max-width:800px){
+  .pg-stage[data-art-mode="reference"]{height:min(69dvh,620px);aspect-ratio:auto;}
+}
+/* Scene fallback is deliberate: the app never silently fakes reference fidelity. */
