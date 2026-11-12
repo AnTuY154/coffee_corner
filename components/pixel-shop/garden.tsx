@@ -257,7 +257,7 @@ export function PixelGarden() {
   const dpad=(dir:Facing)=><button key={dir} type="button" aria-label={"Đi "+({up:"lên",down:"xuống",left:"trái",right:"phải"}[dir])} onPointerDown={e=>{e.preventDefault();send({type:"direction",direction:dir});}} onPointerUp={e=>{e.preventDefault();send({type:"stop"});}} onPointerCancel={()=>send({type:"stop"})}>{({up:"▲",down:"▼",left:"◀",right:"▶"}[dir])}</button>;
   return <div className="pg-root">
     <header className="pg-header">
-      <div><span className="pg-kicker">FRESH PIXEL GARDEN</span><h1>Vườn É <span>✿</span></h1><p>Ghé chơi, chọn nước ép và ngồi giữa khu vườn.</p></div>
+      <div className="pg-brand"><span className="pg-mark" aria-hidden="true">🍊</span><div><span className="pg-kicker">VƯỜN É · COZY PIXEL CAFÉ</span><h1>Vườn É <span>✿</span></h1><p>Một khu vườn nhỏ, thật nhiều điều ngọt lành.</p></div></div>
       <div className="pg-heading-actions"><span className="pg-guests" aria-live="polite">● {people}/20 khách</span><button type="button" onClick={()=>setMenu("all")}>Thực đơn</button><button type="button" onClick={()=>{setMenuInitialView("cart");setMenu("all");}}>Giỏ hàng ({count})</button></div>
     </header>
     <div className="pg-status" role="status" aria-live="polite">{roomLabels[roomStatus]}</div>
