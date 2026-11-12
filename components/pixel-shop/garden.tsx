@@ -175,7 +175,13 @@ export function PixelGarden() {
         if(disposed)return;
         const application=new PIXI.Application();
         app=application;
-        await application.init({resizeTo:mount,backgroundColor:0xbde7da,antialias:false,preference:"webgl",resolution:Math.min(window.devicePixelRatio||1,2),autoDensity:true});
+        // Static pixel-art is already high quality at ~800x540 internal px.
+        // Painting a 2x/3x retina-sized WebGL canvas on software GPUs caused
+        // 50-125ms frame stalls. Cap the render surface, not the CSS layout or
+        // scene geometry: camera/world coordinates remain identical.
+        const renderResolution=Math.max(0.4,Math.min(1,
+          800/Math.max(1,mount.clientWidth),540/Math.max(1,mount.clientHeight)));
+        await application.init({resizeTo:mount,backgroundColor:0xbde7da,antialias:false,preference:"webgl",resolution:renderResolution,autoDensity:true});
         if(disposed){application.destroy(true,{children:true});return;}
         mount.appendChild(application.canvas);
         const [kenney,reference]=await Promise.all([loadKenneyAtlas(),loadReferenceAssets()]);
