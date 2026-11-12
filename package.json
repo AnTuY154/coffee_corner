@@ -19,7 +19,12 @@
     "test:actors": "node --experimental-strip-types scripts/test-actor-director.mjs",
     "test:frames": "node scripts/check-frame-assets.mjs",
     "test:frames:installed": "node scripts/check-frame-assets.mjs --installed",
-    "test:frame-activities": "node --experimental-strip-types scripts/test-frame-activities.mjs"
+    "test:frame-activities": "node --experimental-strip-types scripts/test-frame-activities.mjs",
+    "test:garden:unit": "node --experimental-strip-types scripts/test-garden.mjs",
+    "test:garden:worker": "cd realtime && npm run typecheck",
+    "test:pixel-assets": "node scripts/validate-pixel-assets.mjs",
+    "test:reference-art": "node scripts/check-reference-art.mjs",
+    "test:reference-art:required": "node scripts/check-reference-art.mjs --required"
   },
   "dependencies": {
     "next": "^15.5.0",

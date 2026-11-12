@@ -1,0 +1,157 @@
+
+/* Vườn É — Cozy Pixel Garden, responsive and accessible.
+   Free stack: PixiJS 8 + existing Kenney CC0 sprites + native CSS. */
+.pg-root{
+  --pg-forest:#204c3e;--pg-mint:#e1f1d7;--pg-sun:#ffd68e;
+  --pg-peach:#fbba94;--pg-stroke:#47694e;
+  min-height:100dvh;color:#254d3e;font-family:ui-rounded,"Trebuchet MS",system-ui,-apple-system,sans-serif;
+  background-color:#f4f6e9;
+  background-image:radial-gradient(circle at 16% 8%,#fff6d2 0,transparent 35%),
+    radial-gradient(circle at 92% 41%,#d9f0da 0,transparent 40%),
+    radial-gradient(#9acba649 1px,transparent 1px);
+  background-size:auto,auto,24px 24px;padding-bottom:28px;
+}
+.pg-header{max-width:1400px;margin:auto;display:flex;align-items:center;justify-content:space-between;
+  gap:26px;padding:20px clamp(18px,4vw,46px) 17px;position:relative}
+.pg-brand{display:flex;align-items:center;gap:16px;min-width:0}
+.pg-mark{display:grid;place-items:center;flex-shrink:0;width:64px;height:64px;
+  font-size:31px;background:#fff5d5;border:2px solid #d5ad7b;border-radius:21px;
+  box-shadow:0 5px 0 #e7d1ad,0 11px 20px #486b4820;transform:rotate(-6deg)}
+.pg-kicker{font:800 11px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.15em;color:#6c8e74}
+.pg-header h1{font-weight:1000;font-size:clamp(32px,3.1vw,46px);line-height:1.05;letter-spacing:-.055em;
+  margin:4px 0 5px;color:#245c45;text-shadow:1px 1px 0 #fff}
+.pg-header h1 span{color:#e89b6a;font-size:.68em;vertical-align:15%}
+.pg-header p{margin:0;font-size:13px;color:#61816b;font-weight:650;line-height:1.5}
+.pg-heading-actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.pg-heading-actions button,.pg-game-controls button,.pg-fallback button{
+  cursor:pointer;font:800 13px ui-rounded,"Trebuchet MS",system-ui,sans-serif;
+  color:#285643;background:#fff7dc;border:2px solid #87a78a;border-radius:14px;
+  padding:12px 17px;min-height:43px;
+  box-shadow:0 4px 0 #9fbd9c,0 6px 12px #31553c1e;
+  transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+}
+.pg-heading-actions button:hover,.pg-game-controls button:hover{background:#ffdf9f;transform:translateY(-2px);
+  box-shadow:0 6px 0 #9fbd9c,0 9px 16px #31553c20}
+.pg-heading-actions button:active,.pg-game-controls button:active{transform:translateY(3px);box-shadow:0 1px 0 #9fbd9c}
+.pg-heading-actions button:last-child{color:#fff9e8;background:#36765c;border-color:#275c47;
+  box-shadow:0 4px 0 #244f3c}
+.pg-heading-actions button:last-child:hover{background:#2c6049}
+.pg-guests{font:800 12px ui-monospace,Consolas,monospace;border-radius:100px;
+  padding:12px 16px;background:#e6f4d7;border:1px solid #b2d4a7;color:#397053;white-space:nowrap}
+.pg-status{max-width:min(calc(100% - 44px),1292px);margin:0 auto 9px;padding:8px 14px;
+  text-align:center;font-size:12px;font-weight:750;letter-spacing:.015em;
+  color:#4d765d;background:#e5f1de;border:1px solid #d4e5ca;border-radius:999px}
+.pg-stage-shell{
+  position:relative;width:min(calc(100% - 32px),1324px);margin:10px auto 0;
+  padding:11px;background:#fff8dd;border:2px solid #9ebe98;border-radius:25px;
+  box-shadow:0 9px 0 #b0c8a6,0 20px 36px #31563a26;
+}
+.pg-stage{height:min(69dvh,720px);min-height:340px;position:relative;overflow:hidden;
+  touch-action:none;cursor:crosshair;border:3px solid #56856a;border-radius:15px;
+  background:#d0ead8;image-rendering:pixelated;isolation:isolate}
+.pg-stage::after{content:"";pointer-events:none;position:absolute;inset:0;
+  box-shadow:inset 0 0 0 2px #ffffff52,inset 0 0 60px #0d51320c}
+.pg-stage canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+.pg-tooltip{position:absolute;transform:translateX(-50%);z-index:6;pointer-events:none;
+  color:#234737;background:#fff7db;border:2px solid #d09a6c;border-radius:14px;
+  padding:10px 15px;box-shadow:0 4px 0 #b2a26d,0 8px 24px #1c402634;
+  font:800 12px ui-rounded,"Trebuchet MS",system-ui,sans-serif;max-width:90%;
+  text-align:center;white-space:normal}
+.pg-game-controls{position:absolute;top:22px;right:22px;display:flex;gap:8px;z-index:5}
+.pg-game-controls button{background:#fff7e1ee;font-size:12px;padding:9px 13px;
+  min-height:38px;backdrop-filter:blur(8px);box-shadow:0 3px 0 #b1be91}
+.pg-game-controls button[aria-pressed=true]{background:#f7e5ae}
+.pg-help{text-align:center;max-width:900px;margin:0 auto;padding:20px 18px 10px;
+  color:#6f8773;font-size:12px;line-height:1.7;font-weight:650}
+.pg-loading{min-height:70dvh;display:grid;place-items:center;color:#2c654a;font:800 20px system-ui;background:#f4f6e9}
+.pg-fallback{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;padding:30px;text-align:center;
+  background:linear-gradient(140deg,#d1e9c8,#fff4d3)}
+.pg-fallback p{max-width:340px;font-size:14px}
+.pg-dpad,.pg-mobile-nav{display:none}
+.pg-notice{position:fixed;z-index:60;bottom:24px;left:50%;transform:translateX(-50%);
+  background:#fff8de;border:2px solid #d38a63;border-radius:14px;padding:12px 17px;
+  max-width:90vw;font-weight:750;box-shadow:0 8px 24px #244b3933}
+.pg-notice button{margin-left:20px;border:0;background:transparent;color:inherit;cursor:pointer}
+.pg-root :is(button,a):focus-visible{outline:3px solid #e98c54;outline-offset:4px}
+@media(max-width:800px){
+  .pg-root{padding-bottom:calc(91px + env(safe-area-inset-bottom))}
+  .pg-header{padding:12px 14px 10px;gap:8px;flex-wrap:wrap}
+  .pg-brand{gap:11px}
+  .pg-mark{width:45px;height:45px;border-radius:15px;font-size:24px;box-shadow:0 3px 0 #e7d1ad}
+  .pg-kicker{font-size:9px;letter-spacing:.1em}
+  .pg-header h1{font-size:28px;margin:1px 0 2px}
+  .pg-header p{font-size:10px;max-width:255px}
+  .pg-heading-actions{position:absolute;right:14px;top:16px}
+  .pg-heading-actions button{display:none}
+  .pg-guests{padding:7px 9px;font-size:10px;background:#fff9e6e8}
+  .pg-status{max-width:calc(100% - 24px);margin:1px auto 9px;padding:7px 10px;font-size:10px}
+  .pg-stage-shell{width:100%;padding:0;border:0;border-radius:0;margin:0;box-shadow:none;background:transparent}
+  .pg-stage{height:min(70dvh,680px);min-height:350px;border-radius:0;border:0;border-top:3px solid #5b936e;
+    border-bottom:3px solid #5b936e}
+  .pg-game-controls{top:10px;right:10px;gap:5px}
+  .pg-game-controls button{padding:8px 10px;font-size:11px;min-height:35px;border-radius:10px}
+  .pg-game-controls button:nth-child(n+2){display:none}
+  .pg-dpad{position:absolute;z-index:5;bottom:14px;left:12px;display:flex;
+    flex-direction:column;gap:4px;align-items:center;touch-action:none}
+  .pg-dpad>div{display:flex;gap:5px}
+  .pg-dpad button{display:grid;place-items:center;width:47px;height:45px;
+    border:2px solid #619273;border-bottom:4px solid #3c6d52;background:#fff9dfe8;
+    color:#2a6548;font-size:18px;font-weight:900;border-radius:12px;
+    box-shadow:0 4px 8px #14392727;touch-action:none;user-select:none}
+  .pg-dpad button:active{background:#fbd592}
+  .pg-help{font-size:10px;padding:10px 12px 13px;line-height:1.55}
+  .pg-mobile-nav{position:fixed;bottom:0;left:0;right:0;z-index:50;
+    display:flex;gap:7px;background:#f9f4e7f5;border-top:1px solid #c6d8ba;
+    box-shadow:0 -5px 22px #36543d1c;backdrop-filter:blur(14px);
+    padding:10px 10px calc(10px + env(safe-area-inset-bottom))}
+  .pg-mobile-nav button{flex:1;min-width:0;min-height:48px;border:1px solid #8ab394;
+    background:#fff8dc;color:#28593e;border-radius:14px;font-weight:850;font-size:12px;
+    box-shadow:0 3px 0 #c2d2b5}
+  .pg-mobile-nav button:last-child{background:#317454;border-color:#245d45;color:#fff9dd;
+    box-shadow:0 3px 0 #204c3a}
+  .pg-notice{bottom:calc(88px + env(safe-area-inset-bottom))}
+}
+@media(max-width:400px){
+  .pg-brand{gap:7px}
+  .pg-mark{width:39px;height:39px;font-size:21px}
+  .pg-header h1{font-size:25px}
+  .pg-header p{max-width:210px}
+  .pg-guests{font-size:9px;padding:6px 7px}
+  .pg-stage{min-height:300px}
+  .pg-dpad button{width:43px;height:42px}
+}
+@media(max-height:500px) and (orientation:landscape){
+  .pg-stage{height:calc(100dvh - 120px);min-height:235px}
+  .pg-dpad{bottom:8px}
+  .pg-root .ve-menu-dialog{height:98dvh;max-height:98dvh}
+}
+@media(prefers-reduced-motion:reduce){
+  .pg-root *{scroll-behavior:auto!important;transition:none!important}
+}
+/* Accessible commerce overlay retained from the existing checkout flow. */
+@media(max-width:800px){
+  .pg-root .ve-menu-overlay{align-items:flex-end;padding:0;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+  .pg-root .ve-menu-dialog{width:100%;height:min(88dvh,790px);
+    max-height:calc(100dvh - env(safe-area-inset-top) - 8px);
+    border-radius:22px 22px 0 0;border-bottom:0;padding-bottom:env(safe-area-inset-bottom)}
+  .pg-root .ve-menu-header{padding:12px 18px}
+  .pg-root .ve-menu-brand h2{font-size:21px}
+}
+
+/* User reference is a 3:2 illustration, not the previous 16:9 480x270 mockup.
+   Cap desktop stage width by available viewport height: no cropped roof/tables. */
+@media (min-width:801px) {
+  .pg-stage-shell{width:min(calc(100% - 32px),1324px,calc((100dvh - 174px)*1.5));}
+  .pg-stage{height:auto;aspect-ratio:3/2;min-height:0;max-height:none;}
+}
+.pg-stage[data-art-mode="reference"]{
+  background:#7cc7da;
+  image-rendering:auto;
+}
+.pg-stage[data-art-mode="reference"] canvas{image-rendering:auto;}
+.pg-stage[data-art-mode="fallback"] canvas{image-rendering:pixelated;}
+@media (max-width:800px){
+  .pg-stage[data-art-mode="reference"]{height:min(69dvh,620px);aspect-ratio:auto;}
+}
+/* Scene fallback is deliberate: the app never silently fakes reference fidelity. */
