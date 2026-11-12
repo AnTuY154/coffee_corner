@@ -7,7 +7,7 @@
 import { Assets, Container, Graphics, Sprite, type Texture } from "pixi.js";
 import { SCENE_WIDTH, SCENE_HEIGHT } from "@/shared/garden/model";
 import { drawGuest, drawStaff, drawDog, drawCat } from "./art";
-import { PET_ROUTES, petRouteAt } from "./pet-motion";
+import { PET_ROUTES, petRouteAt, depthScaleAt } from "./pet-motion";
 
 export const REFERENCE_LAYERS = [
   {name:"roof-sign",file:"roof-sign.webp",bbox:[562,113,1045,226],z:5},
@@ -49,6 +49,14 @@ export function buildReferenceScene(assets:ReferenceAssets){
   const image=new Sprite(assets.base);image.width=SCENE_WIDTH;image.height=SCENE_HEIGHT;image.zIndex=-1000;
   world.addChild(image);
   const unit=SCENE_WIDTH/1536;
+  // Background already includes umbrellas, tables and chairs; an entire PNG
+  // duplicated in front of a guest can cover the head. Only the lower chair
+  // and tabletop region should be permitted to occlude a passing visitor.
+  // Cutoff values use source-image pixels, not the 480x320 world.
+  const tableForegroundY:Record<string,number>={
+    "table-left":700,"table-center":738,"table-right":700,
+    "table-back-left":826,"table-back-right":826
+  };
   for(const layer of REFERENCE_LAYERS){
     const tex=assets.parts.get(layer.name);if(!tex)continue;
     const item=new Sprite(tex);
@@ -56,6 +64,13 @@ export function buildReferenceScene(assets:ReferenceAssets){
     item.position.set(x0*unit,y0*unit);
     item.width=(x1-x0)*unit;item.height=(y1-y0)*unit;
     item.zIndex=layer.z;item.label="pixel:"+layer.name;
+    const cutoff=tableForegroundY[layer.name];
+    if(cutoff!==undefined){
+      const lowerMask=new Graphics().rect(x0*unit,cutoff*unit,(x1-x0)*unit,(y1-cutoff)*unit).fill(0xffffff);
+      lowerMask.label="occluder:"+layer.name;
+      world.addChild(lowerMask);
+      item.mask=lowerMask;
+    }
     world.addChild(item);
   }
   // All character and table layers share a single depth-sorted Pixi world.
@@ -74,7 +89,9 @@ export function buildReferenceScene(assets:ReferenceAssets){
     const gingerPose=petRouteAt(time,PET_ROUTES.ginger,7,13);
     const grayPose=petRouteAt(time,PET_ROUTES.gray,6,37);
     for(const [sprite,pose] of [[dog,dogPose],[cat,gingerPose],[grayCat,grayPose]] as const){
-      sprite.position.set(pose.x,pose.y);sprite.scale.x=pose.direction;
+      sprite.position.set(pose.x,pose.y);
+      const scale=depthScaleAt(pose.y);
+      sprite.scale.set(pose.direction*scale,scale);
       // User-facing animals stay visible when crossing transparent furniture overlays.
       sprite.zIndex=320+Math.round(pose.y);
     }
