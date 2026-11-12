@@ -1,0 +1,98 @@
+[
+  {
+    "who": "employee",
+    "action": "idle",
+    "index": 0,
+    "pose": "standing relaxed with open eyes, both hands loosely at waist",
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-06ed42b8-3536-481a-819b-95a815a00559.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-06ed42b8-3536-481a-819b-95a815a00559.png"
+  },
+  {
+    "who": "employee",
+    "action": "idle",
+    "index": 1,
+    "pose": "same standing pose, eyelids half closed beginning a blink",
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-8a6f95d1-52a7-489a-86a4-f4dd32e3b551.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-8a6f95d1-52a7-489a-86a4-f4dd32e3b551.png"
+  },
+  {
+    "who": "employee",
+    "action": "idle",
+    "index": 2,
+    "pose": "same standing pose, eyes fully closed in blink",
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-5cac9342-2d2c-496d-bb09-f5ed121270a6.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-5cac9342-2d2c-496d-bb09-f5ed121270a6.png"
+  },
+  {
+    "who": "employee",
+    "action": "idle",
+    "index": 3,
+    "pose": "same standing pose, eyes opening, slight breath in chest",
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-2d0a787d-3fcb-4748-81cb-32f5596e76b9.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-2d0a787d-3fcb-4748-81cb-32f5596e76b9.png"
+  },
+  {
+    "who": "employee",
+    "action": "idle",
+    "index": 4,
+    "pose": "same standing pose, head tilted subtly right and gentle smile",
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-68d5cdc9-a9d3-4c33-b25c-46d69bb605f8.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-68d5cdc9-a9d3-4c33-b25c-46d69bb605f8.png"
+  },
+  {
+    "who": "employee",
+    "action": "idle",
+    "index": 5,
+    "pose": "same standing pose, head returning upright and hands relaxed",
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-85349584-a2aa-463e-82c6-c65b05b186e2.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-85349584-a2aa-463e-82c6-c65b05b186e2.png"
+  },
+  {
+    "who": "employee",
+    "action": "wave",
+    "index": 0,
+    "pose": "standing front three-quarter view, right hand at shoulder beginning greeting",
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-d806f293-86bc-40ce-a26d-306340bb74d6.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-d806f293-86bc-40ce-a26d-306340bb74d6.png"
+  },
+  {
+    "who": "employee",
+    "action": "wave",
+    "index": 1,
+    "pose": "right elbow bent, open palm raised beside face",
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-65656bdd-ba60-4874-994b-17dac4a4460f.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-65656bdd-ba60-4874-994b-17dac4a4460f.png"
+  },
+  {
+    "who": "employee",
+    "action": "wave",
+    "index": 2,
+    "pose": "open palm waving slightly outward beside head",
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-d90bb989-326b-4d40-b195-9fc29aeb638a.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-d90bb989-326b-4d40-b195-9fc29aeb638a.png"
+  },
+  {
+    "who": "employee",
+    "action": "wave",
+    "index": 3,
+    "pose": "open palm at highest outward wave position",
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-fb73621a-349b-4eaf-87f1-a8a9d28fea68.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-fb73621a-349b-4eaf-87f1-a8a9d28fea68.png"
+  },
+  {
+    "who": "employee",
+    "action": "wave",
+    "index": 4,
+    "pose": "open palm waving back inward beside head",
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-e4dc0636-ea16-40c6-b8f7-ef66f0a9b465.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-e4dc0636-ea16-40c6-b8f7-ef66f0a9b465.png"
+  },
+  {
+    "who": "employee",
+    "action": "wave",
+    "index": 5,
+    "pose": "open palm lowering toward shoulder to finish greeting",
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-a7b01689-ef88-434d-a715-a89d30c2c22d.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-a7b01689-ef88-434d-a715-a89d30c2c22d.png"
+  }
+]

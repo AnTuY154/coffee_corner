@@ -1,0 +1,130 @@
+[
+  {
+    "who": "employee",
+    "action": "idle",
+    "count": 6,
+    "cols": 3,
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-13e9f704-e0c1-45a5-80e4-71f771ea509c.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-13e9f704-e0c1-45a5-80e4-71f771ea509c.png"
+  },
+  {
+    "who": "employee",
+    "action": "wave",
+    "count": 6,
+    "cols": 3,
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-3b4a1838-41f2-4872-9577-498b6c81bb55.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-3b4a1838-41f2-4872-9577-498b6c81bb55.png"
+  },
+  {
+    "who": "employee",
+    "action": "talk",
+    "count": 6,
+    "cols": 3,
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-f166f68a-559b-40e7-83f5-f7a1bea054fa.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-f166f68a-559b-40e7-83f5-f7a1bea054fa.png"
+  },
+  {
+    "who": "employee",
+    "action": "prepare",
+    "count": 6,
+    "cols": 3,
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-4a521979-f01f-405a-b296-21a63d404b94.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-4a521979-f01f-405a-b296-21a63d404b94.png"
+  },
+  {
+    "who": "employee",
+    "action": "pet_dog",
+    "count": 8,
+    "cols": 4,
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-43c225f6-755f-4e39-9c7d-8f8275beb7ca.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-43c225f6-755f-4e39-9c7d-8f8275beb7ca.png"
+  },
+  {
+    "who": "employee",
+    "action": "pet_cat",
+    "count": 8,
+    "cols": 4,
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-d8f781ca-7577-4db0-ab34-4cdcdcece5ad.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-d8f781ca-7577-4db0-ab34-4cdcdcece5ad.png"
+  },
+  {
+    "who": "dog",
+    "action": "idle",
+    "count": 6,
+    "cols": 3,
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-d4ea1e8f-5b7e-42bd-8265-cc38cf3c12e7.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-d4ea1e8f-5b7e-42bd-8265-cc38cf3c12e7.png"
+  },
+  {
+    "who": "dog",
+    "action": "happy",
+    "count": 8,
+    "cols": 4,
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-c1638fe9-1993-460c-8d5b-b5324a038339.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-c1638fe9-1993-460c-8d5b-b5324a038339.png"
+  },
+  {
+    "who": "dog",
+    "action": "jump",
+    "count": 8,
+    "cols": 4,
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-8fc13a8e-c7ec-4c42-9d8c-0584bb7a4aae.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-8fc13a8e-c7ec-4c42-9d8c-0584bb7a4aae.png"
+  },
+  {
+    "who": "dog",
+    "action": "nap",
+    "count": 6,
+    "cols": 3,
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-51d03fed-a9d9-4c08-90dc-419fb969f2f5.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-51d03fed-a9d9-4c08-90dc-419fb969f2f5.png"
+  },
+  {
+    "who": "cat",
+    "action": "idle",
+    "count": 6,
+    "cols": 3,
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-c4eebdf2-fd22-445e-b16c-4fe807cb410d.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-c4eebdf2-fd22-445e-b16c-4fe807cb410d.png"
+  },
+  {
+    "who": "cat",
+    "action": "run",
+    "count": 8,
+    "cols": 4,
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-cad79284-c68c-4473-a969-6d28363c77d3.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-cad79284-c68c-4473-a969-6d28363c77d3.png"
+  },
+  {
+    "who": "cat",
+    "action": "happy",
+    "count": 8,
+    "cols": 4,
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-4f88397c-16fe-4850-825f-496b2b02c9be.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-200f31ca-d31a-4f05-bf8d-dee29cc86e85.png"
+  },
+  {
+    "who": "cat",
+    "action": "jump",
+    "count": 8,
+    "cols": 4,
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-0d53a871-7629-4ef0-b47e-c5ba5e4295b3.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-0d53a871-7629-4ef0-b47e-c5ba5e4295b3.png"
+  },
+  {
+    "who": "cat",
+    "action": "nap",
+    "count": 6,
+    "cols": 3,
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-a1e7d42c-1adf-4187-bae4-a65535fa6157.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-a1e7d42c-1adf-4187-bae4-a65535fa6157.png"
+  },
+  {
+    "who": "cat",
+    "action": "groom",
+    "count": 8,
+    "cols": 4,
+    "hint": "Generated images are saved to C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff as C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-09d36a4c-6e30-4d44-92b2-6b1017283440.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
+    "path": "C:\\Users\\TuanDTA\\.codex\\generated_images\\01a18711-1e8d-7032-9b14-1215019852ff\\exec-09d36a4c-6e30-4d44-92b2-6b1017283440.png"
+  }
+]
