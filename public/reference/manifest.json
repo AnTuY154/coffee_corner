@@ -1,0 +1,290 @@
+{
+  "world": {
+    "width": 480,
+    "height": 320
+  },
+  "source": {
+    "size": [
+      1536,
+      1024
+    ],
+    "attribution": "User-supplied Fresh Juice pixel art reference"
+  },
+  "scene": "scene.webp",
+  "layers": {
+    "roof-sign": {
+      "bbox": [
+        562,
+        113,
+        1045,
+        226
+      ],
+      "z": 8,
+      "interactive": false,
+      "file": "roof-sign.webp",
+      "size": [
+        483,
+        113
+      ],
+      "anchor": [
+        175.625,
+        35.3125
+      ]
+    },
+    "menu-board": {
+      "bbox": [
+        965,
+        292,
+        1222,
+        467
+      ],
+      "z": 31,
+      "interactive": true,
+      "file": "menu-board.webp",
+      "size": [
+        257,
+        175
+      ],
+      "anchor": [
+        301.5625,
+        91.25
+      ]
+    },
+    "counter-front": {
+      "bbox": [
+        633,
+        526,
+        1236,
+        690
+      ],
+      "z": 207,
+      "interactive": true,
+      "file": "counter-front.webp",
+      "size": [
+        603,
+        164
+      ],
+      "anchor": [
+        197.8125,
+        164.375
+      ]
+    },
+    "fruit-display": {
+      "bbox": [
+        1017,
+        456,
+        1225,
+        562
+      ],
+      "z": 181,
+      "interactive": true,
+      "file": "fruit-display.webp",
+      "size": [
+        208,
+        106
+      ],
+      "anchor": [
+        317.8125,
+        142.5
+      ]
+    },
+    "table-left": {
+      "bbox": [
+        8,
+        544,
+        369,
+        830
+      ],
+      "z": 235,
+      "interactive": false,
+      "file": "table-left.webp",
+      "size": [
+        361,
+        286
+      ],
+      "anchor": [
+        2.5,
+        170.0
+      ]
+    },
+    "table-center": {
+      "bbox": [
+        584,
+        581,
+        912,
+        866
+      ],
+      "z": 253,
+      "interactive": false,
+      "file": "table-center.webp",
+      "size": [
+        328,
+        285
+      ],
+      "anchor": [
+        182.5,
+        181.5625
+      ]
+    },
+    "table-right": {
+      "bbox": [
+        1180,
+        542,
+        1535,
+        830
+      ],
+      "z": 236,
+      "interactive": false,
+      "file": "table-right.webp",
+      "size": [
+        355,
+        288
+      ],
+      "anchor": [
+        368.75,
+        169.375
+      ]
+    },
+    "table-back-left": {
+      "bbox": [
+        270,
+        714,
+        595,
+        962
+      ],
+      "z": 284,
+      "interactive": false,
+      "file": "table-back-left.webp",
+      "size": [
+        325,
+        248
+      ],
+      "anchor": [
+        84.375,
+        223.125
+      ]
+    },
+    "table-back-right": {
+      "bbox": [
+        902,
+        713,
+        1249,
+        966
+      ],
+      "z": 285,
+      "interactive": false,
+      "file": "table-back-right.webp",
+      "size": [
+        347,
+        253
+      ],
+      "anchor": [
+        281.875,
+        222.8125
+      ]
+    },
+    "canopy": {
+      "bbox": [
+        181,
+        0,
+        1377,
+        300
+      ],
+      "z": 4,
+      "interactive": false,
+      "file": "canopy.webp",
+      "size": [
+        1196,
+        300
+      ],
+      "anchor": [
+        56.5625,
+        0.0
+      ]
+    },
+    "tree-canopy-left": {
+      "bbox": [
+        0,
+        0,
+        605,
+        480
+      ],
+      "z": 30,
+      "interactive": false,
+      "file": "tree-canopy-left.webp",
+      "size": [
+        605,
+        480
+      ],
+      "anchor": [
+        0.0,
+        0.0
+      ]
+    },
+    "tree-canopy-right": {
+      "bbox": [
+        1120,
+        65,
+        1535,
+        618
+      ],
+      "z": 30,
+      "interactive": false,
+      "file": "tree-canopy-right.webp",
+      "size": [
+        415,
+        553
+      ],
+      "anchor": [
+        350.0,
+        20.3125
+      ]
+    }
+  },
+  "hotspots": [
+    {
+      "id": "menu-board",
+      "label": "Thực đơn nước ép",
+      "action": "menu",
+      "rect": [
+        303,
+        93,
+        78,
+        53
+      ]
+    },
+    {
+      "id": "fruit-case",
+      "label": "Tủ trái cây tươi",
+      "action": "fruit",
+      "rect": [
+        320,
+        144,
+        61,
+        34
+      ]
+    },
+    {
+      "id": "daily-board",
+      "label": "Gợi ý hôm nay",
+      "action": "daily",
+      "rect": [
+        273,
+        174,
+        58,
+        17
+      ]
+    },
+    {
+      "id": "counter",
+      "label": "Gọi món tại quầy",
+      "action": "counter",
+      "rect": [
+        203,
+        164,
+        182,
+        47
+      ]
+    }
+  ]
+}

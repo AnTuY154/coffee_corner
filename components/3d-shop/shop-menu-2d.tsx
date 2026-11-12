@@ -6,17 +6,19 @@ import { InSceneCheckout } from "./in-scene-checkout";
 import { currency, currentSeason, products, seasonOrder, seasons, type SeasonKey } from "@/data/catalog";
 
 type Filter = SeasonKey | "all";
-type Props = { onClose: () => void; initialView?: "browse" | "cart" };
+type MenuCategory = "all" | "fruit" | "daily";
+type Props = { onClose: () => void; initialView?: "browse" | "cart"; initialCategory?: MenuCategory };
 const normalise = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").toLowerCase();
 
 /** The 3D counter opens this accessible 2D commerce layer; the shop behind remains WebGL. */
-export function ShopMenu2D({ onClose, initialView = "browse" }: Props) {
+export function ShopMenu2D({ onClose, initialView = "browse", initialCategory = "all" }: Props) {
   const [season, setSeason] = useState<Filter>(() => currentSeason(new Date().getMonth() + 1));
   const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<MenuCategory>(initialCategory);
   const [cartVisible, setCartVisible] = useState(initialView === "cart");
   const [view, setView] = useState<"browse"|"checkout">("browse");
   const [recent, setRecent] = useState<string | null>(null);
-  const { lines, add, update, remove, count, subtotal } = useCart();
+  const { lines, add, update, remove, count, subtotal, migrationNotice } = useCart();
   const panel = useRef<HTMLElement>(null);
   const firstFocus = useRef<HTMLInputElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
@@ -43,7 +45,7 @@ export function ShopMenu2D({ onClose, initialView = "browse" }: Props) {
   }, [onClose]);
 
   const text = normalise(query.trim());
-  const matches = products.filter(p => (season === "all" || p.season === season)
+  const matches = products.filter(p => (category === "fruit" ? p.category === "fresh-fruit" : category === "daily" ? p.badge === "Bán chạy" : p.category !== "fresh-fruit" && (season === "all" || p.season === season))
     && (!text || normalise([p.name, p.tagline, p.flavour, ...p.ingredients.map(x => x.name)].join(" ")).includes(text)));
   const checkout = () => { if (count) { setCartVisible(false); setView("checkout"); } };
 
@@ -59,7 +61,7 @@ export function ShopMenu2D({ onClose, initialView = "browse" }: Props) {
         <button className="ve-menu-close" type="button" onClick={onClose} aria-label="Đóng thực đơn, quay lại cửa hàng">✕</button>
       </header>
       {view==="checkout" ? <InSceneCheckout onBack={()=>setView("browse")} onCompleted={()=>setCartVisible(false)} onReturnToShop={onClose}/> : <div className="ve-menu-body">
-        <section className="ve-menu-catalogue" aria-label="Danh sách nước ép">
+        <section className="ve-menu-catalogue" aria-label="Danh sách nước ép và trái cây">
           <div className="ve-menu-intro">
             <div><p className="ve-menu-kicker">MÙA NÀO THỨC ẤY</p><p id="ve-menu-description">Chọn nước ép tươi, xem nguyên liệu và thêm vào giỏ. Bạn vẫn đang ở trong cửa hàng minh hoạ 2D.</p></div>
             <label className="ve-menu-search">
@@ -69,12 +71,14 @@ export function ShopMenu2D({ onClose, initialView = "browse" }: Props) {
             </label>
           </div>
           <div className="ve-menu-seasons" role="group" aria-label="Lọc theo mùa">
-            <button type="button" aria-pressed={season === "all"} className={season === "all" ? "active" : ""} onClick={() => setSeason("all")}>Tất cả <small>24 món</small></button>
-            {seasonOrder.map(key => <button type="button" aria-pressed={season === key} className={season === key ? "active" : ""} key={key} onClick={() => setSeason(key)}>
+            <button type="button" aria-pressed={category === "all" && season === "all"} className={category === "all" && season === "all" ? "active" : ""} onClick={() => {setCategory("all");setSeason("all");}}>🥤 Nước ép <small>24 món</small></button>
+            <button type="button" aria-pressed={category === "fruit"} className={category === "fruit" ? "active" : ""} onClick={() => setCategory("fruit")}>🍊 Trái cây tươi <small>theo gói</small></button>
+            <button type="button" aria-pressed={category === "daily"} className={category === "daily" ? "active" : ""} onClick={() => setCategory("daily")}>✨ Gợi ý hôm nay</button>
+            {seasonOrder.map(key => <button type="button" aria-pressed={category === "all" && season === key} className={category === "all" && season === key ? "active" : ""} key={key} onClick={() => {setCategory("all");setSeason(key);}}>
               <span aria-hidden="true">{seasons[key].emoji}</span> {seasons[key].label}<small>{seasons[key].months}</small>
             </button>)}
           </div>
-          <div className="ve-menu-section-title"><h3>{season === "all" ? "Hương vị bốn mùa" : seasons[season].label}</h3><span>{matches.length} thức uống</span></div>
+          <div className="ve-menu-section-title"><h3>{category === "fruit" ? "Trái cây tươi theo gói" : category === "daily" ? "Gợi ý hôm nay" : season === "all" ? "Hương vị bốn mùa" : seasons[season].label}</h3><span>{matches.length} sản phẩm</span></div>
           <div className="ve-menu-grid">
             {matches.map(product => <article className="ve-menu-card" key={product.id}>
               <div className="ve-menu-product-art" style={{background:`linear-gradient(145deg, ${product.colors[1]}, #fff9e9)`}}>
@@ -82,7 +86,7 @@ export function ShopMenu2D({ onClose, initialView = "browse" }: Props) {
                 {product.badge && <span className="ve-menu-product-badge">{product.badge}</span>}
               </div>
               <div className="ve-menu-card-details">
-                <span className="ve-menu-product-meta">{product.method} · {product.tagline}</span>
+                <span className="ve-menu-product-meta">{product.category === "fresh-fruit" ? `${product.gramsPerPack} g/gói` : product.method} · {product.tagline}</span>
                 <h4>{product.name}</h4>
                 <p>{product.flavour}</p>
                 <details className="ve-menu-ingredients"><summary>Nguyên liệu</summary><ul>{product.ingredients.map(item => <li key={item.name}>{item.name}: {item.amount}</li>)}</ul></details>
@@ -101,13 +105,14 @@ export function ShopMenu2D({ onClose, initialView = "browse" }: Props) {
           <div className="ve-menu-basket-top"><div><p className="ve-menu-kicker">GÓC NHỎ CỦA BẠN</p><h3>Giỏ hàng <span>({count})</span></h3></div>
             <button type="button" className="ve-menu-mobile-close" onClick={() => setCartVisible(false)} aria-label="Thu gọn giỏ hàng">✕</button>
           </div>
+          {migrationNotice && <p role="status" className="ve-menu-empty">{migrationNotice}</p>}
           <div className="ve-menu-basket-lines">
             {lines.length === 0 ? <div className="ve-menu-empty-basket"><span aria-hidden="true">🍊</span><p>Giỏ hàng đang trống</p><small>Thêm một chút vitamin tươi mát nhé!</small></div>
             : lines.map(line => {
               const product = products.find(p => p.id === line.id);
               if (!product) return null;
               return <div className="ve-menu-basket-line" key={line.id}>
-                <div><strong>{product.name}</strong><small>{currency(product.price)}</small></div>
+                <div><strong>{product.name}</strong><small>{product.gramsPerPack ? `${product.gramsPerPack * line.quantity} g · ` : ""}{currency(product.price)}</small></div>
                 <div className="ve-menu-qty">
                   <button type="button" aria-label={`Giảm ${product.name}`} onClick={() => update(line.id, line.quantity - 1)}>−</button>
                   <span aria-live="polite">{line.quantity}</span>
