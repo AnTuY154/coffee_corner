@@ -50,5 +50,9 @@ jobs:
           git add qa-captures/
           if ! git diff --cached --quiet; then
             git commit -m "test(pixel-shop): capture desktop and mobile browser screenshots [skip ci]"
-            git push origin HEAD:${{ github.event.pull_request.head.ref }}
+            # PR can receive other commits while browsers are capturing.
+            # Rebase only the screenshot commit on the current branch head.
+            git fetch origin "${{ github.event.pull_request.head.ref }}"
+            git rebase FETCH_HEAD
+            git push origin HEAD:"${{ github.event.pull_request.head.ref }}"
           fi
