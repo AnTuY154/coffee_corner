@@ -391,7 +391,7 @@ export function drawGuest(g: Graphics, actor: Actor, tick: number, seated: boole
   pixel(g,1,4-walk,5,2,0x423c44);
   if(actor.facing==="up")pixel(g,-6,-20+sit+hop,12,9,hair);
 }
-function staff(g: Graphics, wave: boolean, pet: boolean, step: number) {
+export function drawStaff(g: Graphics, wave: boolean, pet: boolean, step: number) {
   g.clear();
   const bob=!pet&&step%4===0?1:0;
   const top=pet?-22:-33+bob;
@@ -431,7 +431,7 @@ function staff(g: Graphics, wave: boolean, pet: boolean, step: number) {
     pixel(g,1,4,7,2,0x414144);
   }
 }
-function dog(g: Graphics, tick: number) {
+export function drawDog(g: Graphics, tick: number) {
   g.clear();
   const wag=Math.floor(tick*6)%3;
   pixel(g,-7,4,19,2,0x659b74);
@@ -450,7 +450,7 @@ function dog(g: Graphics, tick: number) {
   pixel(g,4,5,5,2,0x775d59);
   pixel(g,-3,-14,4,4,0xffebbf);
 }
-function cat(g: Graphics, gray: boolean, tick: number) {
+export function drawCat(g: Graphics, gray: boolean, tick: number) {
   g.clear();
   const fur=gray?0x9c9baa:0xf5bd7a;
   const shade=gray?0x6d7885:0xc68858;
@@ -509,11 +509,11 @@ export function buildScene(kenney: KenneyAtlas | null = null) {
     else if(cycle<18) {employee.x=187+(cycle-15)*34;employee.y=188+(cycle-15)*5;employee.zIndex=211;}
     else if(cycle<21) {employee.x=289-(cycle-18)*15;employee.y=203-(cycle-18)*16;employee.zIndex=201;}
     else {employee.x=241;employee.y=158;employee.zIndex=158;}
-    staff(employee, !outside && step%7<3, cycle>=16 && cycle<18,step);
+    drawStaff(employee, !outside && step%7<3, cycle>=16 && cycle<18,step);
     animals[2].x=296+(reducedMotion?0:Math.sin(tick/2)*10);
-    dog(animals[2],step);
-    cat(animals[0],true,step);
-    cat(animals[1],false,step);
+    drawDog(animals[2],step);
+    drawCat(animals[0],true,step);
+    drawCat(animals[1],false,step);
   }
   update(0,false);
   return { world, actors, update };
