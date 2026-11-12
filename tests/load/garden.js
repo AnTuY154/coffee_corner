@@ -44,7 +44,7 @@ export default function() {
       const every=elapsed>=20*60_000?500:2000; // 10 minutes: all 20, 2 commands/s.
       if(elapsed - (socket.__lastMove||0) < every)return;
       socket.__lastMove=elapsed;
-      const target = seq%2?{x:220,y:244}:{x:260,y:244};
+      const target = seq%2?{x:220,y:297}:{x:260,y:297};
       ++seq;pending.set(seq,Date.now());
       socket.send(JSON.stringify({type:"goTo",seq,target}));
     },250);
