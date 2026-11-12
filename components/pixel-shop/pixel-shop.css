@@ -38,7 +38,7 @@
 .pg-heading-actions button:last-child:hover{background:#2c6049}
 .pg-guests{font:800 12px ui-monospace,Consolas,monospace;border-radius:100px;
   padding:12px 16px;background:#e6f4d7;border:1px solid #b2d4a7;color:#397053;white-space:nowrap}
-.pg-status{max-width:min(100% - 44px,1292px);margin:0 auto 9px;padding:8px 14px;
+.pg-status{max-width:min(calc(100% - 44px),1292px);margin:0 auto 9px;padding:8px 14px;
   text-align:center;font-size:12px;font-weight:750;letter-spacing:.015em;
   color:#4d765d;background:#e5f1de;border:1px solid #d4e5ca;border-radius:999px}
 .pg-stage-shell{
