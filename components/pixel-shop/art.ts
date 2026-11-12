@@ -344,54 +344,136 @@ function paintBackdrop(withKenney: boolean) {
   terraceDetails(g);
   return g;
 }
+
 const shirts=[0x5b99a7,0xe6a25e,0x9d73aa,0x5eaa78,0xe17f79,0xc4bc72];
-/** Single actor texture concept: all guests reuse the same pixel drawing routine and palette. */
+/** Compact expressive 24px guests: different hairstyles and outfits, same networking model. */
 export function drawGuest(g: Graphics, actor: Actor, tick: number, seated: boolean) {
   g.clear();
-  const shirt = shirts[actor.shirt % shirts.length];
-  const stride = seated ? 0 : actor.path.length > 1 ? [0,2,0,-2][Math.floor(tick*8)%4] : 0;
-  const y = seated ? 5 : 0;
-  pixel(g,-5,4,10,2,0x557e61); // foot shadow
-  pixel(g,-6,-22+y,12,6,0x5c403b);
-  pixel(g,-5,-19+y,10,7,0xf0c59a);
-  if (actor.facing !== "up") {pixel(g,-3,-16+y,2,2,C.brown);pixel(g,2,-16+y,2,2,C.brown);}
-  pixel(g,-6,-11+y,12,10,shirt);
-  pixel(g,-8,-10+y,3,8,0xf0c59a); pixel(g,5,-10+y,3,8,0xf0c59a);
-  if(seated){pixel(g,-5,-2+y,10,4,C.brown);return;}
-  pixel(g,-5,-1+stride,4,5,0x4b555a); pixel(g,1,-1-stride,4,5,0x4b555a);
-  if(actor.facing==="up")pixel(g,-4,-20+y,8,4,0x593a35);
-  if(actor.facing==="left")pixel(g,-5,-17+y,2,3,0x593a35);
-  if(actor.facing==="right")pixel(g,3,-17+y,2,3,0x593a35);
+  const shirt=shirts[actor.shirt%shirts.length];
+  const hair=[0x533b41,0x704a32,0x292f3b,0xa36a41,0x47362e,0x78583b][actor.shirt%6];
+  const moving=!seated&&actor.path.length>1;
+  const walk=moving ? [0,1,0,-1][Math.floor(tick*7)%4] : 0;
+  const hop=moving ? (Math.floor(tick*8)%2) : 0;
+  const sit=seated?5:0;
+  pixel(g,-7,4,15,2,0x688d72);
+  // Hair, oversized face and sparkling eyes.
+  pixel(g,-7,-27+sit+hop,14,5,hair);
+  pixel(g,-9,-23+sit+hop,4,12,hair);
+  pixel(g,5,-23+sit+hop,4,12,hair);
+  pixel(g,-6,-22+sit+hop,12,11,0xf4c9a1);
+  pixel(g,-6,-17+sit+hop,2,4,0xe6a67e);
+  pixel(g,4,-17+sit+hop,2,4,0xe6a67e);
+  pixel(g,-4,-24+sit+hop,7,2,hair);
+  if(actor.facing!=="up"){
+    pixel(g,-4,-17+sit+hop,2,3,0x34413d);
+    pixel(g,2,-17+sit+hop,2,3,0x34413d);
+    pixel(g,-4,-18+sit+hop,1,1,0xffffff);
+    pixel(g,2,-18+sit+hop,1,1,0xffffff);
+    pixel(g,-6,-14+sit+hop,2,2,0xea8f85);
+    pixel(g,5,-14+sit+hop,2,2,0xea8f85);
+    pixel(g,-1,-13+sit+hop,3,1,0xa86b65);
+  }
+  // Tunic with sleeves and a small satchel.
+  pixel(g,-7,-11+sit+hop,14,11,shirt);
+  pixel(g,-7,-10+sit+hop,14,2,0xffffff);
+  pixel(g,-9,-10+sit+hop,3,8,0xf4c9a1);
+  pixel(g,7,-10+sit+hop,3,8,0xf4c9a1);
+  pixel(g,-2,-10+sit+hop,2,7,0xe8cfaf);
+  pixel(g,5,-7+sit+hop,4,5,0x885746);
+  pixel(g,6,-6+sit+hop,2,3,0xd5af76);
+  if(seated){
+    pixel(g,-6,1+sit,12,3,0x654e48);
+    return;
+  }
+  pixel(g,-5,-1+walk,4,6,0x536176);
+  pixel(g,1,-1-walk,4,6,0x536176);
+  pixel(g,-6,4+walk,5,2,0x423c44);
+  pixel(g,1,4-walk,5,2,0x423c44);
+  if(actor.facing==="up")pixel(g,-6,-20+sit+hop,12,9,hair);
 }
 function staff(g: Graphics, wave: boolean, pet: boolean, step: number) {
   g.clear();
-  const h=pet?14:27;
-  pixel(g,-7,-h,14,5,0x583934);
-  pixel(g,-6,-h+4,12,8,0xf3c7a0);
-  pixel(g,-3,-h+8,2,2,C.brown);pixel(g,2,-h+8,2,2,C.brown);
-  pixel(g,-7,-h+12,14,11,0x7ba97b);
-  pixel(g,-3,-h+14,6,8,0x446d54);
-  pixel(g,-9,-h+12,3,9,wave?0xf3c7a0:0x446d54);
-  pixel(g,7,-h+(wave?4:12),3,9,0xf3c7a0);
-  if(!pet){pixel(g,-6,-4,5,5,0x454d52);pixel(g,1,-4+(step%2),5,5,0x454d52);}
+  const bob=!pet&&step%4===0?1:0;
+  const top=pet?-22:-33+bob;
+  // Barista with a warm face, brown bob, mint headband and cream apron.
+  pixel(g,-10,top,20,6,0x493735);
+  pixel(g,-11,top+5,22,10,0x654340);
+  pixel(g,-8,top+5,16,13,0xf5c9a8);
+  pixel(g,-9,top+4,18,3,0x4b734f);
+  pixel(g,-7,top+2,13,3,0x6bad7e);
+  pixel(g,-10,top+12,4,6,0x654340);
+  pixel(g,7,top+12,4,6,0x654340);
+  pixel(g,-5,top+11,2,3,0x3b373d);
+  pixel(g,3,top+11,2,3,0x3b373d);
+  pixel(g,-5,top+11,1,1,0xffffff);
+  pixel(g,3,top+11,1,1,0xffffff);
+  pixel(g,-8,top+15,3,2,0xe89491);
+  pixel(g,6,top+15,3,2,0xe89491);
+  pixel(g,-1,top+17,3,1,0xb66d5c);
+  // Sleeves, uniform and apron.
+  pixel(g,-10,top+19,20,15,0x80b89b);
+  pixel(g,-5,top+20,10,13,0xffedd4);
+  pixel(g,-6,top+22,2,10,0xf2dabf);
+  pixel(g,4,top+22,2,10,0xf2dabf);
+  pixel(g,-3,top+28,6,2,0xc17e5d);
+  pixel(g,-13,top+20,4,12,0x80b89b);
+  pixel(g,9,top+(wave?12:20),4,11,0x80b89b);
+  pixel(g,-13,top+30,4,4,0xf5c9a8);
+  pixel(g,9,top+(wave?10:30),5,5,0xf5c9a8);
+  if(wave){
+    pixel(g,10,top+8,3,7,0xf5c9a8);
+    pixel(g,8,top+5,3,4,0xf5c9a8);
+  }
+  if(!pet){
+    pixel(g,-7,0,6,5,0x4d5c63);
+    pixel(g,1,step%2?1:0,6,5,0x4d5c63);
+    pixel(g,-8,4,7,2,0x414144);
+    pixel(g,1,4,7,2,0x414144);
+  }
 }
 function dog(g: Graphics, tick: number) {
   g.clear();
-  pixel(g,-9,-9,18,11,0xf4d49c);
-  pixel(g,-11,-12,10,9,0xffe0ae);
-  pixel(g,-11,-13,3,5,C.brown);pixel(g,-7,-10,2,2,C.brown);
-  pixel(g,7,-12,5,4,C.cream);
-  pixel(g,-7,1+(tick%2),4,5,C.wood);
-  pixel(g,5,1+(1-tick%2),4,5,C.wood);
+  const wag=Math.floor(tick*6)%3;
+  pixel(g,-7,4,19,2,0x659b74);
+  pixel(g,6,-14+wag,7,4,0xd9a579);
+  pixel(g,10,-19+wag,4,6,0xd9a579);
+  pixel(g,-9,-15,19,14,0xf4cf9e);
+  pixel(g,-12,-12,9,12,0xfce3b2);
+  pixel(g,-13,-18,7,10,0x926348);
+  pixel(g,-2,-19,6,7,0xc18b5b);
+  pixel(g,-9,-9,3,3,0x3e3436);
+  pixel(g,-11,-5,5,2,0x9b625a);
+  pixel(g,-3,-4,4,3,0xfff1cd);
+  pixel(g,-7,0,4,6,0xd29c6f);
+  pixel(g,5,0,4,6,0xd29c6f);
+  pixel(g,-8,5,5,2,0x775d59);
+  pixel(g,4,5,5,2,0x775d59);
+  pixel(g,-3,-14,4,4,0xffebbf);
 }
 function cat(g: Graphics, gray: boolean, tick: number) {
   g.clear();
-  const fur = gray ? 0x9296a2 : 0xeac475;
-  pixel(g,-9,-7,18,8,fur);pixel(g,5,-10,8,7,fur);
-  pixel(g,6,-13,4,4,fur);pixel(g,11,-13,3,4,fur);
-  pixel(g,9,-7,2,2,C.brown);pixel(g,-11,-5,4,3,fur);
-  if(tick%3===0)pixel(g,-13,-7,4,2,fur);
+  const fur=gray?0x9c9baa:0xf5bd7a;
+  const shade=gray?0x6d7885:0xc68858;
+  const blink=Math.floor(tick*2)%11===0;
+  pixel(g,-11,4,22,2,0x6a987d);
+  pixel(g,-10,-10,18,12,fur);
+  pixel(g,6,-14,10,12,fur);
+  pixel(g,6,-20,5,9,shade);
+  pixel(g,12,-20,4,9,shade);
+  pixel(g,7,-17,3,4,0xeeb2ad);
+  pixel(g,12,-17,2,4,0xeeb2ad);
+  pixel(g,8,-10,2,blink?1:3,0x363d44);
+  pixel(g,14,-10,2,blink?1:3,0x363d44);
+  pixel(g,12,-7,2,2,0xe48b8b);
+  pixel(g,11,-5,4,1,0xffefdf);
+  pixel(g,-8,0,4,6,shade);
+  pixel(g,3,0,4,6,shade);
+  pixel(g,-16,-12,7,3,fur);
+  pixel(g,-18,-15+(Math.floor(tick*3)%2),4,5,fur);
+  pixel(g,-7,-8,3,5,shade);
+  pixel(g,-1,-6,3,4,shade);
 }
+
 export function buildScene(kenney: KenneyAtlas | null = null) {
   const world = new Container(); world.sortableChildren = true;
   const backdrop=paintBackdrop(!!kenney); backdrop.zIndex=0; world.addChild(backdrop);
