@@ -52,6 +52,9 @@ jobs:
             git commit -m "test(pixel-shop): capture desktop and mobile browser screenshots [skip ci]"
             # PR can receive other commits while browsers are capturing.
             # Rebase only the screenshot commit on the current branch head.
+            # The Next.js build may modify tracked generated files; discard them
+            # after committing screenshots so the rebase only contains the PNG commit.
+            git reset --hard HEAD
             git fetch origin "${{ github.event.pull_request.head.ref }}"
             git rebase FETCH_HEAD
             git push origin HEAD:"${{ github.event.pull_request.head.ref }}"
