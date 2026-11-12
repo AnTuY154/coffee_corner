@@ -7,7 +7,7 @@ test.describe("Pixel Shop real browser evidence", () => {
     const prefix=mobile?"mobile":"desktop";
     const errors:string[]=[];
     page.on("pageerror",error=>errors.push(error.message));
-    await page.goto("/pixel-shop",{waitUntil:"domcontentloaded"});
+    await page.goto("/pixel",{waitUntil:"domcontentloaded"});
     await expect(page.getByRole("heading",{name:/Vườn É/})).toBeVisible();
     await expect(page.locator(".pg-stage canvas")).toBeVisible({timeout:30000});
     await expect(page.locator(".pg-fallback")).toHaveCount(0);
