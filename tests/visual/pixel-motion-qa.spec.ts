@@ -85,6 +85,8 @@ function verifySmooth(samples:QASnapshot[],label:string){
     expect(b.self?.visible,label+" actor invisible").toBe(true);
     expect(b.self?.renderable,label+" not renderable").toBe(true);
     expect(b.self?.alpha,label+" transparent").toBe(1);
+    const expectedScale=0.83+0.23*Math.max(0,Math.min(1,((b.self?.y??216)-216)/92));
+    expect(Math.abs((b.self?.scale??0)-expectedScale),label+" perspective does not match world Y").toBeLessThan(.03);
     const deltaMs=Math.max(0,b.time-a.time);
     const distance=Math.hypot((b.self?.x??0)-(a.self?.x??0),(b.self?.y??0)-(a.self?.y??0));
     // 32 world pixels/second plus rounding and CI scheduling tolerance.
@@ -125,6 +127,43 @@ test.describe("Pixel 2.5D movement QA agent — real browser",()=>{
       JSON.stringify({project:testInfo.project.name,iteration:testInfo.repeatEachIndex,up:up.map(s=>({t:s.time,x:s.self?.x,y:s.self?.y,visible:s.self?.visible})),
         down:down.map(s=>({t:s.time,x:s.self?.x,y:s.self?.y,visible:s.self?.visible})),frame:{p50,p95,max:Math.max(...frames)},pets:down.at(-1)?.pets},null,2));
     expect(errors,"JavaScript errors must be zero").toEqual([]);
+  });
+  test("walking behind all five tables keeps visible head pixels",async({page},testInfo)=>{
+    test.setTimeout(90000);
+    const errors=await launch(page,testInfo.project.name.startsWith("mobile"));
+    await page.evaluate(()=>window.__VUONE_PIXEL_QA__?.freezeDecorations(true));
+    const hardLocations=[
+      {name:"umbrella-left",x:58,y:220},
+      {name:"umbrella-center",x:235,y:225},
+      {name:"umbrella-right",x:419,y:220},
+      {name:"front-left",x:135,y:256},
+      {name:"front-right",x:336,y:256}
+    ];
+    const checks:{place:string;pixelDifference:number}[]=[];
+    for(const pt of hardLocations){
+      await page.evaluate(({x,y})=>window.__VUONE_PIXEL_QA__?.seedAt(x,y),pt);
+      await expect.poll(async()=>{
+        const a=await snapshot(page);
+        return [a.self?.x,a.self?.y];
+      }).toEqual([pt.x,pt.y]);
+      await page.waitForTimeout(50);
+      const actual=await snapshot(page);
+      expect(actual.self?.visible).toBe(true);
+      expect(actual.self?.renderable).toBe(true);
+      const shown=await screenshotClip(page,pt.x,pt.y);
+      await page.evaluate(()=>window.__VUONE_PIXEL_QA__?.setGuestVisible(false));
+      await page.waitForTimeout(60);
+      const hidden=await screenshotClip(page,pt.x,pt.y);
+      await page.evaluate(()=>window.__VUONE_PIXEL_QA__?.setGuestVisible(true));
+      const count=await pixelDifference(page,shown,hidden);
+      checks.push({place:pt.name,pixelDifference:count});
+      expect(count,pt.name+" walking avatar is completely covered").toBeGreaterThan(15);
+    }
+    await mkdir("qa-captures",{recursive:true});
+    const mobile=testInfo.project.name.startsWith("mobile");
+    await writeFile("qa-captures/walk-occlusion-"+(mobile?"mobile":"desktop")+".json",
+      JSON.stringify(checks,null,2));
+    expect(errors).toEqual([]);
   });
   test("all 15 seats render a real non-occluded avatar and staff stays fixed",async({page},testInfo)=>{
     test.setTimeout(120_000);
