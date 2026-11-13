@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { replyToCustomer, type ShopReply } from "./shop-chat-replies";
 
 type ChatMessage={id:number;from:"customer"|"assistant";text:string;category?:ShopReply["category"]};
-type Props={onOpenMenu:(category:"all"|"fruit"|"daily")=>void};
+type Props={onOpenMenu:(category:"all"|"fruit"|"daily")=>void;seated:boolean};
 
 const welcome:ChatMessage={
   id:0,from:"assistant",
@@ -12,7 +12,7 @@ const welcome:ChatMessage={
 };
 const examples=["Gợi ý món ngon","Trái cây tươi","Giá bao nhiêu?","Cách đặt hàng"];
 
-export function CustomerChat({onOpenMenu}:Props){
+export function CustomerChat({onOpenMenu,seated}:Props){
   const [open,setOpen]=useState(false);
   const [messages,setMessages]=useState<ChatMessage[]>([welcome]);
   const [draft,setDraft]=useState("");
@@ -49,7 +49,7 @@ export function CustomerChat({onOpenMenu}:Props){
   const submit=(event:FormEvent<HTMLFormElement>)=>{event.preventDefault();send(draft);};
 
   return (
-    <aside className="pg-customer-chat" data-testid="customer-chat">
+    <aside className={"pg-customer-chat"+(seated?" is-seated":"")} data-testid="customer-chat">
       {!open?(
         <button
           className="pg-chat-launcher"
