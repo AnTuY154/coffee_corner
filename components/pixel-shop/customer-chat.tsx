@@ -73,7 +73,7 @@ export function CustomerChat({onOpenMenu}:Props){
               <div key={message.id} className={"pg-chat-message "+(message.from==="customer"?"from-customer":"from-assistant")}>
                 <p>{message.text}</p>
                 {message.from==="assistant"&&message.category&&
-                  <button type="button" onClick={()=>onOpenMenu(message.category!)}>
+                  <button type="button" onClick={()=>{setOpen(false);onOpenMenu(message.category!);}}>
                     {message.category==="fruit"?"🍓 Xem trái cây":"🥤 Xem thực đơn"}
                   </button>}
               </div>
