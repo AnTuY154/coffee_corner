@@ -62,20 +62,24 @@ export function StaffDialogue({getScreenAnchor,getGuestPosition,onOpenMenu,menuO
     return ()=>window.clearInterval(timer);
   },[menuOpen,lines.length]);
 
-  useEffect(()=>{
-    if(!voiceOn||!voiceSupported||menuOpen||document.hidden)return;
-    if(announced.current===line.id)return;
-    announced.current=line.id;
+  const speak=useCallback((text:string)=>{
     try{
       window.speechSynthesis.cancel();
-      const speech=new SpeechSynthesisUtterance(line.text);
+      const speech=new SpeechSynthesisUtterance(text);
       speech.lang="vi-VN";speech.rate=0.94;speech.pitch=1.1;speech.volume=0.85;
       const vietnamese=window.speechSynthesis.getVoices()
         .find(v=>v.lang.toLowerCase().startsWith("vi"));
       if(vietnamese)speech.voice=vietnamese;
       window.speechSynthesis.speak(speech);
     }catch{/* Text bubble remains accessible when the device has no voice engine. */}
-  },[voiceOn,voiceSupported,menuOpen,line.id,line.text]);
+  },[]);
+
+  useEffect(()=>{
+    if(!voiceOn||!voiceSupported||menuOpen||document.hidden)return;
+    if(announced.current===line.id)return;
+    announced.current=line.id;
+    speak(line.text);
+  },[voiceOn,voiceSupported,menuOpen,line.id,line.text,speak]);
 
   useEffect(()=>{
     if(menuOpen&&"speechSynthesis" in window)window.speechSynthesis.cancel();
@@ -93,10 +97,13 @@ export function StaffDialogue({getScreenAnchor,getGuestPosition,onOpenMenu,menuO
       setVoiceOn(false);
       window.speechSynthesis.cancel();
     }else{
-      announced.current=null;
+      // Trigger the FIRST utterance synchronously inside the click gesture;
+      // mobile Safari may reject speech initiated later from a React effect.
+      announced.current=line.id;
+      speak(line.text);
       setVoiceOn(true);
     }
-  },[voiceOn]);
+  },[voiceOn,line.id,line.text,speak]);
 
   if(!anchor)return null;
   return (
