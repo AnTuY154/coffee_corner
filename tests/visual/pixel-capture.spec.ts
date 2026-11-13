@@ -3,6 +3,58 @@ import fs from "node:fs/promises";
 
 test.describe("Pixel Shop real browser evidence", () => {
 
+  test("customer can chat about real products and open the correct menu",async({page},testInfo)=>{
+    const errors:string[]=[];
+    page.on("pageerror",e=>errors.push(e.message));
+    await page.goto("/pixel",{waitUntil:"domcontentloaded"});
+    await expect(page.locator(".pg-stage")).toHaveAttribute("data-art-mode","reference",{timeout:30000});
+    const chat=page.getByTestId("customer-chat");
+    const launcher=chat.getByRole("button",{name:"Mở chat Vườn É"});
+    await expect(launcher).toBeVisible();
+    await launcher.click();
+    const panel=chat.getByRole("dialog",{name:"Chat với Vườn É Trợ lý tự động · tư vấn theo menu"});
+    await expect(panel).toBeVisible();
+    await expect(chat.locator(".pg-chat-disclaimer")).toContainText("không kết nối nhân viên thật");
+    await chat.getByRole("button",{name:"Món mới có gì?"}).click();
+    await expect(chat.locator(".pg-chat-message.is-guest")).toContainText(["Món mới có gì?"]);
+    const reply=chat.locator(".pg-chat-message.is-bot").last();
+    await expect(reply).toContainText(/món|Món|Gợi ý/);
+    await chat.getByRole("button",{name:"Mở thực đơn"}).last().click();
+    await expect(page.getByRole("heading",{name:"Thực đơn Vườn É"})).toBeVisible();
+    await expect(chat.getByRole("dialog")).toHaveCount(0);
+    await page.getByRole("button",{name:"Đóng thực đơn, quay lại cửa hàng"}).click();
+    await chat.getByRole("button",{name:"Mở chat Vườn É"}).click();
+    await chat.getByRole("textbox",{name:"Nhập câu hỏi cho Vườn É"}).fill("Bưởi Vàng");
+    await chat.getByRole("button",{name:"Gửi tin nhắn"}).click();
+    await expect(chat.locator(".pg-chat-message.is-bot").last()).toContainText("45.000");
+    const mobile=testInfo.project.name.startsWith("mobile");
+    await fs.mkdir("qa-captures",{recursive:true});
+    await page.screenshot({
+      path:"qa-captures/pixel-"+(mobile?"mobile":"desktop")+"-customer-chat.png",
+      fullPage:false,animations:"disabled"
+    });
+    expect(errors).toEqual([]);
+  });
+
+  test("customer chat gives honest delivery and opening-hours answers",async({page})=>{
+    await page.goto("/pixel",{waitUntil:"domcontentloaded"});
+    await expect(page.locator(".pg-stage")).toHaveAttribute("data-art-mode","reference",{timeout:30000});
+    const chat=page.getByTestId("customer-chat");
+    await chat.getByRole("button",{name:"Mở chat Vườn É"}).click();
+    const input=chat.getByRole("textbox",{name:"Nhập câu hỏi cho Vườn É"});
+    await input.fill("Mở cửa mấy giờ?");
+    await input.press("Enter");
+    await expect(chat.locator(".pg-chat-message.is-bot").last()).toContainText("chưa có thông tin giờ mở cửa");
+    await input.fill("Phí ship bao nhiêu?");
+    await input.press("Enter");
+    await expect(chat.locator(".pg-chat-message.is-bot").last()).toContainText("chưa thể báo trước");
+    await chat.getByRole("button",{name:"Đóng khung chat"}).click();
+    await expect(chat.getByRole("dialog")).toHaveCount(0);
+    await expect(page.locator(".pg-stage canvas")).toBeVisible();
+  });
+
+
+
   test("barista says hello and recommends a real seasonal menu item",async({page},testInfo)=>{
     const mobile=testInfo.project.name.startsWith("mobile");
     const errors:string[]=[];
