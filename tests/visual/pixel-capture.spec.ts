@@ -162,6 +162,12 @@ test.describe("Pixel Shop real browser evidence", () => {
     await page.mouse.click(x,y); // table-3-bottom; one of 15 existing seats
     const stand=page.getByRole("button",{name:/Đứng dậy/});
     await expect(stand).toBeVisible({timeout:15000});
+    if(mobile){
+      const a=await stand.boundingBox();
+      const b=await page.getByTestId("customer-chat").getByRole("button",{name:"Mở chat Vườn É"}).boundingBox();
+      expect(a&&b,"stand-up and chat launch controls must be present").toBeTruthy();
+      expect(a!.x+a!.width+4,"chat launcher must not obstruct standing up").toBeLessThan(b!.x);
+    }
     await page.waitForTimeout(400);
     await fs.mkdir("qa-captures",{recursive:true});
     await page.screenshot({path:`qa-captures/pixel-${mobile?"mobile":"desktop"}-seated.png`,fullPage:true,animations:"disabled"});
