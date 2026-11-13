@@ -6,6 +6,8 @@ import { ShopMenu2D } from "@/components/3d-shop/shop-menu-2d";
 import { createGardenNetwork, type RoomStatus } from "./network";
 import { loadKenneyAtlas } from "./kenney-art";
 import { loadReferenceAssets, buildReferenceScene } from "./reference-scene";
+import { StaffDialogue } from "./staff-dialogue";
+import type { StaffCategory } from "./staff-dialogue-content";
 import { guestVisualDepth,depthScaleAt } from "./pet-motion";
 import { SCENE_HEIGHT, SCENE_WIDTH, SCENE_VERSION, NAV_VERSION, SPAWN, WALK_SPEED, HOTSPOTS, SEATS, findPath, hotspotAt, nearestWalkable, positionAt, facingFromPath, type Actor, type ClientIntent, type Facing, type Point, type ServerEvent } from "@/shared/garden/model";
 import "./pixel-shop.css";
@@ -398,6 +400,20 @@ export function PixelGarden() {
       y:Math.max(8,c.y+target.y*c.scale-43)
     });
   };
+  const getStaffAnchor=useCallback(()=>{
+    const mount=mountRef.current;
+    if(!mount)return null;
+    const c=cameraRef.current;
+    return {x:c.x+249*c.scale,y:c.y+157*c.scale,width:mount.clientWidth,height:mount.clientHeight};
+  },[]);
+  const getOwnPosition=useCallback(()=>{
+    const actor=actorsRef.current.get(selfRef.current);
+    return actor?positionAt(actor,Date.now()+clockOffsetRef.current):null;
+  },[]);
+  const openStaffRecommendation=useCallback((category:StaffCategory)=>{
+    setMenuInitialView("browse");
+    setMenu(category);
+  },[]);
   const dpad=(dir:Facing)=><button key={dir} type="button" aria-label={"Đi "+({up:"lên",down:"xuống",left:"trái",right:"phải"}[dir])}
     onPointerDown={e=>{
       e.preventDefault();
@@ -418,6 +434,13 @@ export function PixelGarden() {
       <div className="pg-stage" data-art-mode={artMode} ref={mountRef} onPointerUp={onTap} onPointerMove={onHover} onPointerLeave={()=>setHover(null)} role="application" aria-label="Sân Pixel Art Vườn É, nhấn vào sân để đi hoặc chạm tủ trái cây để mua">
         {renderError && <div className="pg-fallback" role="status"><strong>Đang hiển thị chế độ nhẹ</strong><p>Thiết bị không hỗ trợ WebGL. Bạn vẫn có thể mở thực đơn và đặt món.</p><button type="button" onClick={()=>setMenu("all")}>Mở thực đơn</button></div>}
         {hover && <div className="pg-tooltip" role="tooltip" style={{left:hover.x,top:hover.y}}>{hover.label} · Nhấn để khám phá</div>}
+        {artMode!=="loading"&&!renderError&&
+          <StaffDialogue
+            getScreenAnchor={getStaffAnchor}
+            getGuestPosition={getOwnPosition}
+            onOpenMenu={openStaffRecommendation}
+            menuOpen={opened}
+          />}
       </div>
       <div className="pg-game-controls">
         <button type="button" onClick={()=>setCamera(c=>c==="all"?"follow":"all")} aria-pressed={camera==="follow"}>{camera==="all"?"Theo nhân vật":"Toàn sân"}</button>
