@@ -7,6 +7,7 @@ import { createGardenNetwork, type RoomStatus } from "./network";
 import { loadKenneyAtlas } from "./kenney-art";
 import { loadReferenceAssets, buildReferenceScene } from "./reference-scene";
 import { StaffDialogue } from "./staff-dialogue";
+import { CustomerChat } from "./customer-chat";
 import type { StaffCategory } from "./staff-dialogue-content";
 import { guestVisualDepth,depthScaleAt } from "./pet-motion";
 import { SCENE_HEIGHT, SCENE_WIDTH, SCENE_VERSION, NAV_VERSION, SPAWN, WALK_SPEED, HOTSPOTS, SEATS, findPath, hotspotAt, nearestWalkable, positionAt, facingFromPath, type Actor, type ClientIntent, type Facing, type Point, type ServerEvent } from "@/shared/garden/model";
@@ -406,7 +407,7 @@ export function PixelGarden() {
     const c=cameraRef.current;
     // Place the speech-tail just above the barista's head (world Y~148),
     // not over her face: she stays visibly behind the counter.
-    return {x:c.x+249*c.scale,y:c.y+141*c.scale,width:mount.clientWidth,height:mount.clientHeight};
+    return {x:c.x+294*c.scale,y:c.y+137*c.scale,width:mount.clientWidth,height:mount.clientHeight};
   },[]);
   const getOwnPosition=useCallback(()=>{
     const actor=actorsRef.current.get(selfRef.current);
@@ -461,6 +462,7 @@ export function PixelGarden() {
       <button type="button" onClick={()=>setMenu("fruit")}>🍊 Trái cây</button>
       <button type="button" onClick={()=>{setMenuInitialView("cart");setMenu("all");}}>🧺 Giỏ ({count})</button>
     </nav>
+    <CustomerChat onOpenMenu={openStaffRecommendation}/>
     {opened&&<ShopMenu2D key={menu+"-"+menuInitialView} initialCategory={menu} initialView={menuInitialView} onClose={()=>{setMenu(null);setMenuInitialView("browse");}}/>}
   </div>;
 }
