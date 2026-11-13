@@ -3,6 +3,42 @@ import fs from "node:fs/promises";
 
 test.describe("Pixel Shop real browser evidence", () => {
 
+  test("visitor chat answers real product questions and links to menu",async ({page},testInfo)=>{
+    const errors:string[]=[];
+    page.on("pageerror",error=>errors.push(error.message));
+    await page.goto("/pixel",{waitUntil:"domcontentloaded"});
+    await expect(page.locator(".pg-stage")).toHaveAttribute("data-art-mode","reference",{timeout:30000});
+    const launcher=page.getByRole("button",{name:"Mở trò chuyện tư vấn Vườn É"});
+    await expect(launcher).toBeVisible();
+    await launcher.click();
+    const chat=page.getByRole("dialog",{name:"Trò chuyện tư vấn Vườn É"});
+    await expect(chat).toBeVisible();
+    await expect(chat).toContainText("Trợ lý tự động");
+    await chat.getByTestId("chat-input").fill("Cam Đồi");
+    await chat.getByRole("button",{name:"Gửi câu hỏi"}).click();
+    await expect(chat).toContainText("Cam Đồi:");
+    await expect(chat).toContainText("42.000");
+    await expect(chat).toContainText("Giá tham khảo");
+    await chat.getByRole("button",{name:"🥤 Xem thực đơn"}).click();
+    await expect(page.getByRole("heading",{name:"Thực đơn Vườn É"})).toBeVisible();
+    expect(errors).toEqual([]);
+    await fs.mkdir("qa-captures",{recursive:true});
+    await page.screenshot({path:"qa-captures/pixel-"+(testInfo.project.name.startsWith("mobile")?"mobile":"desktop")+"-customer-chat.png",fullPage:false});
+  });
+
+  test("visitor can close chat and ask about delivery without false live-agent claims",async ({page})=>{
+    await page.goto("/pixel",{waitUntil:"domcontentloaded"});
+    await page.getByRole("button",{name:"Mở trò chuyện tư vấn Vườn É"}).click();
+    const chat=page.getByRole("dialog",{name:"Trò chuyện tư vấn Vườn É"});
+    await chat.getByTestId("chat-input").fill("Có giao hàng không?");
+    await chat.getByRole("button",{name:"Gửi câu hỏi"}).click();
+    await expect(chat).toContainText("chưa được xác nhận");
+    await chat.getByRole("button",{name:"Đóng chat"}).click();
+    await expect(chat).toHaveCount(0);
+    await expect(page.getByRole("button",{name:"Mở trò chuyện tư vấn Vườn É"})).toBeVisible();
+  });
+
+
   test("barista says hello and recommends a real seasonal menu item",async({page},testInfo)=>{
     const mobile=testInfo.project.name.startsWith("mobile");
     const errors:string[]=[];
