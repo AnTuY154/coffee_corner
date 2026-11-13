@@ -73,15 +73,17 @@ export function buildReferenceScene(assets:ReferenceAssets){
     world.addChild(item);
   }
   // All character and table layers share a single depth-sorted Pixi world.
-  const employee=new Graphics();employee.position.set(249,181);employee.zIndex=210;employee.label="staff:stationary";world.addChild(employee);
-  // One stable barista pose behind the foreground counter. No waves, exits or pet interactions.
-  drawStaff(employee,false,false,1);employee.scale.set(1.05);
+  const employee=new Graphics();employee.position.set(249,170);employee.zIndex=210;employee.label="staff:stationary";world.addChild(employee);
+  // The waist is hidden by the counter; face, apron and greeting hand stay visible.
+  // Animate only the raised forearm, never the barista position or whole body.
+  drawStaff(employee,false,false,0);employee.scale.set(1.04);
   const dog=new Graphics();dog.label="pet:dog";world.addChild(dog);
   const cat=new Graphics();cat.label="pet:ginger-cat";world.addChild(cat);
   const grayCat=new Graphics();grayCat.label="pet:gray-cat";world.addChild(grayCat);
   const lights=new Graphics();lights.zIndex=16;world.addChild(lights);
   const bulbs=[[17,61],[31,48],[46,37],[61,32],[80,41],[181,96],[233,96],[278,96],[318,94],[349,91]];
   let previous=-1;
+  let lastWaveFrame=-1;
   function update(tick:number,reducedMotion:boolean){
     const time=reducedMotion?0:tick;
     const dogPose=petRouteAt(time,PET_ROUTES.dog,11);
@@ -93,6 +95,11 @@ export function buildReferenceScene(assets:ReferenceAssets){
       sprite.scale.set(pose.direction*scale,scale);
       // User-facing animals stay visible when crossing transparent furniture overlays.
       sprite.zIndex=320+Math.round(pose.y);
+    }
+    const waveFrame=reducedMotion?0:(tick%8<3.3?1+Math.floor(tick*2.5)%2:0);
+    if(waveFrame!==lastWaveFrame){
+      drawStaff(employee,waveFrame>0,false,Math.max(0,waveFrame-1));
+      lastWaveFrame=waveFrame;
     }
     const step=reducedMotion?0:Math.floor(tick*6);
     if(step===previous)return;previous=step;
