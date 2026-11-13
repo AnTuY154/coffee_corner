@@ -117,21 +117,25 @@ test.describe("Pixel Shop real browser evidence", () => {
     await expect(stand).toHaveCount(0);
     await expect(page.locator(".pg-stage canvas")).toBeVisible();
   });
-  test("barista stays visually stationary behind the counter",async ({page},testInfo)=>{
-    test.skip(testInfo.project.name.startsWith("mobile"),"Desktop pixel-stability sample");
+  test("barista displays her upper torso and waves behind the same counter",async ({page},testInfo)=>{
+    test.skip(testInfo.project.name.startsWith("mobile"),"Desktop frame-level wave audit");
     await page.goto("/pixel",{waitUntil:"domcontentloaded"});
     await expect(page.locator(".pg-stage")).toHaveAttribute("data-art-mode","reference",{timeout:30000});
+    const responses=await Promise.all([0,1].map(i=>page.request.get("/pixel-shop/characters/barista-wave-"+i+".svg")));
+    for(const response of responses)expect(response.ok(),"wave assets must be shipped").toBe(true);
     const box=await page.locator(".pg-stage").boundingBox();
     expect(box).not.toBeNull();
     const scale=Math.min(box!.width/480,box!.height/320);
-    const clip={x:Math.round(box!.x+(box!.width-480*scale)/2+236*scale),
-      y:Math.round(box!.y+(box!.height-320*scale)/2+144*scale),
-      width:Math.round(28*scale),height:Math.round(51*scale)};
+    const clip={x:Math.round(box!.x+(box!.width-480*scale)/2+222*scale),
+      y:Math.round(box!.y+(box!.height-320*scale)/2+116*scale),
+      width:Math.round(55*scale),height:Math.round(49*scale)};
     await page.waitForTimeout(350);
-    const before=await page.screenshot({clip});
-    await page.waitForTimeout(1300);
-    const after=await page.screenshot({clip});
-    expect(before.equals(after),"barista must not wave or leave the counter").toBe(true);
+    const frames=[await page.screenshot({clip})];
+    for(let i=0;i<5;i++){
+      await page.waitForTimeout(220);
+      frames.push(await page.screenshot({clip}));
+    }
+    expect(frames.some(frame=>!frame.equals(frames[0])),"barista's hand should wave, never walk away").toBe(true);
   });
   test("capture actual WebGL canvas and commerce on desktop/mobile", async ({ page }, testInfo) => {
     const mobile=testInfo.project.name.startsWith("mobile");
