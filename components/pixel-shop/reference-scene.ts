@@ -23,7 +23,7 @@ export const REFERENCE_LAYERS = [
   {name:"tree-canopy-left",file:"tree-canopy-left.webp",bbox:[0,0,605,480],z:18},
   {name:"tree-canopy-right",file:"tree-canopy-right.webp",bbox:[1120,65,1535,618],z:18}
 ] as const;
-export type ReferenceAssets={base:Texture;parts:Map<string,Texture>};
+export type ReferenceAssets={base:Texture;parts:Map<string,Texture>;staffFrames?:[Texture,Texture]};
 export async function loadReferenceAssets():Promise<ReferenceAssets|null>{
   const prefix=window.location.pathname.startsWith("/coffee_corner/")?"/coffee_corner":"";
   const path=prefix+"/pixel-shop/reference/";
@@ -41,7 +41,17 @@ export async function loadReferenceAssets():Promise<ReferenceAssets|null>{
       result.value.tex.source.scaleMode="linear";
       parts.set(result.value.name,result.value.tex);
     }
-    return {base,parts};
+    let staffFrames:[Texture,Texture]|undefined;
+    try{
+      const frames=await Promise.all([0,1].map(i=>Assets.load<Texture>({
+        alias:"ve-pixel-barista-wave-"+i,
+        src:prefix+"/pixel-shop/characters/barista-wave-"+i+".svg"
+      })));
+      if(frames.every(frame=>frame.width>0&&frame.height>0)){
+        staffFrames=[frames[0],frames[1]];
+      }
+    }catch{/* Keep procedural barista if vector assets fail to load. */}
+    return {base,parts,staffFrames};
   }catch{return null;}
 }
 export function buildReferenceScene(assets:ReferenceAssets){
@@ -73,9 +83,19 @@ export function buildReferenceScene(assets:ReferenceAssets){
     world.addChild(item);
   }
   // All character and table layers share a single depth-sorted Pixi world.
-  const employee=new Graphics();employee.position.set(249,181);employee.zIndex=210;employee.label="staff:stationary";world.addChild(employee);
-  // One stable barista pose behind the foreground counter. No waves, exits or pet interactions.
-  drawStaff(employee,false,false,1);employee.scale.set(1.05);
+  // Half-body staff stands anchored behind counter; only her arm waves.
+  // Counter-front (z=217) hides the apron below the work surface.
+  const employee=assets.staffFrames
+    ?new Sprite(assets.staffFrames[0]):new Graphics();
+  employee.position.set(249,175);employee.zIndex=210;employee.label="staff:stationary";world.addChild(employee);
+  if(employee instanceof Sprite){
+    employee.anchor.set(0.5,1);
+    employee.width=54;
+    employee.height=58.5;
+  }else{
+    drawStaff(employee,true,false,1);
+    employee.scale.set(1.45);
+  }
   const dog=new Graphics();dog.label="pet:dog";world.addChild(dog);
   const cat=new Graphics();cat.label="pet:ginger-cat";world.addChild(cat);
   const grayCat=new Graphics();grayCat.label="pet:gray-cat";world.addChild(grayCat);
@@ -95,6 +115,14 @@ export function buildReferenceScene(assets:ReferenceAssets){
       sprite.zIndex=320+Math.round(pose.y);
     }
     const step=reducedMotion?0:Math.floor(tick*6);
+    const waveFrame=reducedMotion?0:Math.floor(tick*2.4)%2;
+    if(employee instanceof Sprite&&assets.staffFrames){
+      if(employee.texture!==assets.staffFrames[waveFrame]){
+        employee.texture=assets.staffFrames[waveFrame];
+      }
+    }else if(employee instanceof Graphics&&step!==previous){
+      drawStaff(employee,!reducedMotion&&Math.floor(tick*2.4)%2===0,false,1);
+    }
     if(step===previous)return;previous=step;
     drawDog(dog,step);drawCat(cat,false,step);drawCat(grayCat,true,step);
     lights.clear();
