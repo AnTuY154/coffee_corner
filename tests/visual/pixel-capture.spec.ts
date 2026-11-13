@@ -12,7 +12,7 @@ test.describe("Pixel Shop real browser evidence", () => {
     const launcher=chat.getByRole("button",{name:"Mở chat Vườn É"});
     await expect(launcher).toBeVisible();
     await launcher.click();
-    const panel=chat.getByRole("dialog",{name:"Chat với Vườn É Trợ lý tự động · tư vấn theo menu"});
+    const panel=chat.getByRole("dialog",{name:"Chat với Vườn É"});
     await expect(panel).toBeVisible();
     await expect(chat.locator(".pg-chat-disclaimer")).toContainText("không kết nối nhân viên thật");
     await chat.getByRole("button",{name:"Món mới có gì?"}).click();
