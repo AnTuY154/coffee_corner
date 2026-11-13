@@ -9,6 +9,14 @@ import { SCENE_WIDTH, SCENE_HEIGHT } from "@/shared/garden/model";
 import { drawGuest, drawStaff, drawDog, drawCat } from "./art";
 import { PET_ROUTES, petRouteAt, depthScaleAt } from "./pet-motion";
 
+// The master scene already contains these static details. Only sprites that
+// must cover moving characters require a second GPU draw. This halves the
+// number of large textures submitted per frame on software WebGL.
+const OCCLUDER_LAYERS=new Set([
+  "counter-front","table-left","table-center","table-right",
+  "table-back-left","table-back-right"
+]);
+
 export const REFERENCE_LAYERS = [
   {name:"roof-sign",file:"roof-sign.webp",bbox:[562,113,1045,226],z:5},
   {name:"canopy",file:"canopy.webp",bbox:[181,0,1377,300],z:6},
@@ -23,7 +31,7 @@ export const REFERENCE_LAYERS = [
   {name:"tree-canopy-left",file:"tree-canopy-left.webp",bbox:[0,0,605,480],z:18},
   {name:"tree-canopy-right",file:"tree-canopy-right.webp",bbox:[1120,65,1535,618],z:18}
 ] as const;
-export type ReferenceAssets={base:Texture;parts:Map<string,Texture>};
+export type ReferenceAssets={base:Texture;parts:Map<string,Texture>;barista:Texture|null};
 export async function loadReferenceAssets():Promise<ReferenceAssets|null>{
   const prefix=window.location.pathname.startsWith("/coffee_corner/")?"/coffee_corner":"";
   const path=prefix+"/pixel-shop/reference/";
@@ -32,7 +40,7 @@ export async function loadReferenceAssets():Promise<ReferenceAssets|null>{
     if(!base||base.width<100||base.height<100)return null;
     base.source.scaleMode="linear";
     const parts=new Map<string,Texture>();
-    const loaded=await Promise.allSettled(REFERENCE_LAYERS.map(async layer=>{
+    const loaded=await Promise.allSettled(REFERENCE_LAYERS.filter(layer=>OCCLUDER_LAYERS.has(layer.name)).map(async layer=>{
       const tex=await Assets.load<Texture>({alias:"ve-ref-"+layer.name,src:path+layer.file});
       return {name:layer.name,tex};
     }));
@@ -41,7 +49,18 @@ export async function loadReferenceAssets():Promise<ReferenceAssets|null>{
       result.value.tex.source.scaleMode="linear";
       parts.set(result.value.name,result.value.tex);
     }
-    return {base,parts};
+    // The illustrated upper-body cashier comes from the approved artwork.
+    // Keep the procedural barista as a safe fallback if this optional asset
+    // cannot be loaded (e.g. older cached deployment).
+    let barista:Texture|null=null;
+    try{
+      barista=await Assets.load<Texture>({
+        alias:"ve-barista-wave-illustrated",
+        src:prefix+"/pixel-shop/barista/wave-a.png"
+      });
+      barista.source.scaleMode="linear";
+    }catch{/* Older releases still use the hand-drawn fallback. */}
+    return {base,parts,barista};
   }catch{return null;}
 }
 export function buildReferenceScene(assets:ReferenceAssets){
@@ -58,6 +77,7 @@ export function buildReferenceScene(assets:ReferenceAssets){
     "table-back-left":826,"table-back-right":826
   };
   for(const layer of REFERENCE_LAYERS){
+    if(!OCCLUDER_LAYERS.has(layer.name))continue; // Already visible in scene.webp.
     const tex=assets.parts.get(layer.name);if(!tex)continue;
     const [x0,y0,x1,y1]=layer.bbox;
     const cutoff=tableForegroundY[layer.name];
@@ -73,15 +93,38 @@ export function buildReferenceScene(assets:ReferenceAssets){
     world.addChild(item);
   }
   // All character and table layers share a single depth-sorted Pixi world.
-  const employee=new Graphics();employee.position.set(249,181);employee.zIndex=210;employee.label="staff:stationary";world.addChild(employee);
-  // One stable barista pose behind the foreground counter. No waves, exits or pet interactions.
-  drawStaff(employee,false,false,1);employee.scale.set(1.05);
+  // The approved illustrated 80×93 transparent PNG shows the *whole* face,
+  // apron and waving arm, instead of the old blocky 22px head. The bottom
+  // pixels are masked naturally by the counter-front at depth 217.
+  const employee:Graphics|Sprite=assets.barista?new Sprite(assets.barista):new Graphics();
+  employee.label="staff:stationary";
+  employee.position.set(249,170);
+  employee.zIndex=210;
+  if(employee instanceof Sprite){
+    employee.anchor.set(0.5,1);
+    employee.width=52;
+    employee.height=60;
+  }else{
+    drawStaff(employee,true,false,0);
+    employee.scale.set(1.04);
+  }
+  world.addChild(employee);
+  // Light rays beside the already-raised hand provide an unmistakable,
+  // small greeting animation without moving the cashier's body.
+  const waveAccent=new Graphics();
+  waveAccent.label="staff:wave-accent";
+  waveAccent.zIndex=211;
+  waveAccent.rect(279,126,2,7).fill(0xffcd61);
+  waveAccent.rect(283,135,6,2).fill(0xffdc81);
+  waveAccent.rect(274,121,3,4).fill(0xffcd61);
+  world.addChild(waveAccent);
   const dog=new Graphics();dog.label="pet:dog";world.addChild(dog);
   const cat=new Graphics();cat.label="pet:ginger-cat";world.addChild(cat);
   const grayCat=new Graphics();grayCat.label="pet:gray-cat";world.addChild(grayCat);
   const lights=new Graphics();lights.zIndex=16;world.addChild(lights);
   const bulbs=[[17,61],[31,48],[46,37],[61,32],[80,41],[181,96],[233,96],[278,96],[318,94],[349,91]];
   let previous=-1;
+  let lastWaveFrame=-1;
   function update(tick:number,reducedMotion:boolean){
     const time=reducedMotion?0:tick;
     const dogPose=petRouteAt(time,PET_ROUTES.dog,11);
@@ -93,6 +136,13 @@ export function buildReferenceScene(assets:ReferenceAssets){
       sprite.scale.set(pose.direction*scale,scale);
       // User-facing animals stay visible when crossing transparent furniture overlays.
       sprite.zIndex=320+Math.round(pose.y);
+    }
+    const waveFrame=reducedMotion?0:(tick%8<3.3?1+Math.floor(tick*2.5)%2:0);
+    if(waveFrame!==lastWaveFrame){
+      waveAccent.visible=waveFrame>0;
+      waveAccent.alpha=waveFrame===2?0.65:1;
+      if(employee instanceof Graphics)drawStaff(employee,waveFrame>0,false,Math.max(0,waveFrame-1));
+      lastWaveFrame=waveFrame;
     }
     const step=reducedMotion?0:Math.floor(tick*6);
     if(step===previous)return;previous=step;

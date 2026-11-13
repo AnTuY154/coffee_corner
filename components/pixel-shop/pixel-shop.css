@@ -208,3 +208,93 @@
 @media(prefers-reduced-transparency:reduce){
   .pg-staff-dialogue{background:#fff8e7;backdrop-filter:none}
 }
+
+/* Customer self-service chat is DOM-only, on top of the world, and does not
+   allocate a multiplayer actor or interfere with seat/map click handling. */
+.pg-customer-chat{
+  position:fixed;right:clamp(12px,2.5vw,30px);bottom:24px;z-index:65;
+  display:flex;flex-direction:column;align-items:flex-end;gap:12px;
+  width:min(374px,calc(100vw - 24px));pointer-events:none;
+  font-family:ui-rounded,"Trebuchet MS",system-ui,-apple-system,sans-serif;
+}
+.pg-chat-launch{
+  pointer-events:auto;display:flex;align-items:center;gap:10px;
+  border:2px solid #438565;border-bottom:4px solid #285b43;
+  border-radius:22px;background:#fff7df;color:#235f43;
+  padding:10px 15px;min-height:60px;max-width:100%;
+  box-shadow:0 8px 24px #1c462b3a;cursor:pointer;text-align:left;
+}
+.pg-chat-launch:hover{background:#ffe8b8;transform:translateY(-1px)}
+.pg-chat-launch:focus-visible,.pg-chat-panel button:focus-visible,.pg-chat-panel input:focus-visible{outline:3px solid #ef9662;outline-offset:3px}
+.pg-chat-launch-icon{font-size:24px;width:34px;display:grid;place-items:center}
+.pg-chat-launch-copy{display:flex;flex-direction:column;gap:2px}
+.pg-chat-launch-copy strong{font-size:15px;font-weight:1000;white-space:nowrap}
+.pg-chat-launch-copy small{font-size:10px;font-weight:700;color:#668e77}
+.pg-chat-panel{
+  pointer-events:auto;width:100%;max-height:min(570px,calc(100dvh - 140px));
+  display:flex;flex-direction:column;overflow:hidden;
+  border:2px solid #77a17e;border-radius:21px;background:#fffaf0;
+  box-shadow:0 15px 44px #173c2a47;color:#264e3b;
+}
+.pg-chat-heading{
+  display:flex;gap:10px;align-items:center;padding:13px 14px;
+  background:#245e46;color:#fff8db;flex-shrink:0;
+}
+.pg-chat-avatar{width:40px;height:40px;flex-shrink:0;display:grid;place-items:center;
+  font-size:23px;border-radius:14px;background:#fcf0c6}
+.pg-chat-headings{min-width:0;display:flex;flex-direction:column;gap:3px;flex:1}
+.pg-chat-headings strong{font-size:17px;line-height:1.15}
+.pg-chat-headings span{font-size:10px;font-weight:700;color:#d5ecd5}
+.pg-chat-close{cursor:pointer;border:1px solid #91b4a0;border-radius:11px;
+  background:#316e54;color:white;min-width:32px;height:32px;font-size:16px}
+.pg-chat-messages{display:flex;flex-direction:column;gap:10px;overflow-y:auto;
+  flex:1;min-height:140px;padding:16px 14px;overscroll-behavior:contain}
+.pg-chat-message{max-width:91%;align-self:flex-start;padding:10px 12px;
+  background:#e6f1de;border:1px solid #cce0bf;border-radius:15px 15px 15px 4px;
+  line-height:1.48;font-size:12px;overflow-wrap:anywhere}
+.pg-chat-message.is-guest{align-self:flex-end;background:#fff0c6;border-color:#dfcda0;
+  border-radius:15px 15px 4px 15px}
+.pg-chat-speaker{display:block;color:#397553;font-size:10px;font-weight:900;margin-bottom:4px}
+.pg-chat-message p{margin:0;white-space:pre-wrap}
+.pg-chat-menu-cta{border:1px solid #579171;border-radius:9px;background:#2f7957;color:#fffce8;
+  font-size:11px;font-weight:850;padding:7px 11px;margin-top:9px;cursor:pointer}
+.pg-chat-quick{padding:8px 12px;display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0;
+  border-top:1px solid #e4e6d5}
+.pg-chat-quick button{border:1px solid #b3cbab;border-radius:99px;background:#fffbea;
+  color:#376b4d;font-weight:750;font-size:10px;padding:7px 10px;cursor:pointer}
+.pg-chat-input-row{display:flex;gap:8px;padding:10px 12px;border-top:1px solid #dedfd0;flex-shrink:0}
+.pg-chat-input-row input{flex:1;min-width:0;border:1px solid #adc4aa;border-radius:12px;
+  background:#fff;color:#234b37;font:650 12px system-ui,sans-serif;padding:10px 11px}
+.pg-chat-input-row button{border:0;background:#2c7253;color:white;min-width:42px;
+  border-radius:12px;cursor:pointer;font-size:17px}
+.pg-chat-input-row button:disabled{opacity:.4;cursor:not-allowed}
+.pg-chat-disclaimer{margin:0;padding:0 13px 12px;color:#6e8776;font-size:10px;
+  line-height:1.4;font-weight:650;flex-shrink:0}
+@media(max-width:800px){
+  .pg-customer-chat{right:11px;bottom:calc(91px + env(safe-area-inset-bottom))}
+  .pg-chat-launch{border-radius:18px;min-height:51px;padding:8px 10px}
+  .pg-chat-launch-icon{font-size:20px;width:27px}
+  .pg-chat-launch-copy strong{font-size:12px}
+  .pg-chat-launch-copy small{font-size:9px}
+  .pg-chat-panel{max-height:calc(100dvh - 208px);border-radius:18px}
+  .pg-chat-messages{min-height:100px}
+}
+@media(max-height:520px){
+  .pg-customer-chat{bottom:10px}
+  .pg-chat-panel{max-height:calc(100dvh - 75px)}
+}
+
+/* Occupied chairs: keep Stand Up opposite the chat launcher on mobile.
+   Both remain above the bottom commerce nav without intercepting each other. */
+@media(max-width:800px){
+  .pg-stand-action{left:12px;right:auto;bottom:calc(91px + env(safe-area-inset-bottom));max-width:calc(48vw - 10px)}
+}
+
+/* Keep accessible input names for assistive technology without allowing a
+   visible label to squeeze the conversation composer on small screens. */
+.pg-chat-input-row .sr-only{
+  position:absolute!important;
+  width:1px!important;height:1px!important;
+  padding:0!important;margin:-1px!important;overflow:hidden!important;
+  clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;
+}

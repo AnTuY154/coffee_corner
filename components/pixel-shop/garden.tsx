@@ -7,6 +7,7 @@ import { createGardenNetwork, type RoomStatus } from "./network";
 import { loadKenneyAtlas } from "./kenney-art";
 import { loadReferenceAssets, buildReferenceScene } from "./reference-scene";
 import { StaffDialogue } from "./staff-dialogue";
+import { CustomerChat } from "./customer-chat";
 import type { StaffCategory } from "./staff-dialogue-content";
 import { guestVisualDepth,depthScaleAt } from "./pet-motion";
 import { SCENE_HEIGHT, SCENE_WIDTH, SCENE_VERSION, NAV_VERSION, SPAWN, WALK_SPEED, HOTSPOTS, SEATS, findPath, hotspotAt, nearestWalkable, positionAt, facingFromPath, type Actor, type ClientIntent, type Facing, type Point, type ServerEvent } from "@/shared/garden/model";
@@ -17,7 +18,7 @@ type GardenCommand = {type:"goTo";target:Point}|{type:"direction";direction:Faci
 type CameraMode = "all" | "follow";
 type PixelMotionQASnapshot = {
   time:number; self:{x:number;y:number;scale:number;seatId:string|null;zIndex:number;visible:boolean;renderable:boolean;alpha:number;moving:boolean}|null;
-  staff:{x:number;y:number;zIndex:number}|null;
+  staff:{x:number;y:number;zIndex:number;illustrated:boolean;width:number;height:number}|null;
   pets:{name:string;x:number;y:number;zIndex:number;visible:boolean}[];
   framesMs:number[];
   scene:{width:number;height:number;camera:"all"|"follow"};
@@ -209,7 +210,8 @@ export function PixelGarden() {
                   zIndex:sprite.zIndex,visible:sprite.visible,renderable:sprite.renderable,alpha:sprite.alpha,
                   moving:isWalking(own,Date.now()+clockOffsetRef.current)
                 }:null,
-                staff:staff?{x:staff.position.x,y:staff.position.y,zIndex:staff.zIndex}:null,
+                staff:staff?{x:staff.position.x,y:staff.position.y,zIndex:staff.zIndex,
+                  illustrated:staff instanceof PIXI.Sprite,width:staff.width,height:staff.height}:null,
                 pets:engine.world.children.filter(child=>child.label?.startsWith("pet:"))
                   .map(child=>({name:child.label,x:child.position.x,y:child.position.y,
                     zIndex:child.zIndex,visible:child.visible})),
@@ -406,7 +408,8 @@ export function PixelGarden() {
     const c=cameraRef.current;
     // Place the speech-tail just above the barista's head (world Y~148),
     // not over her face: she stays visibly behind the counter.
-    return {x:c.x+249*c.scale,y:c.y+141*c.scale,width:mount.clientWidth,height:mount.clientHeight};
+    // Keep chat bubble beside the torso/raised hand; never cover the face.
+    return {x:c.x+182*c.scale,y:c.y+136*c.scale,width:mount.clientWidth,height:mount.clientHeight};
   },[]);
   const getOwnPosition=useCallback(()=>{
     const actor=actorsRef.current.get(selfRef.current);
@@ -461,6 +464,10 @@ export function PixelGarden() {
       <button type="button" onClick={()=>setMenu("fruit")}>🍊 Trái cây</button>
       <button type="button" onClick={()=>{setMenuInitialView("cart");setMenu("all");}}>🧺 Giỏ ({count})</button>
     </nav>
+    <CustomerChat
+      menuOpen={opened}
+      onOpenMenu={category=>{setMenuInitialView("browse");setMenu(category);}}
+    />
     {opened&&<ShopMenu2D key={menu+"-"+menuInitialView} initialCategory={menu} initialView={menuInitialView} onClose={()=>{setMenu(null);setMenuInitialView("browse");}}/>}
   </div>;
 }

@@ -116,11 +116,18 @@ test.describe("Pixel 2.5D movement QA agent — real browser",()=>{
     const down=await telemetryFor(page,2400);
     verifySmooth(down,"downward");
     expect((down.at(-1)?.self?.y??0)-(down[0].self?.y??0),"down must increase world Y").toBeGreaterThan(30);
+    // A pet may complete (almost) exactly one loop, returning near the start.
+    // Measure travelled distance across EVERY sample, not only endpoints.
     for(const pet of up[0].pets){
-      const last=down.at(-1)?.pets.find(p=>p.name===pet.name);
-      expect(last,"pet disappeared: "+pet.name).toBeTruthy();
-      expect(Math.hypot(last!.x-pet.x,last!.y-pet.y),"pet frozen: "+pet.name).toBeGreaterThan(2);
-      expect(last!.visible).toBe(true);
+      const poses=[...up,...down]
+        .map(s=>s.pets.find(p=>p.name===pet.name));
+      expect(poses.every(Boolean),"pet disappeared: "+pet.name).toBe(true);
+      const distance=poses.slice(1).reduce((sum,p,i)=>{
+        const q=poses[i]!;
+        return sum+Math.hypot(p!.x-q.x,p!.y-q.y);
+      },0);
+      expect(distance,"pet frozen throughout animation: "+pet.name).toBeGreaterThan(12);
+      expect(poses.every(p=>p!.visible),"pet hidden: "+pet.name).toBe(true);
     }
     const frames=down.at(-1)?.framesMs??[];
     expect(frames.length,"not enough real Pixi animation frames").toBeGreaterThan(40);
@@ -219,6 +226,9 @@ test.describe("Pixel 2.5D movement QA agent — real browser",()=>{
     await page.evaluate(()=>window.__VUONE_PIXEL_QA__?.freezeDecorations(true));
     const initial=await snapshot(page);
     expect(initial.staff).not.toBeNull();
+    expect(initial.staff?.illustrated,"staff should use approved illustrated sprite, not old box Graphics").toBe(true);
+    expect(initial.staff?.height??0,"barista upper body should be tall enough to see face and apron").toBeGreaterThanOrEqual(58);
+    expect(initial.staff?.width??0,"barista needs visible waving hand beside face").toBeGreaterThanOrEqual(48);
     expect(initial.pets).toHaveLength(3);
     const evidence:{seat:string;changedPixels:number}[]=[];
     for(const seatId of seats){
