@@ -9,6 +9,14 @@ import { SCENE_WIDTH, SCENE_HEIGHT } from "@/shared/garden/model";
 import { drawGuest, drawStaff, drawDog, drawCat } from "./art";
 import { PET_ROUTES, petRouteAt, depthScaleAt } from "./pet-motion";
 
+// The master scene already contains these static details. Only sprites that
+// must cover moving characters require a second GPU draw. This halves the
+// number of large textures submitted per frame on software WebGL.
+const OCCLUDER_LAYERS=new Set([
+  "counter-front","table-left","table-center","table-right",
+  "table-back-left","table-back-right"
+]);
+
 export const REFERENCE_LAYERS = [
   {name:"roof-sign",file:"roof-sign.webp",bbox:[562,113,1045,226],z:5},
   {name:"canopy",file:"canopy.webp",bbox:[181,0,1377,300],z:6},
@@ -32,7 +40,7 @@ export async function loadReferenceAssets():Promise<ReferenceAssets|null>{
     if(!base||base.width<100||base.height<100)return null;
     base.source.scaleMode="linear";
     const parts=new Map<string,Texture>();
-    const loaded=await Promise.allSettled(REFERENCE_LAYERS.map(async layer=>{
+    const loaded=await Promise.allSettled(REFERENCE_LAYERS.filter(layer=>OCCLUDER_LAYERS.has(layer.name)).map(async layer=>{
       const tex=await Assets.load<Texture>({alias:"ve-ref-"+layer.name,src:path+layer.file});
       return {name:layer.name,tex};
     }));
@@ -69,6 +77,7 @@ export function buildReferenceScene(assets:ReferenceAssets){
     "table-back-left":826,"table-back-right":826
   };
   for(const layer of REFERENCE_LAYERS){
+    if(!OCCLUDER_LAYERS.has(layer.name))continue; // Already visible in scene.webp.
     const tex=assets.parts.get(layer.name);if(!tex)continue;
     const [x0,y0,x1,y1]=layer.bbox;
     const cutoff=tableForegroundY[layer.name];
