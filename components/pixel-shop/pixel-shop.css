@@ -208,3 +208,68 @@
 @media(prefers-reduced-transparency:reduce){
   .pg-staff-dialogue{background:#fff8e7;backdrop-filter:none}
 }
+
+/* Pixel Art customer chat: small fixed launcher, full conversation panel on demand.
+   Chat is a local catalogue/FAQ assistant, not an imaginary live support channel. */
+.pg-customer-chat{position:fixed;z-index:75;right:clamp(12px,2vw,28px);bottom:22px;
+  font-family:ui-rounded,"Trebuchet MS",system-ui,sans-serif;color:#244e3c}
+.pg-chat-launcher{display:flex;align-items:center;gap:11px;text-align:left;
+  border:2px solid #497b50;border-radius:19px;background:#fff7de;
+  color:#246039;min-height:63px;padding:10px 15px;
+  box-shadow:0 5px 0 #7ca274,0 12px 26px #233e2f35;cursor:pointer}
+.pg-chat-launcher-icon{display:grid;place-items:center;width:35px;height:35px;
+  font-size:23px;background:#e5f1c9;border:1px solid #a7c48f;border-radius:13px}
+.pg-chat-launcher strong{display:block;font-size:14px;font-weight:900}
+.pg-chat-launcher small{display:block;color:#62836c;margin-top:2px;font-size:11px}
+.pg-chat-launcher:hover{background:#fff0c5}
+.pg-chat-panel{display:flex;flex-direction:column;width:min(352px,calc(100vw - 24px));
+  height:min(520px,calc(100dvh - 110px));min-height:310px;
+  background:#fffdf3;border:2px solid #8cab83;border-radius:19px;
+  box-shadow:0 9px 0 #91af8a,0 20px 48px #1f412f50;overflow:hidden}
+.pg-chat-header{display:flex;align-items:center;justify-content:space-between;
+  gap:10px;padding:15px 15px 12px;background:#2e7053;color:#fff9e2}
+.pg-chat-header strong{font-size:15px;font-weight:900;display:block}
+.pg-chat-header small{font-size:10px;display:block;color:#dcefd0;margin-top:3px}
+.pg-chat-header button{border:1px solid #b5d5aa;background:#448467;color:white;
+  font-size:18px;width:32px;height:32px;border-radius:10px;cursor:pointer}
+.pg-chat-messages{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:9px;
+  padding:14px 13px 10px;overscroll-behavior:contain;background:linear-gradient(#fffef5,#f3f9ea)}
+.pg-chat-message{max-width:91%;border:1px solid #c8dac0;border-radius:14px 14px 14px 4px;
+  background:#fff9e9;padding:10px 11px;font-size:12px;line-height:1.5;
+  overflow-wrap:anywhere;align-self:flex-start}
+.pg-chat-message p{margin:0}.pg-chat-message.from-customer{background:#d7ead8;
+  border-color:#a9c8af;border-radius:14px 14px 4px 14px;align-self:flex-end}
+.pg-chat-message button{display:block;margin-top:8px;border-radius:9px;
+  border:1px solid #357051;color:#fff8e8;background:#36775a;padding:7px 9px;
+  font-size:11px;font-weight:800;cursor:pointer}
+.pg-chat-suggestions{display:flex;gap:6px;padding:6px 12px;overflow-x:auto;flex-shrink:0}
+.pg-chat-suggestions button{border:1px solid #b9d3ac;border-radius:999px;
+  padding:7px 9px;white-space:nowrap;background:#eaf5de;color:#2f694f;
+  font-size:10px;font-weight:800;cursor:pointer}
+.pg-chat-form{display:flex;align-items:center;gap:8px;padding:10px 11px;
+  border-top:1px solid #dae5d0;background:#fffdf4}
+.pg-chat-input-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.pg-chat-form input{flex:1;min-width:0;min-height:40px;border:1.5px solid #9ab798;
+  background:#fff;border-radius:11px;color:#254b39;padding:9px 10px;
+  font-size:12px;font-family:inherit;outline-offset:2px}
+.pg-chat-form button{display:grid;place-items:center;width:40px;height:40px;
+  border:1px solid #286549;border-radius:11px;background:#317453;color:#fff;
+  font-weight:900;font-size:18px;cursor:pointer}
+.pg-chat-form button:disabled{opacity:.45;cursor:not-allowed}
+.pg-chat-footer{display:flex;justify-content:space-between;align-items:center;
+  gap:8px;padding:0 12px 10px;color:#748878;background:#fffdf4;font-size:9px}
+.pg-chat-footer a{white-space:nowrap;color:#286c4d;font-weight:800;text-decoration:underline}
+.pg-customer-chat :is(button,input):focus-visible{outline:3px solid #e39b57;outline-offset:2px}
+@media(max-width:800px){
+  .pg-customer-chat{right:10px;bottom:calc(89px + env(safe-area-inset-bottom))}
+  .pg-chat-launcher{gap:7px;min-height:47px;padding:7px 10px;border-radius:15px}
+  .pg-chat-launcher-icon{width:27px;height:27px;font-size:17px}
+  .pg-chat-launcher strong{font-size:11px}.pg-chat-launcher small{font-size:9px}
+  .pg-chat-panel{width:min(350px,calc(100vw - 20px));
+    height:min(490px,calc(100dvh - 185px));min-height:270px}
+}
+@media(max-height:550px) and (orientation:landscape){
+  .pg-customer-chat{bottom:8px;right:8px}
+  .pg-chat-panel{height:min(340px,calc(100dvh - 16px));min-height:230px}
+}
