@@ -462,7 +462,7 @@ export function PixelGarden() {
       <button type="button" onClick={()=>setMenu("fruit")}>🍊 Trái cây</button>
       <button type="button" onClick={()=>{setMenuInitialView("cart");setMenu("all");}}>🧺 Giỏ ({count})</button>
     </nav>
-    <CustomerChat onOpenMenu={openStaffRecommendation}/>
+    <CustomerChat onOpenMenu={openStaffRecommendation} seated={Boolean(seatedAt)}/>
     {opened&&<ShopMenu2D key={menu+"-"+menuInitialView} initialCategory={menu} initialView={menuInitialView} onClose={()=>{setMenu(null);setMenuInitialView("browse");}}/>}
   </div>;
 }
