@@ -407,7 +407,7 @@ export function PixelGarden() {
     const c=cameraRef.current;
     // Place the speech-tail just above the barista's head (world Y~148),
     // not over her face: she stays visibly behind the counter.
-    return {x:c.x+294*c.scale,y:c.y+137*c.scale,width:mount.clientWidth,height:mount.clientHeight};
+    return {x:c.x+315*c.scale,y:c.y+141*c.scale,width:mount.clientWidth,height:mount.clientHeight};
   },[]);
   const getOwnPosition=useCallback(()=>{
     const actor=actorsRef.current.get(selfRef.current);
