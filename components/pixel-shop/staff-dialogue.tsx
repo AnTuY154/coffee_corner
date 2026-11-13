@@ -40,7 +40,7 @@ export function StaffDialogue({getScreenAnchor,getGuestPosition,onOpenMenu,menuO
       const screen=getScreenAnchor();
       if(screen&&screen.width>0&&screen.height>0){
         const docked=screen.y<148||screen.x<108||screen.x>screen.width-108;
-        const left=clamp(screen.x,120,Math.max(120,screen.width-120));
+        const left=docked?Math.min(128,screen.width/2):clamp(screen.x,120,Math.max(120,screen.width-120));
         const top=docked?142:screen.y;
         setAnchor(old=>old&&Math.abs(old.left-left)<1&&Math.abs(old.top-top)<1&&old.docked===docked
           ?old:{left,top,docked});
@@ -76,6 +76,10 @@ export function StaffDialogue({getScreenAnchor,getGuestPosition,onOpenMenu,menuO
       window.speechSynthesis.speak(speech);
     }catch{/* Text bubble remains accessible when the device has no voice engine. */}
   },[voiceOn,voiceSupported,menuOpen,line.id,line.text]);
+
+  useEffect(()=>{
+    if(menuOpen&&"speechSynthesis" in window)window.speechSynthesis.cancel();
+  },[menuOpen]);
 
   useEffect(()=>{
     if(menuOpen||!voiceOn)return;
