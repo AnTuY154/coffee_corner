@@ -13,6 +13,16 @@ test.describe("Pixel Shop real browser evidence", () => {
     await expect(bubble).toBeVisible();
     await expect(bubble).toHaveAttribute("data-line-id","welcome");
     await expect(bubble.getByTestId("staff-line")).toContainText("Vườn É xin chào");
+    await fs.mkdir("qa-captures",{recursive:true});
+    await bubble.screenshot({
+      path:"qa-captures/pixel-"+(mobile?"mobile":"desktop")+"-staff-bubble.png",
+      animations:"disabled"
+    });
+    // Compressed viewport capture for lightweight human review of bubble placement.
+    await page.screenshot({
+      path:"qa-captures/pixel-"+(mobile?"mobile":"desktop")+"-dialogue-view.jpg",
+      type:"jpeg",quality:72,fullPage:false
+    });
     await bubble.getByRole("button",{name:"Lời giới thiệu tiếp theo"}).click();
     await expect(bubble).toHaveAttribute("data-line-id","invite");
     await bubble.getByRole("button",{name:"Lời giới thiệu tiếp theo"}).click();
