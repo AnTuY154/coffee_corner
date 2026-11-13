@@ -404,7 +404,9 @@ export function PixelGarden() {
     const mount=mountRef.current;
     if(!mount)return null;
     const c=cameraRef.current;
-    return {x:c.x+249*c.scale,y:c.y+157*c.scale,width:mount.clientWidth,height:mount.clientHeight};
+    // Place the speech-tail just above the barista's head (world Y~148),
+    // not over her face: she stays visibly behind the counter.
+    return {x:c.x+249*c.scale,y:c.y+141*c.scale,width:mount.clientWidth,height:mount.clientHeight};
   },[]);
   const getOwnPosition=useCallback(()=>{
     const actor=actorsRef.current.get(selfRef.current);
