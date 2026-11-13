@@ -161,3 +161,48 @@
 .pg-stand-action:hover{background:#ffe4a1}
 .pg-stand-action:focus-visible{outline:3px solid #e98c54;outline-offset:3px}
 @media(max-width:800px){.pg-stand-action{position:fixed;right:12px;bottom:calc(83px + env(safe-area-inset-bottom));z-index:49;margin:0;padding:9px 15px;min-height:42px;font-size:12px;box-shadow:0 3px 10px #244b3933}}
+
+/* Barista's stationary speech bubble: DOM overlay follows the Pixi world camera.
+   It uses no extra textures or WebGL draw calls, keeping the 2.5D FPS stable. */
+.pg-staff-dialogue{
+  position:absolute;z-index:7;transform:translate(-50%,-100%);
+  width:min(255px,calc(100% - 22px));min-width:185px;
+  border:2px solid #8d714e;border-bottom:4px solid #8d714e;
+  border-radius:15px 15px 13px 13px;background:#fff8e7f5;
+  box-shadow:0 5px 0 #9b8d6e7a,0 10px 25px #193b2c3d;
+  padding:9px 10px 8px;color:#2b533e;pointer-events:auto;
+  font:700 12px/1.45 ui-rounded,"Trebuchet MS",system-ui,sans-serif;
+  backdrop-filter:blur(3px);
+}
+.pg-staff-dialogue::after{
+  content:"";position:absolute;bottom:-11px;left:calc(50% - 8px);
+  width:13px;height:13px;transform:rotate(45deg);
+  background:#fff8e7;border-right:2px solid #8d714e;border-bottom:2px solid #8d714e;
+}
+.pg-staff-dialogue.is-docked::after{display:none}
+.pg-staff-dialogue-heading{
+  color:#438363;font-size:10px;font-weight:900;letter-spacing:.03em;
+  display:flex;align-items:center;gap:5px;
+}
+.pg-staff-dialogue-text{margin:6px 0 8px;min-height:34px;max-height:74px;overflow:auto;font-weight:700}
+.pg-staff-dialogue-actions{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.pg-staff-dialogue-actions button{
+  border:1px solid #91ae90;border-radius:9px;background:#e6f3d7;
+  color:#2f6c4f;padding:6px 8px;cursor:pointer;
+  font:800 10px ui-rounded,"Trebuchet MS",system-ui,sans-serif;
+  min-height:29px;white-space:nowrap;
+}
+.pg-staff-dialogue-actions button:first-child{background:#377b5c;border-color:#276648;color:#fff8df}
+.pg-staff-dialogue-actions button:last-child[aria-pressed]{min-width:31px}
+.pg-staff-dialogue-actions button[aria-pressed="true"]{background:#ffdfae;color:#6b4d2d}
+.pg-staff-dialogue-actions button:hover{filter:brightness(.97)}
+.pg-staff-dialogue-actions button:focus-visible{outline:2px solid #d78b50;outline-offset:2px}
+@media(max-width:800px){
+  .pg-staff-dialogue{width:min(224px,calc(100% - 20px));min-width:0;padding:8px 9px;
+    border-radius:12px;font-size:11px}
+  .pg-staff-dialogue-text{margin:5px 0 7px;min-height:31px;max-height:64px}
+  .pg-staff-dialogue-actions button{padding:5px 7px;font-size:10px;min-height:28px}
+}
+@media(prefers-reduced-transparency:reduce){
+  .pg-staff-dialogue{background:#fff8e7;backdrop-filter:none}
+}
