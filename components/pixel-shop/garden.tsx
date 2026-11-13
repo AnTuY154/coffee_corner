@@ -18,7 +18,7 @@ type GardenCommand = {type:"goTo";target:Point}|{type:"direction";direction:Faci
 type CameraMode = "all" | "follow";
 type PixelMotionQASnapshot = {
   time:number; self:{x:number;y:number;scale:number;seatId:string|null;zIndex:number;visible:boolean;renderable:boolean;alpha:number;moving:boolean}|null;
-  staff:{x:number;y:number;zIndex:number}|null;
+  staff:{x:number;y:number;zIndex:number;illustrated:boolean;width:number;height:number}|null;
   pets:{name:string;x:number;y:number;zIndex:number;visible:boolean}[];
   framesMs:number[];
   scene:{width:number;height:number;camera:"all"|"follow"};
@@ -210,7 +210,8 @@ export function PixelGarden() {
                   zIndex:sprite.zIndex,visible:sprite.visible,renderable:sprite.renderable,alpha:sprite.alpha,
                   moving:isWalking(own,Date.now()+clockOffsetRef.current)
                 }:null,
-                staff:staff?{x:staff.position.x,y:staff.position.y,zIndex:staff.zIndex}:null,
+                staff:staff?{x:staff.position.x,y:staff.position.y,zIndex:staff.zIndex,
+                  illustrated:staff instanceof PIXI.Sprite,width:staff.width,height:staff.height}:null,
                 pets:engine.world.children.filter(child=>child.label?.startsWith("pet:"))
                   .map(child=>({name:child.label,x:child.position.x,y:child.position.y,
                     zIndex:child.zIndex,visible:child.visible})),
