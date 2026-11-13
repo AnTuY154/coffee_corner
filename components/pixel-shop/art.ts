@@ -392,46 +392,97 @@ export function drawGuest(g: Graphics, actor: Actor, tick: number, seated: boole
   pixel(g,1,4-walk,5,2,0x423c44);
   if(actor.facing==="up")pixel(g,-6,-20+sit+hop,12,9,hair);
 }
-export function drawStaff(g: Graphics, wave: boolean, pet: boolean, step: number) {
+/**
+ * Counter-only barista, 44 × 67 world pixels, with a visible upper body.
+ * The Y origin is the countertop, not the feet: the Pixi counter-front
+ * layer occludes only the lower apron. No walking or full-body animation.
+ *
+ * The raised hand is to the RIGHT of the face so it never obscures the eyes.
+ * Two subtle arm poses create a friendly 2–3 FPS greeting wave.
+ */
+export function drawStaff(g: Graphics, wave: boolean, _pet: boolean, step: number) {
   g.clear();
-  const bob=!pet&&step%4===0?1:0;
-  const top=pet?-22:-33+bob;
-  // Barista with a warm face, brown bob, mint headband and cream apron.
-  pixel(g,-10,top,20,6,0x493735);
-  pixel(g,-11,top+5,22,10,0x654340);
-  pixel(g,-8,top+5,16,13,0xf5c9a8);
-  pixel(g,-9,top+4,18,3,0x4b734f);
-  pixel(g,-7,top+2,13,3,0x6bad7e);
-  pixel(g,-10,top+12,4,6,0x654340);
-  pixel(g,7,top+12,4,6,0x654340);
-  pixel(g,-5,top+11,2,3,0x3b373d);
-  pixel(g,3,top+11,2,3,0x3b373d);
-  pixel(g,-5,top+11,1,1,0xffffff);
-  pixel(g,3,top+11,1,1,0xffffff);
-  pixel(g,-8,top+15,3,2,0xe89491);
-  pixel(g,6,top+15,3,2,0xe89491);
-  pixel(g,-1,top+17,3,1,0xb66d5c);
-  // Sleeves, uniform and apron.
-  pixel(g,-10,top+19,20,15,0x80b89b);
-  pixel(g,-5,top+20,10,13,0xffedd4);
-  pixel(g,-6,top+22,2,10,0xf2dabf);
-  pixel(g,4,top+22,2,10,0xf2dabf);
-  pixel(g,-3,top+28,6,2,0xc17e5d);
-  pixel(g,-13,top+20,4,12,0x80b89b);
-  pixel(g,9,top+(wave?12:20),4,11,0x80b89b);
-  pixel(g,-13,top+30,4,4,0xf5c9a8);
-  pixel(g,9,top+(wave?10:30),5,5,0xf5c9a8);
-  if(wave){
-    pixel(g,10,top+8,3,7,0xf5c9a8);
-    pixel(g,8,top+5,3,4,0xf5c9a8);
-  }
-  if(!pet){
-    pixel(g,-7,0,6,5,0x4d5c63);
-    pixel(g,1,step%2?1:0,6,5,0x4d5c63);
-    pixel(g,-8,4,7,2,0x414144);
-    pixel(g,1,4,7,2,0x414144);
+  const ink=0x3d393b,hair=0x473a39,hairLight=0x655045;
+  const skin=0xf7c8a6,skinShadow=0xe5a77f,shirt=0xffebcc;
+  const green=0x43815d,greenLight=0x76ad79,greenDark=0x2b674c;
+  const hat=0x407954,brim=0x315e47;
+  // Sleeves and shoulders; torso reaches the top of the counter.
+  pixel(g,-23,-26,46,27,ink);
+  pixel(g,-21,-27,42,26,shirt);
+  pixel(g,-22,-22,7,18,0xe1d4b8);
+  pixel(g,15,-22,7,18,0xe1d4b8);
+  pixel(g,-16,-27,32,30,greenDark);
+  pixel(g,-14,-27,28,29,green);
+  pixel(g,-11,-26,5,22,greenLight);
+  pixel(g,-12,-32,6,12,greenDark);pixel(g,6,-32,6,12,greenDark);
+  pixel(g,-8,-28,16,6,shirt);
+  pixel(g,-6,-22,12,2,0xfff6d8);
+  pixel(g,-12,-6,24,3,greenDark);
+  // Apron leaf and a tiny golden name badge.
+  pixel(g,-2,-11,4,7,greenLight);
+  pixel(g,-7,-12,6,3,0xbedc98);
+  pixel(g,1,-14,6,3,0xbedc98);
+  pixel(g,5,-23,12,7,0xf3d68c);
+  pixel(g,7,-21,8,3,0xffffff);
+  // Left hand rests visibly on the counter rim.
+  pixel(g,-22,-19,6,17,shirt);
+  pixel(g,-24,-7,12,5,skinShadow);
+  pixel(g,-23,-8,10,5,skin);
+  pixel(g,-22,-6,7,1,0xffe2c5);
+  // Hair behind face (bob with dark outline and soft light).
+  pixel(g,-19,-54,38,30,ink);
+  pixel(g,-17,-56,34,32,hair);
+  pixel(g,-20,-45,6,19,hair);
+  pixel(g,14,-44,6,18,hair);
+  pixel(g,-14,-30,8,5,hairLight);
+  pixel(g,8,-30,8,5,hairLight);
+  // Large, clear face; cheeks and a delighted smile.
+  pixel(g,-15,-48,30,23,skinShadow);
+  pixel(g,-14,-49,28,21,skin);
+  pixel(g,-14,-35,4,5,0xe99b91);
+  pixel(g,10,-35,4,5,0xe99b91);
+  pixel(g,-9,-41,6,2,ink);pixel(g,4,-41,6,2,ink);
+  pixel(g,-8,-40,4,2,0x73504b);pixel(g,5,-40,4,2,0x73504b);
+  pixel(g,-3,-32,7,3,0xb86960);
+  pixel(g,-2,-32,5,2,0x743f49);
+  pixel(g,-2,-31,4,1,0xffe9df);
+  pixel(g,-18,-47,4,11,hair);
+  pixel(g,14,-47,4,11,hair);
+  pixel(g,-18,-50,36,5,hairLight);
+  // Green cap/visor and a tiny leaf insignia, matching the approved mock-up.
+  pixel(g,-18,-63,36,11,ink);
+  pixel(g,-16,-64,32,10,hat);
+  pixel(g,-15,-63,25,4,greenLight);
+  pixel(g,-21,-54,42,5,brim);
+  pixel(g,-18,-54,36,2,greenLight);
+  pixel(g,-2,-61,3,5,shirt);
+  pixel(g,-7,-61,5,3,0xb6d994);pixel(g,1,-62,5,3,0xb6d994);
+  // Right elbow stays next to torso. Alternate just the forearm/hand.
+  pixel(g,17,-26,7,12,shirt);
+  pixel(g,21,-29,6,7,skinShadow);
+  const raised=wave;
+  if(raised){
+    const offset=step%2===0?0:3;
+    pixel(g,23+offset,-39,8,15,shirt);
+    pixel(g,26+offset,-45,7,11,skin);
+    pixel(g,24+offset,-52,11,10,skinShadow);
+    pixel(g,25+offset,-53,9,10,skin);
+    for(let finger=0;finger<4;finger++)pixel(g,25+offset+finger*3,-56-(finger%2),2,9,skin);
+    pixel(g,35+offset,-49,4,6,skin);
+    pixel(g,39+offset,-50,3,3,0xffdfaf);
+    // Subtle warm greeting rays, visible without a pulsing background.
+    pixel(g,43+offset,-57,2,5,0xffd568);
+    pixel(g,47+offset,-49,4,2,0xffd568);
+  }else{
+    pixel(g,22,-35,8,14,shirt);
+    pixel(g,27,-43,8,13,skin);
+    pixel(g,25,-46,10,8,skin);
+    pixel(g,28,-50,3,7,skin);
+    pixel(g,32,-49,3,8,skin);
+    pixel(g,35,-45,4,5,skin);
   }
 }
+
 export function drawDog(g: Graphics, tick: number) {
   g.clear();
   const wag=Math.floor(tick*6)%3;
