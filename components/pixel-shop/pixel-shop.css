@@ -283,3 +283,9 @@
   .pg-customer-chat{bottom:10px}
   .pg-chat-panel{max-height:calc(100dvh - 75px)}
 }
+
+/* Occupied chairs: keep Stand Up opposite the chat launcher on mobile.
+   Both remain above the bottom commerce nav without intercepting each other. */
+@media(max-width:800px){
+  .pg-stand-action{left:12px;right:auto;bottom:calc(91px + env(safe-area-inset-bottom));max-width:calc(48vw - 10px)}
+}
