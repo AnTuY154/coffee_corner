@@ -28,7 +28,7 @@ export function CustomerChat({menuOpen,onOpenMenu}:Props){
   const [messages,setMessages]=useState<ChatMessage[]>([greeting]);
   const nextId=useRef(1);
   const inputRef=useRef<HTMLInputElement>(null);
-  const bottomRef=useRef<HTMLDivElement>(null);
+  const messagesRef=useRef<HTMLDivElement>(null);
   useEffect(()=>setMonth(new Date().getMonth()+1),[]);
   useEffect(()=>{
     if(menuOpen)setOpen(false);
@@ -39,7 +39,7 @@ export function CustomerChat({menuOpen,onOpenMenu}:Props){
     return ()=>window.cancelAnimationFrame(focus);
   },[open]);
   useEffect(()=>{
-    if(open)bottomRef.current?.scrollIntoView({block:"end",behavior:"instant"});
+    if(open&&messagesRef.current)messagesRef.current.scrollTop=messagesRef.current.scrollHeight;
   },[messages,open]);
 
   const send=(raw:string)=>{
@@ -75,7 +75,7 @@ export function CustomerChat({menuOpen,onOpenMenu}:Props){
           </div>
           <button type="button" className="pg-chat-close" aria-label="Đóng khung chat" onClick={()=>setOpen(false)}>✕</button>
         </header>
-        <div className="pg-chat-messages" role="log" aria-label="Nội dung trò chuyện" aria-live="polite" aria-relevant="additions">
+        <div ref={messagesRef} className="pg-chat-messages" role="log" aria-label="Nội dung trò chuyện" aria-live="polite" aria-relevant="additions">
           {messages.map(message=><div key={message.id}
             className={"pg-chat-message "+(message.sender==="bot"?"is-bot":"is-guest")}>
             {message.sender==="bot"&&<span className="pg-chat-speaker">Vườn É</span>}
@@ -84,7 +84,7 @@ export function CustomerChat({menuOpen,onOpenMenu}:Props){
               onOpenMenu(message.action!);setOpen(false);
             }}>🌿 {message.action==="fruit"?"Xem trái cây tươi":"Mở thực đơn"}</button>}
           </div>)}
-          <div ref={bottomRef}/>
+
         </div>
         {messages.length<=3&&<div className="pg-chat-quick" aria-label="Câu hỏi gợi ý">
           {quickQuestions.map(question=><button key={question} type="button" onClick={()=>send(question)}>{question}</button>)}
