@@ -541,7 +541,7 @@ export function buildScene(kenney: KenneyAtlas | null = null) {
     world.addChild(front);
   }
   const counterFront=new Graphics();pixel(counterFront,193,153,99,20,C.brown);pixel(counterFront,197,157,91,10,C.woodLight);counterFront.zIndex=173;world.addChild(counterFront);
-  const employee=new Graphics();employee.x=241;employee.y=158;employee.zIndex=158;world.addChild(employee);
+  const employee=new Graphics();employee.x=241;employee.y=165;employee.zIndex=158;world.addChild(employee);
   const animals=[new Graphics(),new Graphics(),new Graphics()];
   animals[0].position.set(272,143);animals[0].zIndex=168;
   animals[1].position.set(43,209);animals[1].zIndex=211;
@@ -550,9 +550,10 @@ export function buildScene(kenney: KenneyAtlas | null = null) {
   // Depth-sort all guests by feet within the world; no always-on-top actor layer.
   const actors=world;
   // The fallback also keeps the barista fixed behind the counter at all times.
-  drawStaff(employee,false,false,1);employee.label="staff:stationary";
+  drawStaff(employee,false,false,0);employee.label="staff:stationary";
   animals[0].label="pet:gray-cat";animals[1].label="pet:ginger-cat";animals[2].label="pet:dog";
   let prevStep=-1;
+  let lastWaveFrame=-1;
   function update(tick:number,reducedMotion:boolean) {
     const time=reducedMotion?0:tick;
     const gray=petRouteAt(time,PET_ROUTES.gray,6,37);
@@ -564,6 +565,8 @@ export function buildScene(kenney: KenneyAtlas | null = null) {
       sprite.scale.set(pose.direction*scale,scale);
       sprite.zIndex=320+Math.round(pose.y);
     }
+    const waveFrame=reducedMotion?0:(tick%8<3.3?1+Math.floor(tick*2.5)%2:0);
+    if(lastWaveFrame!==waveFrame){drawStaff(employee,waveFrame>0,false,Math.max(0,waveFrame-1));lastWaveFrame=waveFrame;}
     const step=reducedMotion?0:Math.floor(tick*6);
     if(step===prevStep)return;prevStep=step;
     drawCat(animals[0],true,step);drawCat(animals[1],false,step);drawDog(animals[2],step);
