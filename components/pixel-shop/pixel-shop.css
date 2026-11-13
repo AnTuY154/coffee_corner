@@ -266,6 +266,7 @@
   .pg-chat-launcher{gap:7px;min-height:47px;padding:7px 10px;border-radius:15px}
   .pg-chat-launcher-icon{width:27px;height:27px;font-size:17px}
   .pg-chat-launcher strong{font-size:11px}.pg-chat-launcher small{font-size:9px}
+  .pg-customer-chat.is-seated{bottom:calc(154px + env(safe-area-inset-bottom))}
   .pg-chat-panel{width:min(350px,calc(100vw - 20px));
     height:min(490px,calc(100dvh - 185px));min-height:270px}
 }
