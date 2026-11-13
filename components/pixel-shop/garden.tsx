@@ -7,6 +7,7 @@ import { createGardenNetwork, type RoomStatus } from "./network";
 import { loadKenneyAtlas } from "./kenney-art";
 import { loadReferenceAssets, buildReferenceScene } from "./reference-scene";
 import { StaffDialogue } from "./staff-dialogue";
+import { CustomerChat } from "./customer-chat";
 import type { StaffCategory } from "./staff-dialogue-content";
 import { guestVisualDepth,depthScaleAt } from "./pet-motion";
 import { SCENE_HEIGHT, SCENE_WIDTH, SCENE_VERSION, NAV_VERSION, SPAWN, WALK_SPEED, HOTSPOTS, SEATS, findPath, hotspotAt, nearestWalkable, positionAt, facingFromPath, type Actor, type ClientIntent, type Facing, type Point, type ServerEvent } from "@/shared/garden/model";
@@ -181,8 +182,13 @@ export function PixelGarden() {
         // Painting a 2x/3x retina-sized WebGL canvas on software GPUs caused
         // 50-125ms frame stalls. Cap the render surface, not the CSS layout or
         // scene geometry: camera/world coordinates remain identical.
-        const renderResolution=Math.max(0.4,Math.min(1,
-          800/Math.max(1,mount.clientWidth),540/Math.max(1,mount.clientHeight)));
+        // Pixel-art canvas is display-scaled; rasterising more than ~275K
+        // internal pixels slows software WebGL and lower-end devices.
+        // Render at scene-friendly resolution, then CSS-scale the same world.
+        const isSmall=mount.clientWidth<=800;
+        const renderResolution=Math.max(0.34,Math.min(1,
+          (isSmall?360:640)/Math.max(1,mount.clientWidth),
+          (isSmall?470:430)/Math.max(1,mount.clientHeight)));
         await application.init({resizeTo:mount,backgroundColor:0xbde7da,antialias:false,preference:"webgl",resolution:renderResolution,autoDensity:true});
         if(disposed){application.destroy(true,{children:true});return;}
         mount.appendChild(application.canvas);
@@ -406,7 +412,7 @@ export function PixelGarden() {
     const c=cameraRef.current;
     // Place the speech-tail just above the barista's head (world Y~148),
     // not over her face: she stays visibly behind the counter.
-    return {x:c.x+249*c.scale,y:c.y+141*c.scale,width:mount.clientWidth,height:mount.clientHeight};
+    return {x:c.x+315*c.scale,y:c.y+141*c.scale,width:mount.clientWidth,height:mount.clientHeight};
   },[]);
   const getOwnPosition=useCallback(()=>{
     const actor=actorsRef.current.get(selfRef.current);
@@ -461,6 +467,7 @@ export function PixelGarden() {
       <button type="button" onClick={()=>setMenu("fruit")}>🍊 Trái cây</button>
       <button type="button" onClick={()=>{setMenuInitialView("cart");setMenu("all");}}>🧺 Giỏ ({count})</button>
     </nav>
+    <CustomerChat onOpenMenu={openStaffRecommendation} seated={Boolean(seatedAt)}/>
     {opened&&<ShopMenu2D key={menu+"-"+menuInitialView} initialCategory={menu} initialView={menuInitialView} onClose={()=>{setMenu(null);setMenuInitialView("browse");}}/>}
   </div>;
 }

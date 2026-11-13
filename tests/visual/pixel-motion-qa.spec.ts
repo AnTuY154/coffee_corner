@@ -116,11 +116,18 @@ test.describe("Pixel 2.5D movement QA agent — real browser",()=>{
     const down=await telemetryFor(page,2400);
     verifySmooth(down,"downward");
     expect((down.at(-1)?.self?.y??0)-(down[0].self?.y??0),"down must increase world Y").toBeGreaterThan(30);
+    const petSamples=[...up,...down];
     for(const pet of up[0].pets){
-      const last=down.at(-1)?.pets.find(p=>p.name===pet.name);
-      expect(last,"pet disappeared: "+pet.name).toBeTruthy();
-      expect(Math.hypot(last!.x-pet.x,last!.y-pet.y),"pet frozen: "+pet.name).toBeGreaterThan(2);
-      expect(last!.visible).toBe(true);
+      const track=petSamples.map(sample=>sample.pets.find(p=>p.name===pet.name))
+        .filter((point):point is NonNullable<typeof point>=>Boolean(point));
+      expect(track.length,"pet disappeared: "+pet.name).toBeGreaterThan(25);
+      const walked=track.slice(1).reduce((distance,point,index)=>{
+        const prior=track[index];
+        return distance+Math.hypot(point.x-prior.x,point.y-prior.y);
+      },0);
+      // Circular patrols may end almost exactly where they started.
+      expect(walked,"pet did not move along its patrol: "+pet.name).toBeGreaterThan(8);
+      expect(track.every(point=>point.visible),"pet became invisible: "+pet.name).toBe(true);
     }
     const frames=down.at(-1)?.framesMs??[];
     expect(frames.length,"not enough real Pixi animation frames").toBeGreaterThan(40);

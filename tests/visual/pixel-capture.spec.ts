@@ -3,6 +3,42 @@ import fs from "node:fs/promises";
 
 test.describe("Pixel Shop real browser evidence", () => {
 
+  test("visitor chat answers real product questions and links to menu",async ({page},testInfo)=>{
+    const errors:string[]=[];
+    page.on("pageerror",error=>errors.push(error.message));
+    await page.goto("/pixel",{waitUntil:"domcontentloaded"});
+    await expect(page.locator(".pg-stage")).toHaveAttribute("data-art-mode","reference",{timeout:30000});
+    const launcher=page.getByRole("button",{name:"Mở trò chuyện tư vấn Vườn É"});
+    await expect(launcher).toBeVisible();
+    await launcher.click();
+    const chat=page.getByRole("dialog",{name:"Trò chuyện tư vấn Vườn É"});
+    await expect(chat).toBeVisible();
+    await expect(chat).toContainText("Trợ lý tự động");
+    await chat.getByTestId("chat-input").fill("Cam Đồi");
+    await chat.getByRole("button",{name:"Gửi câu hỏi"}).click();
+    await expect(chat).toContainText("Cam Đồi:");
+    await expect(chat).toContainText("42.000");
+    await expect(chat).toContainText("Giá tham khảo");
+    await chat.getByRole("button",{name:"🥤 Xem thực đơn"}).click();
+    await expect(page.getByRole("heading",{name:"Thực đơn Vườn É"})).toBeVisible();
+    expect(errors).toEqual([]);
+    await fs.mkdir("qa-captures",{recursive:true});
+    await page.screenshot({path:"qa-captures/pixel-"+(testInfo.project.name.startsWith("mobile")?"mobile":"desktop")+"-customer-chat.png",fullPage:false});
+  });
+
+  test("visitor can close chat and ask about delivery without false live-agent claims",async ({page})=>{
+    await page.goto("/pixel",{waitUntil:"domcontentloaded"});
+    await page.getByRole("button",{name:"Mở trò chuyện tư vấn Vườn É"}).click();
+    const chat=page.getByRole("dialog",{name:"Trò chuyện tư vấn Vườn É"});
+    await chat.getByTestId("chat-input").fill("Có giao hàng không?");
+    await chat.getByRole("button",{name:"Gửi câu hỏi"}).click();
+    await expect(chat).toContainText("chưa được xác nhận");
+    await chat.getByRole("button",{name:"Đóng chat"}).click();
+    await expect(chat).toHaveCount(0);
+    await expect(page.getByRole("button",{name:"Mở trò chuyện tư vấn Vườn É"})).toBeVisible();
+  });
+
+
   test("barista says hello and recommends a real seasonal menu item",async({page},testInfo)=>{
     const mobile=testInfo.project.name.startsWith("mobile");
     const errors:string[]=[];
@@ -117,21 +153,25 @@ test.describe("Pixel Shop real browser evidence", () => {
     await expect(stand).toHaveCount(0);
     await expect(page.locator(".pg-stage canvas")).toBeVisible();
   });
-  test("barista stays visually stationary behind the counter",async ({page},testInfo)=>{
-    test.skip(testInfo.project.name.startsWith("mobile"),"Desktop pixel-stability sample");
+  test("barista displays her upper torso and waves behind the same counter",async ({page},testInfo)=>{
+    test.skip(testInfo.project.name.startsWith("mobile"),"Desktop frame-level wave audit");
     await page.goto("/pixel",{waitUntil:"domcontentloaded"});
     await expect(page.locator(".pg-stage")).toHaveAttribute("data-art-mode","reference",{timeout:30000});
+    const responses=await Promise.all([0,1].map(i=>page.request.get("/pixel-shop/characters/barista-wave-"+i+".svg")));
+    for(const response of responses)expect(response.ok(),"wave assets must be shipped").toBe(true);
     const box=await page.locator(".pg-stage").boundingBox();
     expect(box).not.toBeNull();
     const scale=Math.min(box!.width/480,box!.height/320);
-    const clip={x:Math.round(box!.x+(box!.width-480*scale)/2+236*scale),
-      y:Math.round(box!.y+(box!.height-320*scale)/2+144*scale),
-      width:Math.round(28*scale),height:Math.round(51*scale)};
+    const clip={x:Math.round(box!.x+(box!.width-480*scale)/2+222*scale),
+      y:Math.round(box!.y+(box!.height-320*scale)/2+116*scale),
+      width:Math.round(55*scale),height:Math.round(49*scale)};
     await page.waitForTimeout(350);
-    const before=await page.screenshot({clip});
-    await page.waitForTimeout(1300);
-    const after=await page.screenshot({clip});
-    expect(before.equals(after),"barista must not wave or leave the counter").toBe(true);
+    const frames=[await page.screenshot({clip})];
+    for(let i=0;i<5;i++){
+      await page.waitForTimeout(220);
+      frames.push(await page.screenshot({clip}));
+    }
+    expect(frames.some(frame=>!frame.equals(frames[0])),"barista's hand should wave, never walk away").toBe(true);
   });
   test("capture actual WebGL canvas and commerce on desktop/mobile", async ({ page }, testInfo) => {
     const mobile=testInfo.project.name.startsWith("mobile");
@@ -147,6 +187,12 @@ test.describe("Pixel Shop real browser evidence", () => {
     await page.waitForTimeout(2200);
     await fs.mkdir("qa-captures",{recursive:true});
     await page.screenshot({path:`qa-captures/pixel-${prefix}-garden.png`,fullPage:true,animations:"disabled"});
+    // Small reproducible real-canvas evidence: unlike the full-resolution PNG
+    // these JPEG frames can be inspected directly during PR review.
+    await page.screenshot({
+      path:"qa-captures/pixel-"+prefix+"-wave-scene.jpg",
+      type:"jpeg",quality:66,fullPage:false
+    });
     if(mobile) {
       await expect(page.getByRole("button",{name:"Đi lên"})).toBeVisible();
       await page.getByRole("button",{name:"🍊 Trái cây"}).last().click();
