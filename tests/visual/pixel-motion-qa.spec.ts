@@ -219,6 +219,9 @@ test.describe("Pixel 2.5D movement QA agent — real browser",()=>{
     await page.evaluate(()=>window.__VUONE_PIXEL_QA__?.freezeDecorations(true));
     const initial=await snapshot(page);
     expect(initial.staff).not.toBeNull();
+    expect(initial.staff?.illustrated,"staff should use approved illustrated sprite, not old box Graphics").toBe(true);
+    expect(initial.staff?.height??0,"barista upper body should be tall enough to see face and apron").toBeGreaterThanOrEqual(58);
+    expect(initial.staff?.width??0,"barista needs visible waving hand beside face").toBeGreaterThanOrEqual(48);
     expect(initial.pets).toHaveLength(3);
     const evidence:{seat:string;changedPixels:number}[]=[];
     for(const seatId of seats){
