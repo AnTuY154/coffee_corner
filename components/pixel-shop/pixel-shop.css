@@ -201,7 +201,9 @@
   .pg-staff-dialogue{width:min(224px,calc(100% - 20px));min-width:0;padding:8px 9px;
     border-radius:12px;font-size:11px}
   .pg-staff-dialogue-text{margin:5px 0 7px;min-height:31px;max-height:64px}
-  .pg-staff-dialogue-actions button{padding:5px 7px;font-size:10px;min-height:28px}
+  .pg-staff-dialogue-actions{gap:4px;flex-wrap:nowrap}
+  .pg-staff-dialogue-actions button{padding:5px 5px;font-size:9px;min-height:28px}
+  .pg-staff-dialogue-actions button[aria-pressed]{min-width:27px;padding-inline:4px}
 }
 @media(prefers-reduced-transparency:reduce){
   .pg-staff-dialogue{background:#fff8e7;backdrop-filter:none}
