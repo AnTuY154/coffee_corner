@@ -187,6 +187,12 @@ test.describe("Pixel Shop real browser evidence", () => {
     await page.waitForTimeout(2200);
     await fs.mkdir("qa-captures",{recursive:true});
     await page.screenshot({path:`qa-captures/pixel-${prefix}-garden.png`,fullPage:true,animations:"disabled"});
+    // Small reproducible real-canvas evidence: unlike the full-resolution PNG
+    // these JPEG frames can be inspected directly during PR review.
+    await page.screenshot({
+      path:"qa-captures/pixel-"+prefix+"-wave-scene.jpg",
+      type:"jpeg",quality:66,fullPage:false
+    });
     if(mobile) {
       await expect(page.getByRole("button",{name:"Đi lên"})).toBeVisible();
       await page.getByRole("button",{name:"🍊 Trái cây"}).last().click();
