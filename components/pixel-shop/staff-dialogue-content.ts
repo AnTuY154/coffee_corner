@@ -29,7 +29,7 @@ export function buildStaffLines(month: number): StaffLine[] {
   const lines: StaffLine[] = [
     {
       id: "welcome",
-      text: "Vườn É xin chào! Mời bạn ghé quầy chọn một ly nước thật ngon nhé! 🍹",
+      text: "Vườn Ép xin chào! Mời bạn ghé quầy chọn một ly nước thật ngon nhé! 🍹",
       category: "all"
     },
     {
@@ -42,7 +42,7 @@ export function buildStaffLines(month: number): StaffLine[] {
     lines.push({
       id: "seasonal",
       text: featured.badge === "Mới"
-        ? `Vườn É vừa có món mới ${featured.name}: ${featured.tagline}. Bạn muốn thử không? ✨`
+        ? `Vườn Ép vừa có món mới ${featured.name}: ${featured.tagline}. Bạn muốn thử không? ✨`
         : `Gợi ý mới cho bạn đây: ${featured.name}, vị ${featured.flavour.toLowerCase()}. Mình giới thiệu nhé! ✨`,
       category: "all",
       promotedProductId: featured.id
