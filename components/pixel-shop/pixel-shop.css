@@ -147,9 +147,11 @@
 }
 .pg-stage[data-art-mode="reference"]{
   background:#7cc7da;
-  image-rendering:auto;
+  image-rendering:pixelated;
 }
-.pg-stage[data-art-mode="reference"] canvas{image-rendering:auto;}
+/* The reference artwork and character sprites share a pixel grid.
+   Never let the browser bilinearly blur the WebGL canvas when scaling it. */
+.pg-stage[data-art-mode="reference"] canvas{image-rendering:pixelated;}
 .pg-stage[data-art-mode="fallback"] canvas{image-rendering:pixelated;}
 @media (max-width:800px){
   .pg-stage[data-art-mode="reference"]{height:min(69dvh,620px);aspect-ratio:auto;}
