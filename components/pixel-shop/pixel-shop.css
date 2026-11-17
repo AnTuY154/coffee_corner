@@ -602,3 +602,28 @@
   .pg-brand,.pg-heading-actions,.pg-game-controls button,.pg-chat-launcher,
   .pg-status,.pg-mobile-nav,.pg-dpad button{background:#fff9e9}
 }
+
+
+/* No costly real-time CSS compositing above the WebGL canvas.
+   Frosted-look HUD comes from low-alpha solid surfaces, not a
+   backdrop-filter recalculated across every animation frame. */
+.pg-root .pg-brand,
+.pg-root .pg-heading-actions,
+.pg-root .pg-status,
+.pg-root .pg-game-controls button,
+.pg-root .pg-chat-launcher,
+.pg-root .pg-help,
+.pg-root .pg-staff-dialogue,
+.pg-root .pg-dpad button,
+.pg-root .pg-mobile-nav,
+.pg-root .pg-stand-action,
+.pg-root .pg-notice,
+.pg-root .ve-menu-overlay {
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+}
+.pg-stage[data-art-mode="reference"]::before{
+  filter:none;
+  opacity:.68;
+  transform:none;
+}
