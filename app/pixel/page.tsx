@@ -10,8 +10,8 @@ import { products } from "@/data/catalog";
  * The old "/pixel-shop" preview continues to work.
  */
 export const metadata: Metadata = {
-  title: "Vườn É Pixel Art — Quán nước ép trong khu vườn",
-  description: "Khám phá quán Vườn É phiên bản Pixel Art, di chuyển trong sân vườn, chọn nước ép và trái cây tươi.",
+  title: "Vườn Ép Pixel Art — Quán nước ép trong khu vườn",
+  description: "Khám phá quán Vườn Ép phiên bản Pixel Art, di chuyển trong sân vườn, chọn nước ép và trái cây tươi.",
 };
 
 export default function PixelPage() {
