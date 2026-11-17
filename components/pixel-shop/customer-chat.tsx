@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { replyToCustomer, type ShopReply } from "./shop-chat-replies";
 
 type ChatMessage={id:number;from:"customer"|"assistant";text:string;category?:ShopReply["category"]};
-type Props={onOpenMenu:(category:"all"|"fruit"|"daily")=>void;seated:boolean};
+type Props={onOpenMenu:(category:"all"|"fruit"|"daily")=>void;seated:boolean;onOpenChange?:(open:boolean)=>void};
 
 const welcome:ChatMessage={
   id:0,from:"assistant",
@@ -12,7 +12,7 @@ const welcome:ChatMessage={
 };
 const examples=["Gợi ý món ngon","Trái cây tươi","Giá bao nhiêu?","Cách đặt hàng"];
 
-export function CustomerChat({onOpenMenu,seated}:Props){
+export function CustomerChat({onOpenMenu,seated,onOpenChange}:Props){
   const [open,setOpen]=useState(false);
   const [messages,setMessages]=useState<ChatMessage[]>([welcome]);
   const [draft,setDraft]=useState("");
@@ -20,6 +20,8 @@ export function CustomerChat({onOpenMenu,seated}:Props){
   const endRef=useRef<HTMLDivElement|null>(null);
   const inputRef=useRef<HTMLInputElement|null>(null);
   const storePhone=process.env.NEXT_PUBLIC_STORE_PHONE;
+
+  useEffect(()=>{onOpenChange?.(open);},[open,onOpenChange]);
 
   useEffect(()=>{
     if(open){
