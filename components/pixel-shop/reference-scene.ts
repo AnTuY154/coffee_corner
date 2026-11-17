@@ -23,7 +23,7 @@ export const REFERENCE_LAYERS = [
   {name:"tree-canopy-left",file:"tree-canopy-left.webp",bbox:[0,0,605,480],z:18},
   {name:"tree-canopy-right",file:"tree-canopy-right.webp",bbox:[1120,65,1535,618],z:18}
 ] as const;
-export type ReferenceAssets={base:Texture;parts:Map<string,Texture>;staffFrames?:[Texture,Texture]};
+export type ReferenceAssets={base:Texture;parts:Map<string,Texture>;staffFrames?:Texture[];brandSign?:Texture};
 export async function loadReferenceAssets():Promise<ReferenceAssets|null>{
   const prefix=window.location.pathname.startsWith("/coffee_corner/")?"/coffee_corner":"";
   const path=prefix+"/pixel-shop/reference/";
@@ -41,17 +41,25 @@ export async function loadReferenceAssets():Promise<ReferenceAssets|null>{
       result.value.tex.source.scaleMode="linear";
       parts.set(result.value.name,result.value.tex);
     }
-    let staffFrames:[Texture,Texture]|undefined;
+    let staffFrames:Texture[]|undefined;
     try{
-      const frames=await Promise.all([0,1].map(i=>Assets.load<Texture>({
-        alias:"ve-pixel-barista-wave-"+i,
-        src:prefix+"/pixel-shop/characters/barista-wave-"+i+".svg"
+      const frames=await Promise.all([0,1,2].map(i=>Assets.load<Texture>({
+        alias:"ve-pixel-barista-cozy-"+i,
+        src:prefix+"/pixel-shop/characters/barista-cozy-"+i+".svg"
       })));
       if(frames.every(frame=>frame.width>0&&frame.height>0)){
-        staffFrames=[frames[0],frames[1]];
+        frames.forEach(frame=>{frame.source.scaleMode="nearest";});
+        staffFrames=frames;
       }
-    }catch{/* Keep procedural barista if vector assets fail to load. */}
-    return {base,parts,staffFrames};
+    }catch{/* Keep the existing independently drawn staff if upgraded art is missing. */}
+    let brandSign:Texture|undefined;
+    try{
+      brandSign=await Assets.load<Texture>({
+        alias:"ve-vuon-ep-wordmark",
+        src:prefix+"/pixel-shop/reference/vuon-ep-wordmark.svg"
+      });
+    }catch{/* Fallback scene still works; QA requires this branded asset. */}
+    return {base,parts,staffFrames,brandSign};
   }catch{return null;}
 }
 export function buildReferenceScene(assets:ReferenceAssets){
@@ -64,6 +72,7 @@ export function buildReferenceScene(assets:ReferenceAssets){
   // and tabletop region should be permitted to occlude a passing visitor.
   // Cutoff values use source-image pixels, not the 480x320 world.
   const tableForegroundY:Record<string,number>={
+    "counter-front":578,
     "table-left":700,"table-center":738,"table-right":700,
     "table-back-left":826,"table-back-right":826
   };
@@ -82,19 +91,28 @@ export function buildReferenceScene(assets:ReferenceAssets){
     item.zIndex=layer.z;item.label="pixel:"+layer.name;
     world.addChild(item);
   }
-  // All character and table layers share a single depth-sorted Pixi world.
-  // Half-body staff stands anchored behind counter; only her arm waves.
-  // Counter-front (z=217) hides the apron below the work surface.
+  // Rebrand the original baked English lettering with a source-aligned
+  // transparent SVG; keep the cup, citrus and wooden plaque from the source.
+  if(assets.brandSign){
+    const sign=new Sprite(assets.brandSign);
+    sign.position.set(674*unit,149*unit);
+    sign.width=305*unit;sign.height=69*unit;
+    sign.zIndex=20;sign.label="sign:vuon-ep";
+    world.addChild(sign);
+  }
+  // Staff remains at one world coordinate; only the raised hand varies.
+  // The lower counter crop starts at image y=578 so her shoulders and apron
+  // remain visible while the counter hides her waist.
   const employee=assets.staffFrames
     ?new Sprite(assets.staffFrames[0]):new Graphics();
-  employee.position.set(249,175);employee.zIndex=210;employee.label="staff:stationary";world.addChild(employee);
+  employee.position.set(249,184);employee.zIndex=210;employee.label="staff:stationary";world.addChild(employee);
   if(employee instanceof Sprite){
     employee.anchor.set(0.5,1);
-    employee.width=54;
-    employee.height=58.5;
+    employee.width=74;
+    employee.height=87;
   }else{
     drawStaff(employee,true,false,1);
-    employee.scale.set(1.45);
+    employee.scale.set(1.65);
   }
   const dog=new Graphics();dog.label="pet:dog";world.addChild(dog);
   const cat=new Graphics();cat.label="pet:ginger-cat";world.addChild(cat);
@@ -115,11 +133,10 @@ export function buildReferenceScene(assets:ReferenceAssets){
       sprite.zIndex=320+Math.round(pose.y);
     }
     const step=reducedMotion?0:Math.floor(tick*6);
-    const waveFrame=reducedMotion?0:Math.floor(tick*2.4)%2;
+    const waveFrame=reducedMotion?0:Math.floor(tick*2.1)%3;
     if(employee instanceof Sprite&&assets.staffFrames){
-      if(employee.texture!==assets.staffFrames[waveFrame]){
-        employee.texture=assets.staffFrames[waveFrame];
-      }
+      const next=assets.staffFrames[waveFrame%assets.staffFrames.length];
+      if(next&&employee.texture!==next)employee.texture=next;
     }else if(employee instanceof Graphics&&step!==previous){
       drawStaff(employee,!reducedMotion&&Math.floor(tick*2.4)%2===0,false,1);
     }
