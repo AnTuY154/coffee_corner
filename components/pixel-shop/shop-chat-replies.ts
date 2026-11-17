@@ -28,7 +28,7 @@ export function replyToCustomer(raw:string,month:number):ShopReply{
     return {text:"Bạn chọn “Xem thực đơn”, thêm món vào giỏ và thực hiện các bước đặt hàng. Giá trên trang là dữ liệu tham khảo, cần xác nhận trước khi bán chính thức.",category:"all"};
   }
   if(/(trai cay|hoa qua|qua tuoi|fruit)/.test(text)){
-    return {text:"Vườn É có danh mục trái cây tươi theo gói. Bạn mở “Trái cây tươi” để xem các lựa chọn đang được giới thiệu nhé!",category:"fruit"};
+    return {text:"Vườn Ép có danh mục trái cây tươi theo gói. Bạn mở “Trái cây tươi” để xem các lựa chọn đang được giới thiệu nhé!",category:"fruit"};
   }
   if(/(gia|bao nhieu|bang gia|menu|thuc don)/.test(text)){
     return {text:"Mình có thể giúp tra giá tham khảo theo từng sản phẩm. Bấm “Xem thực đơn” để xem đầy đủ giá và thành phần nhé!",category:"all"};
@@ -39,7 +39,7 @@ export function replyToCustomer(raw:string,month:number):ShopReply{
     return {text:"Bạn thử xem danh mục nước ép và sinh tố nhé! Mỗi sản phẩm đều có thành phần và hương vị tham khảo.",category:"all"};
   }
   if(/(chao|hello|hi|xin chao|cam on)/.test(text)){
-    return {text:"Vườn É xin chào! 🌿 Mình là trợ lý trả lời tự động. Bạn cần tư vấn về món uống hay cách đặt hàng nhỉ?"};
+    return {text:"Vườn Ép xin chào! 🌿 Mình là trợ lý trả lời tự động. Bạn cần tư vấn về món uống hay cách đặt hàng nhỉ?"};
   }
-  return {text:"Mình là trợ lý tự động của Vườn É, hiện có thể trả lời về món uống, trái cây, giá tham khảo và cách đặt hàng. Bạn thử hỏi “Món nào ngon?” hoặc mở thực đơn nhé!"};
+  return {text:"Mình là trợ lý tự động của Vườn Ép, hiện có thể trả lời về món uống, trái cây, giá tham khảo và cách đặt hàng. Bạn thử hỏi “Món nào ngon?” hoặc mở thực đơn nhé!"};
 }
