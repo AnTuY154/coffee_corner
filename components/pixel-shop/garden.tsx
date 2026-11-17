@@ -179,17 +179,12 @@ export function PixelGarden() {
         if(disposed)return;
         const application=new PIXI.Application();
         app=application;
-        // Static pixel-art is already high quality at ~800x540 internal px.
-        // Painting a 2x/3x retina-sized WebGL canvas on software GPUs caused
-        // 50-125ms frame stalls. Cap the render surface, not the CSS layout or
-        // scene geometry: camera/world coordinates remain identical.
-        // Pixel-art canvas is display-scaled; rasterising more than ~275K
-        // internal pixels slows software WebGL and lower-end devices.
-        // Render at scene-friendly resolution, then CSS-scale the same world.
-        const isSmall=mount.clientWidth<=800;
-        const renderResolution=Math.max(0.34,Math.min(1,
-          (isSmall?350:475)/Math.max(1,mount.clientWidth),
-          (isSmall?450:320)/Math.max(1,mount.clientHeight)));
+        // Keep the WebGL backing surface close to the actual display pixel
+        // grid. The former 320–475px cap made the browser enlarge a tiny
+        // raster canvas over the full-screen scene, visibly smearing sprites.
+        // A modest DPR cap preserves crisp edges without creating huge
+        // software-WebGL surfaces on high-density displays.
+        const renderResolution=Math.min(1.5,Math.max(1,window.devicePixelRatio||1));
         await application.init({resizeTo:mount,backgroundColor:0xbde7da,backgroundAlpha:0,antialias:false,preference:"webgl",resolution:renderResolution,autoDensity:true});
         if(disposed){application.destroy(true,{children:true});return;}
         mount.appendChild(application.canvas);
