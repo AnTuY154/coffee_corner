@@ -190,7 +190,7 @@ export function PixelGarden() {
         const renderResolution=Math.max(0.34,Math.min(1,
           (isSmall?360:640)/Math.max(1,mount.clientWidth),
           (isSmall?470:430)/Math.max(1,mount.clientHeight)));
-        await application.init({resizeTo:mount,backgroundColor:0xbde7da,antialias:false,preference:"webgl",resolution:renderResolution,autoDensity:true});
+        await application.init({resizeTo:mount,backgroundColor:0xbde7da,backgroundAlpha:0,antialias:false,preference:"webgl",resolution:renderResolution,autoDensity:true});
         if(disposed){application.destroy(true,{children:true});return;}
         mount.appendChild(application.canvas);
         const [kenney,reference]=await Promise.all([loadKenneyAtlas(),loadReferenceAssets()]);
