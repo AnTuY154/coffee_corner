@@ -77,6 +77,7 @@ export function PixelGarden() {
   const [roomStatus,setRoomStatus]=useState<RoomStatus>("solo");
   const [people,setPeople]=useState(1);
   const [seatedAt,setSeatedAt]=useState<string|null>(null);
+  const [chatOpen,setChatOpen]=useState(false);
   const [camera,setCamera]=useState<CameraMode>("all");
   useEffect(()=>{if(window.innerWidth<800)setCamera("follow");},[]);
   const [menu,setMenu]=useState<MenuCategory|null>(null);
@@ -187,9 +188,9 @@ export function PixelGarden() {
         // Render at scene-friendly resolution, then CSS-scale the same world.
         const isSmall=mount.clientWidth<=800;
         const renderResolution=Math.max(0.34,Math.min(1,
-          (isSmall?360:640)/Math.max(1,mount.clientWidth),
-          (isSmall?470:430)/Math.max(1,mount.clientHeight)));
-        await application.init({resizeTo:mount,backgroundColor:0xbde7da,antialias:false,preference:"webgl",resolution:renderResolution,autoDensity:true});
+          (isSmall?350:475)/Math.max(1,mount.clientWidth),
+          (isSmall?450:320)/Math.max(1,mount.clientHeight)));
+        await application.init({resizeTo:mount,backgroundColor:0xbde7da,backgroundAlpha:0,antialias:false,preference:"webgl",resolution:renderResolution,autoDensity:true});
         if(disposed){application.destroy(true,{children:true});return;}
         mount.appendChild(application.canvas);
         const [kenney,reference]=await Promise.all([loadKenneyAtlas(),loadReferenceAssets()]);
@@ -434,12 +435,12 @@ export function PixelGarden() {
     onPointerCancel={stopDpad}>{({up:"▲",down:"▼",left:"◀",right:"▶"}[dir])}</button>;
   return <div className="pg-root">
     <header className="pg-header">
-      <div className="pg-brand"><span className="pg-mark" aria-hidden="true">🍊</span><div><span className="pg-kicker">VƯỜN É · COZY PIXEL CAFÉ</span><h1>Vườn É <span>✿</span></h1><p>Một khu vườn nhỏ, thật nhiều điều ngọt lành.</p></div></div>
+      <div className="pg-brand"><span className="pg-mark" aria-hidden="true">🍊</span><div><span className="pg-kicker">VƯỜN ÉP · COZY PIXEL CAFÉ</span><h1>Vườn Ép <span>✿</span></h1><p>Một khu vườn nhỏ, thật nhiều điều ngọt lành.</p></div></div>
       <div className="pg-heading-actions"><span className="pg-guests" aria-live="polite">● {people}/20 khách</span><button type="button" onClick={()=>setMenu("all")}>Thực đơn</button><button type="button" onClick={()=>{setMenuInitialView("cart");setMenu("all");}}>Giỏ hàng ({count})</button></div>
     </header>
     <div className="pg-status" role="status" aria-live="polite">{roomLabels[roomStatus]}</div>
     <div className="pg-stage-shell">
-      <div className="pg-stage" data-art-mode={artMode} ref={mountRef} onPointerUp={onTap} onPointerMove={onHover} onPointerLeave={()=>setHover(null)} role="application" aria-label="Sân Pixel Art Vườn É, nhấn vào sân để đi hoặc chạm tủ trái cây để mua">
+      <div className="pg-stage" data-art-mode={artMode} ref={mountRef} onPointerUp={onTap} onPointerMove={onHover} onPointerLeave={()=>setHover(null)} role="application" aria-label="Sân Pixel Art Vườn Ép, nhấn vào sân để đi hoặc chạm tủ trái cây để mua">
         {renderError && <div className="pg-fallback" role="status"><strong>Đang hiển thị chế độ nhẹ</strong><p>Thiết bị không hỗ trợ WebGL. Bạn vẫn có thể mở thực đơn và đặt món.</p><button type="button" onClick={()=>setMenu("all")}>Mở thực đơn</button></div>}
         {hover && <div className="pg-tooltip" role="tooltip" style={{left:hover.x,top:hover.y}}>{hover.label} · Nhấn để khám phá</div>}
         {artMode!=="loading"&&!renderError&&
@@ -448,6 +449,7 @@ export function PixelGarden() {
             getGuestPosition={getOwnPosition}
             onOpenMenu={openStaffRecommendation}
             menuOpen={opened}
+            chatOpen={chatOpen}
           />}
       </div>
       <div className="pg-game-controls">
@@ -467,7 +469,7 @@ export function PixelGarden() {
       <button type="button" onClick={()=>setMenu("fruit")}>🍊 Trái cây</button>
       <button type="button" onClick={()=>{setMenuInitialView("cart");setMenu("all");}}>🧺 Giỏ ({count})</button>
     </nav>
-    <CustomerChat onOpenMenu={openStaffRecommendation} seated={Boolean(seatedAt)}/>
+    <CustomerChat onOpenMenu={openStaffRecommendation} seated={Boolean(seatedAt)} onOpenChange={setChatOpen}/>
     {opened&&<ShopMenu2D key={menu+"-"+menuInitialView} initialCategory={menu} initialView={menuInitialView} onClose={()=>{setMenu(null);setMenuInitialView("browse");}}/>}
   </div>;
 }

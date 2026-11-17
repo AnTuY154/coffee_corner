@@ -4,15 +4,15 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { replyToCustomer, type ShopReply } from "./shop-chat-replies";
 
 type ChatMessage={id:number;from:"customer"|"assistant";text:string;category?:ShopReply["category"]};
-type Props={onOpenMenu:(category:"all"|"fruit"|"daily")=>void;seated:boolean};
+type Props={onOpenMenu:(category:"all"|"fruit"|"daily")=>void;seated:boolean;onOpenChange?:(open:boolean)=>void};
 
 const welcome:ChatMessage={
   id:0,from:"assistant",
-  text:"Vườn É chào bạn! 🌿 Mình là trợ lý tự động. Bạn có thể hỏi về nước ép, trái cây hoặc cách đặt hàng."
+  text:"Vườn Ép chào bạn! 🌿 Mình là trợ lý tự động. Bạn có thể hỏi về nước ép, trái cây hoặc cách đặt hàng."
 };
 const examples=["Gợi ý món ngon","Trái cây tươi","Giá bao nhiêu?","Cách đặt hàng"];
 
-export function CustomerChat({onOpenMenu,seated}:Props){
+export function CustomerChat({onOpenMenu,seated,onOpenChange}:Props){
   const [open,setOpen]=useState(false);
   const [messages,setMessages]=useState<ChatMessage[]>([welcome]);
   const [draft,setDraft]=useState("");
@@ -20,6 +20,8 @@ export function CustomerChat({onOpenMenu,seated}:Props){
   const endRef=useRef<HTMLDivElement|null>(null);
   const inputRef=useRef<HTMLInputElement|null>(null);
   const storePhone=process.env.NEXT_PUBLIC_STORE_PHONE;
+
+  useEffect(()=>{onOpenChange?.(open);},[open,onOpenChange]);
 
   useEffect(()=>{
     if(open){
@@ -54,16 +56,16 @@ export function CustomerChat({onOpenMenu,seated}:Props){
         <button
           className="pg-chat-launcher"
           type="button"
-          aria-label="Mở trò chuyện tư vấn Vườn É"
+          aria-label="Mở trò chuyện tư vấn Vườn Ép"
           aria-expanded="false"
           onClick={()=>setOpen(true)}>
           <span className="pg-chat-launcher-icon" aria-hidden="true">💬</span>
-          <span><strong>Chat với Vườn É</strong><small>Tư vấn món & đặt hàng</small></span>
+          <span><strong>Chat với Vườn Ép</strong><small>Tư vấn món & đặt hàng</small></span>
         </button>
       ):(
-        <section className="pg-chat-panel" role="dialog" aria-modal="false" aria-label="Trò chuyện tư vấn Vườn É">
+        <section className="pg-chat-panel" role="dialog" aria-modal="false" aria-label="Trò chuyện tư vấn Vườn Ép">
           <header className="pg-chat-header">
-            <div><strong><span aria-hidden="true">🍊</span> Trò chuyện cùng Vườn É</strong>
+            <div><strong><span aria-hidden="true">🍊</span> Trò chuyện cùng Vườn Ép</strong>
               <small>Trợ lý tự động · không phải nhân viên trực tuyến</small>
             </div>
             <button type="button" aria-label="Đóng chat" onClick={()=>setOpen(false)}>✕</button>

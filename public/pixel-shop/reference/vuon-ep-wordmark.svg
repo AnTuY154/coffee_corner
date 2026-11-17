@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="305" height="69" viewBox="0 0 305 69" shape-rendering="geometricPrecision">
+<title>Vườn Ép</title>
+<defs>
+  <linearGradient id="paper" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#fff3dd"/><stop offset=".52" stop-color="#ffebce"/><stop offset="1" stop-color="#fbe0ba"/></linearGradient>
+  <filter id="textshadow" x="-15%" y="-30%" width="135%" height="160%"><feDropShadow dx="1.4" dy="2.2" stdDeviation=".45" flood-color="#8c5f38" flood-opacity=".45"/></filter>
+</defs>
+<!-- Opaque parchment patch conceals the baked-in English name while retaining
+     the original wooden border, orange slice and cup in the scene image. -->
+<path d="M24 4H278Q299 4 300 25V46Q299 64 278 65H24Q5 65 4 46V24Q6 4 24 4Z" fill="url(#paper)"/>
+<path d="M23 7H282" stroke="#fff9ea" stroke-width="2.5" opacity=".7"/>
+<path d="M24 62H280" stroke="#dbad76" stroke-width="1.7" opacity=".35"/>
+<g transform="translate(0 1)" fill="#6d9c42">
+ <path d="M20 33Q10 29 13 16Q24 18 25 30Z"/><path d="M284 35Q292 24 290 17Q281 21 279 33Z"/>
+</g>
+<g filter="url(#textshadow)">
+ <text x="155" y="49" text-anchor="middle"
+ font-family="Trebuchet MS, DejaVu Sans, Arial, sans-serif"
+ font-size="47" font-weight="900" letter-spacing="-1.8"
+ stroke="#3d6e37" stroke-width="1.4" paint-order="stroke fill" fill="#558c3c">Vườn Ép</text>
+</g>
+<path d="M274 14l4 -5 4 5 -4 5z" fill="#f3ac44" opacity=".8"/>
+</svg>

@@ -2,16 +2,61 @@ import { test, expect } from "@playwright/test";
 import fs from "node:fs/promises";
 
 test.describe("Pixel Shop real browser evidence", () => {
+  test("fullscreen Vườn Ép scene keeps source aspect and translucent floating HUD",async({page})=>{
+    await page.goto("/pixel",{waitUntil:"domcontentloaded"});
+    await expect(page.locator(".pg-stage")).toHaveAttribute("data-art-mode","reference",{timeout:30000});
+    await expect(page.getByRole("heading",{name:/Vườn Ép/})).toBeVisible();
+    const sign=await page.request.get("/pixel-shop/reference/vuon-ep-wordmark.svg");
+    expect(sign.ok(),"Vườn Ép Vietnamese signage sprite missing").toBe(true);
+    expect(await sign.text()).toContain("Vườn Ép");
+    const dimensions=await page.evaluate(()=>{
+      const root=document.querySelector<HTMLElement>(".pg-root")!;
+      const stage=document.querySelector<HTMLElement>(".pg-stage")!;
+      const panel=document.querySelector<HTMLElement>(".pg-brand")!;
+      const r=root.getBoundingClientRect(),s=stage.getBoundingClientRect();
+      const bg=getComputedStyle(panel).backgroundColor;
+      return {viewport:[innerWidth,innerHeight],root:[r.x,r.y,r.width,r.height],
+        stage:[s.x,s.y,s.width,s.height],background:bg,overlayPosition:getComputedStyle(panel).position};
+    });
+    expect(dimensions.root[0]).toBe(0);
+    expect(dimensions.root[1]).toBe(0);
+    expect(Math.abs(dimensions.root[2]-dimensions.viewport[0])).toBeLessThanOrEqual(2);
+    expect(Math.abs(dimensions.root[3]-dimensions.viewport[1])).toBeLessThanOrEqual(2);
+    expect(Math.abs(dimensions.stage[2]-dimensions.viewport[0])).toBeLessThanOrEqual(2);
+    expect(Math.abs(dimensions.stage[3]-dimensions.viewport[1])).toBeLessThanOrEqual(2);
+    expect(dimensions.background).toMatch(/rgba\(/);
+    const alpha=Number(dimensions.background.match(/,\s*([\d.]+)\)$/)?.[1]);
+    expect(alpha).toBeGreaterThan(0.45);
+    expect(alpha).toBeLessThan(0.9);
+  });
+
+  test("staff dialogue rotates on its own every six seconds and pauses for chat",async({page})=>{
+    test.setTimeout(45000);
+    await page.goto("/pixel",{waitUntil:"domcontentloaded"});
+    await expect(page.locator(".pg-stage")).toHaveAttribute("data-art-mode","reference",{timeout:30000});
+    const bubble=page.getByTestId("staff-dialogue");
+    await expect(bubble).toHaveAttribute("data-line-id","welcome");
+    await expect(bubble).toHaveAttribute("data-line-id","invite",{timeout:8500});
+    const current=await bubble.getAttribute("data-line-id");
+    await page.getByRole("button",{name:"Mở trò chuyện tư vấn Vườn Ép"}).click();
+    await expect(page.getByRole("dialog",{name:"Trò chuyện tư vấn Vườn Ép"})).toBeVisible();
+    await page.waitForTimeout(6600);
+    await expect(bubble).toHaveAttribute("data-line-id",current!);
+    await page.getByRole("button",{name:"Đóng chat"}).click();
+    await expect(bubble).toHaveAttribute("data-line-id","seasonal",{timeout:8500});
+    await expect(bubble).toHaveAttribute("data-promoted-id",/\w+/);
+  });
+
 
   test("visitor chat answers real product questions and links to menu",async ({page},testInfo)=>{
     const errors:string[]=[];
     page.on("pageerror",error=>errors.push(error.message));
     await page.goto("/pixel",{waitUntil:"domcontentloaded"});
     await expect(page.locator(".pg-stage")).toHaveAttribute("data-art-mode","reference",{timeout:30000});
-    const launcher=page.getByRole("button",{name:"Mở trò chuyện tư vấn Vườn É"});
+    const launcher=page.getByRole("button",{name:"Mở trò chuyện tư vấn Vườn Ép"});
     await expect(launcher).toBeVisible();
     await launcher.click();
-    const chat=page.getByRole("dialog",{name:"Trò chuyện tư vấn Vườn É"});
+    const chat=page.getByRole("dialog",{name:"Trò chuyện tư vấn Vườn Ép"});
     await expect(chat).toBeVisible();
     await expect(chat).toContainText("Trợ lý tự động");
     await chat.getByTestId("chat-input").fill("Cam Đồi");
@@ -28,14 +73,14 @@ test.describe("Pixel Shop real browser evidence", () => {
 
   test("visitor can close chat and ask about delivery without false live-agent claims",async ({page})=>{
     await page.goto("/pixel",{waitUntil:"domcontentloaded"});
-    await page.getByRole("button",{name:"Mở trò chuyện tư vấn Vườn É"}).click();
-    const chat=page.getByRole("dialog",{name:"Trò chuyện tư vấn Vườn É"});
+    await page.getByRole("button",{name:"Mở trò chuyện tư vấn Vườn Ép"}).click();
+    const chat=page.getByRole("dialog",{name:"Trò chuyện tư vấn Vườn Ép"});
     await chat.getByTestId("chat-input").fill("Có giao hàng không?");
     await chat.getByRole("button",{name:"Gửi câu hỏi"}).click();
     await expect(chat).toContainText("chưa được xác nhận");
     await chat.getByRole("button",{name:"Đóng chat"}).click();
     await expect(chat).toHaveCount(0);
-    await expect(page.getByRole("button",{name:"Mở trò chuyện tư vấn Vườn É"})).toBeVisible();
+    await expect(page.getByRole("button",{name:"Mở trò chuyện tư vấn Vườn Ép"})).toBeVisible();
   });
 
 
@@ -48,7 +93,7 @@ test.describe("Pixel Shop real browser evidence", () => {
     const bubble=page.getByTestId("staff-dialogue");
     await expect(bubble).toBeVisible();
     await expect(bubble).toHaveAttribute("data-line-id","welcome");
-    await expect(bubble.getByTestId("staff-line")).toContainText("Vườn É xin chào");
+    await expect(bubble.getByTestId("staff-line")).toContainText("Vườn Ép xin chào");
     await fs.mkdir("qa-captures",{recursive:true});
     await bubble.screenshot({
       path:"qa-captures/pixel-"+(mobile?"mobile":"desktop")+"-staff-bubble.png",

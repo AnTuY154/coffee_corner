@@ -274,3 +274,356 @@
   .pg-customer-chat{bottom:8px;right:8px}
   .pg-chat-panel{height:min(340px,calc(100dvh - 16px));min-height:230px}
 }
+
+
+/* ===============================================================
+   VƯỜN ÉP /PIXEL — IMMERSIVE FULL-VIEWPORT HUD
+   The 3:2 world remains fully in view (contain), while a blurred
+   copy of the source artwork fills otherwise empty widescreen bars.
+   All non-essential HUD surfaces float over the scene with a
+   translucent background; readable labels stay full-opacity.
+   =============================================================== */
+.pg-root{
+  position:fixed;
+  inset:0;
+  isolation:isolate;
+  width:100vw;
+  height:100vh;
+  height:100dvh;
+  min-height:0;
+  max-width:none;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  overscroll-behavior:none;
+  background:#b3d4b9;
+}
+.pg-stage-shell{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  width:100vw;
+  height:100%;
+  max-width:none;
+  min-height:0;
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  overflow:hidden;
+}
+.pg-stage,
+.pg-stage[data-art-mode="reference"]{
+  position:relative;
+  width:100%;
+  height:100%;
+  min-height:0;
+  max-height:none;
+  aspect-ratio:auto;
+  margin:0;
+  border:0;
+  border-radius:0;
+  background:#a9d6c8;
+  touch-action:none;
+  overflow:hidden;
+}
+.pg-stage[data-art-mode="reference"]::before{
+  content:"";
+  pointer-events:none;
+  position:absolute;
+  z-index:0;
+  inset:-26px;
+  background:url("/pixel-shop/reference/scene.webp") center/cover no-repeat;
+  filter:blur(16px) saturate(.9) brightness(.87);
+  transform:scale(1.04);
+}
+.pg-stage canvas{
+  position:relative;
+  z-index:1;
+  width:100%;
+  height:100%;
+  display:block;
+  image-rendering:auto;
+}
+.pg-stage[data-art-mode="fallback"]::before{display:none}
+.pg-stage::after{
+  z-index:2;
+  box-shadow:inset 0 0 40px #214e3015;
+}
+.pg-header{
+  position:absolute;
+  z-index:40;
+  inset:12px 14px auto 14px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  max-width:none;
+  margin:0;
+  padding:0;
+  gap:12px;
+  pointer-events:none;
+}
+.pg-brand,
+.pg-heading-actions{
+  pointer-events:auto;
+  border:1px solid rgba(255,255,255,.68);
+  background:rgba(255,250,234,.67);
+  -webkit-backdrop-filter:blur(9px);
+  backdrop-filter:blur(9px);
+  box-shadow:0 6px 28px rgba(31,73,48,.16);
+  border-radius:18px;
+  padding:8px 12px;
+  transition:background-color .2s ease, box-shadow .2s ease;
+}
+.pg-brand:hover,.pg-heading-actions:hover,
+.pg-brand:focus-within,.pg-heading-actions:focus-within{
+  background:rgba(255,250,234,.92);
+}
+.pg-brand{gap:10px}
+.pg-mark{
+  width:45px;height:45px;
+  font-size:25px;
+  border-radius:14px;
+  box-shadow:0 2px 0 rgba(161,129,70,.28);
+}
+.pg-header h1{font-size:clamp(24px,2.2vw,31px);margin:1px 0 2px}
+.pg-header p{font-size:11px;line-height:1.25}
+.pg-kicker{font-size:9px}
+.pg-heading-actions{gap:7px;padding:7px}
+.pg-heading-actions button,
+.pg-game-controls button{
+  background:rgba(255,248,222,.7);
+  border:1px solid rgba(85,129,91,.6);
+  box-shadow:0 2px 0 rgba(69,113,76,.2);
+  color:#27573f;
+  min-height:37px;
+  padding:8px 12px;
+  transition:background .2s ease,transform .15s ease;
+}
+.pg-heading-actions button:last-child{
+  color:#fff9e7;
+  background:rgba(42,106,76,.85);
+  border-color:rgba(34,92,66,.9);
+  box-shadow:0 2px 0 rgba(38,79,53,.25);
+}
+.pg-heading-actions button:hover,.pg-game-controls button:hover,
+.pg-heading-actions button:focus-visible,.pg-game-controls button:focus-visible{
+  background:rgba(255,244,203,.98);
+}
+.pg-heading-actions button:last-child:hover{background:rgba(42,106,76,.98)}
+.pg-guests{
+  padding:9px 11px;
+  background:rgba(220,243,214,.58);
+  border:1px solid rgba(144,190,145,.58);
+}
+.pg-status{
+  position:absolute;
+  top:auto;
+  bottom:14px;
+  left:14px;
+  right:auto;
+  z-index:25;
+  margin:0;
+  width:max-content;
+  max-width:min(370px,calc(100vw - 30px));
+  padding:8px 12px;
+  border-radius:999px;
+  color:#305c43;
+  background:rgba(245,252,229,.66);
+  border:1px solid rgba(174,212,159,.5);
+  backdrop-filter:blur(7px);
+  opacity:.8;
+  pointer-events:none;
+}
+.pg-game-controls{
+  position:absolute;
+  z-index:30;
+  top:87px;
+  right:16px;
+  gap:7px;
+  pointer-events:auto;
+}
+.pg-game-controls button{
+  background:rgba(255,249,226,.69);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+.pg-game-controls button[aria-pressed="true"]{background:rgba(246,225,171,.91)}
+.pg-help{
+  position:absolute;
+  z-index:22;
+  bottom:10px;
+  left:50%;
+  transform:translateX(-50%);
+  width:max-content;
+  max-width:min(570px,calc(100vw - 410px));
+  margin:0;
+  padding:7px 14px;
+  background:rgba(255,251,235,.54);
+  border:1px solid rgba(255,255,255,.45);
+  border-radius:999px;
+  color:#315d44;
+  font-size:11px;
+  line-height:1.5;
+  text-align:center;
+  opacity:.78;
+  backdrop-filter:blur(6px);
+  pointer-events:none;
+}
+.pg-tooltip{z-index:14;background:rgba(255,247,219,.89)}
+.pg-staff-dialogue{
+  z-index:21;
+  background:rgba(255,248,232,.91);
+  border-color:rgba(141,113,78,.9);
+}
+.pg-staff-dialogue-text{
+  animation:pg-dialogue-arrive .28s ease-out both;
+}
+@keyframes pg-dialogue-arrive{
+  from{opacity:.28;transform:translateY(4px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.pg-chat-launcher{
+  background:rgba(255,249,228,.72);
+  border-color:rgba(73,123,80,.8);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  box-shadow:0 4px 0 rgba(124,162,116,.45),0 8px 23px rgba(35,62,47,.2);
+  transition:background .2s ease;
+}
+.pg-chat-launcher:hover,.pg-chat-launcher:focus-visible{background:rgba(255,248,222,.99)}
+.pg-chat-panel{background:rgba(255,253,243,.98)}
+.pg-stand-action{
+  position:absolute;
+  z-index:45;
+  right:20px;
+  bottom:26px;
+  margin:0;
+  background:rgba(255,241,205,.84);
+  backdrop-filter:blur(6px);
+}
+/* Sitting must never put the floating chat launcher on top of Stand up.
+   The mobile dock uses the stricter vertical offsets below. */
+.pg-customer-chat.is-seated{bottom:112px}
+.pg-notice{background:rgba(255,248,222,.92);backdrop-filter:blur(8px)}
+.pg-root :is(button,a):focus-visible{outline:3px solid #e98c54;outline-offset:3px}
+@media(max-width:800px){
+  .pg-root{padding:0}
+  .pg-header{
+    top:8px;left:8px;right:8px;
+    padding:0;
+    gap:6px;
+    flex-wrap:nowrap;
+  }
+  .pg-brand{padding:6px 8px;gap:6px;max-width:calc(100% - 91px);border-radius:13px}
+  .pg-mark{width:33px;height:33px;font-size:19px;border-radius:10px}
+  .pg-kicker{font-size:8px;letter-spacing:0}
+  .pg-header h1{font-size:23px;white-space:nowrap}
+  .pg-header p{font-size:9px;max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pg-heading-actions{
+    position:relative;
+    top:auto;right:auto;
+    flex-shrink:0;
+    padding:5px;
+    border-radius:13px;
+  }
+  .pg-guests{font-size:9px;padding:6px 7px}
+  .pg-heading-actions button{display:none}
+  .pg-status{
+    top:63px;bottom:auto;left:8px;right:auto;
+    padding:6px 9px;
+    max-width:calc(100vw - 120px);
+    font-size:9px;
+    text-align:left;
+    opacity:.72;
+  }
+  .pg-stage-shell{width:100%;height:100%;margin:0;padding:0}
+  .pg-stage,.pg-stage[data-art-mode="reference"]{
+    width:100%;height:100%;min-height:0;
+    max-height:none;border:0;border-radius:0;aspect-ratio:auto;
+  }
+  .pg-game-controls{top:57px;right:8px;gap:5px}
+  .pg-game-controls button{padding:6px 8px;min-height:31px;font-size:10px}
+  .pg-game-controls button:nth-child(n+2){display:none}
+  .pg-dpad{
+    position:absolute;
+    z-index:23;
+    left:12px;
+    bottom:calc(88px + env(safe-area-inset-bottom));
+  }
+  .pg-dpad button{
+    background:rgba(255,249,225,.7);
+    border-color:rgba(79,131,99,.76);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+  }
+  .pg-dpad button:active,.pg-dpad button:focus-visible{background:rgba(255,226,169,.98)}
+  .pg-mobile-nav{
+    z-index:50;
+    background:rgba(249,246,229,.61);
+    border-color:rgba(198,216,186,.67);
+    box-shadow:0 -6px 19px rgba(54,84,61,.17);
+    backdrop-filter:blur(13px);
+    -webkit-backdrop-filter:blur(13px);
+  }
+  .pg-mobile-nav button{background:rgba(255,248,220,.73);box-shadow:0 2px 0 rgba(194,210,181,.45)}
+  .pg-mobile-nav button:last-child{background:rgba(46,113,84,.88);color:#fff9dd}
+  .pg-mobile-nav button:focus-visible,.pg-mobile-nav button:hover{background:rgba(255,243,205,.98)}
+  .pg-mobile-nav button:last-child:focus-visible,.pg-mobile-nav button:last-child:hover{background:#317454}
+  .pg-help{display:none}
+  .pg-stand-action{position:fixed;right:10px;bottom:calc(87px + env(safe-area-inset-bottom));z-index:49}
+  .pg-customer-chat{bottom:calc(89px + env(safe-area-inset-bottom))}
+  .pg-customer-chat.is-seated{bottom:calc(154px + env(safe-area-inset-bottom))}
+  .pg-notice{bottom:calc(87px + env(safe-area-inset-bottom))}
+}
+@media(max-height:550px) and (orientation:landscape){
+  .pg-stage,.pg-stage[data-art-mode="reference"]{height:100%;min-height:0}
+  .pg-customer-chat{bottom:12px}
+  .pg-game-controls{top:54px}
+  .pg-dpad{bottom:12px}
+  .pg-help{display:none}
+}
+/* Avoid expensive full-screen backdrop re-blurs over a moving WebGL scene.
+   Translucent surfaces remain visible, but only the static garden surround blurs. */
+@media(min-width:801px){
+  .pg-brand,.pg-heading-actions,.pg-status,.pg-game-controls button,.pg-help,.pg-chat-launcher{
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+  }
+  .pg-stage[data-art-mode="reference"]::before{filter:blur(8px) saturate(.9) brightness(.87)}
+}
+@media(prefers-reduced-motion:reduce){
+  .pg-staff-dialogue-text{animation:none}
+  .pg-root *{transition:none!important}
+}
+@media(prefers-reduced-transparency:reduce){
+  .pg-brand,.pg-heading-actions,.pg-game-controls button,.pg-chat-launcher,
+  .pg-status,.pg-mobile-nav,.pg-dpad button{background:#fff9e9}
+}
+
+
+/* No costly real-time CSS compositing above the WebGL canvas.
+   Frosted-look HUD comes from low-alpha solid surfaces, not a
+   backdrop-filter recalculated across every animation frame. */
+.pg-root .pg-brand,
+.pg-root .pg-heading-actions,
+.pg-root .pg-status,
+.pg-root .pg-game-controls button,
+.pg-root .pg-chat-launcher,
+.pg-root .pg-help,
+.pg-root .pg-staff-dialogue,
+.pg-root .pg-dpad button,
+.pg-root .pg-mobile-nav,
+.pg-root .pg-stand-action,
+.pg-root .pg-notice,
+.pg-root .ve-menu-overlay {
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+}
+.pg-stage[data-art-mode="reference"]::before{
+  filter:none;
+  opacity:.68;
+  transform:none;
+}
