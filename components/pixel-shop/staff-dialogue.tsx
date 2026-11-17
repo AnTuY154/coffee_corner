@@ -10,6 +10,7 @@ type Props = {
   getGuestPosition: () => WorldPoint | null;
   onOpenMenu: (category:StaffCategory) => void;
   menuOpen: boolean;
+  chatOpen: boolean;
 };
 
 const clamp=(n:number,min:number,max:number)=>Math.max(min,Math.min(max,n));
@@ -18,11 +19,12 @@ const clamp=(n:number,min:number,max:number)=>Math.max(min,Math.min(max,n));
  * Pure DOM overlay over the Pixi scene: no new WebGL draw calls,
  * character movement, network messages or new dependencies.
  */
-export function StaffDialogue({getScreenAnchor,getGuestPosition,onOpenMenu,menuOpen}:Props){
+export function StaffDialogue({getScreenAnchor,getGuestPosition,onOpenMenu,menuOpen,chatOpen}:Props){
   const [month,setMonth]=useState(1);
   const lines=useMemo(()=>buildStaffLines(month),[month]);
   const [index,setIndex]=useState(0);
   const [anchor,setAnchor]=useState<{left:number;top:number;docked:boolean}|null>(null);
+  const [interacting,setInteracting]=useState(false);
   const [voiceSupported,setVoiceSupported]=useState(false);
   const [voiceOn,setVoiceOn]=useState(false);
   const wasNear=useRef(false);
@@ -56,11 +58,14 @@ export function StaffDialogue({getScreenAnchor,getGuestPosition,onOpenMenu,menuO
   },[getScreenAnchor,getGuestPosition]);
 
   useEffect(()=>{
-    if(menuOpen)return;
-    if(window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
-    const timer=window.setInterval(()=>setIndex(i=>(i+1)%lines.length),11000);
+    // Changing speech is content, not an animation: reduced-motion users still
+    // get fresh suggestions every six seconds without a moving transition.
+    if(menuOpen||chatOpen||interacting)return;
+    const timer=window.setInterval(()=>{
+      if(!document.hidden)setIndex(i=>(i+1)%lines.length);
+    },6000);
     return ()=>window.clearInterval(timer);
-  },[menuOpen,lines.length]);
+  },[menuOpen,chatOpen,interacting,lines.length]);
 
   const speak=useCallback((text:string)=>{
     try{
@@ -75,15 +80,15 @@ export function StaffDialogue({getScreenAnchor,getGuestPosition,onOpenMenu,menuO
   },[]);
 
   useEffect(()=>{
-    if(!voiceOn||!voiceSupported||menuOpen||document.hidden)return;
+    if(!voiceOn||!voiceSupported||menuOpen||chatOpen||document.hidden)return;
     if(announced.current===line.id)return;
     announced.current=line.id;
     speak(line.text);
-  },[voiceOn,voiceSupported,menuOpen,line.id,line.text,speak]);
+  },[voiceOn,voiceSupported,menuOpen,chatOpen,line.id,line.text,speak]);
 
   useEffect(()=>{
-    if(menuOpen&&"speechSynthesis" in window)window.speechSynthesis.cancel();
-  },[menuOpen]);
+    if((menuOpen||chatOpen)&&"speechSynthesis" in window)window.speechSynthesis.cancel();
+  },[menuOpen,chatOpen]);
 
   useEffect(()=>{
     if(menuOpen||!voiceOn)return;
@@ -110,15 +115,19 @@ export function StaffDialogue({getScreenAnchor,getGuestPosition,onOpenMenu,menuO
     <section
       className={`pg-staff-dialogue${anchor.docked?" is-docked":""}`}
       style={{left:anchor.left,top:anchor.top}}
-      aria-label="Lời mời của nhân viên Vườn É"
+      aria-label="Lời mời của nhân viên Vườn Ép"
       lang="vi"
       data-testid="staff-dialogue"
       data-line-id={line.id}
       data-promoted-id={line.promotedProductId??""}
       onPointerDown={event=>event.stopPropagation()}
-      onPointerUp={event=>event.stopPropagation()}>
-      <div className="pg-staff-dialogue-heading"><span aria-hidden="true">🌼</span> Nhân viên Vườn É</div>
-      <p className="pg-staff-dialogue-text" data-testid="staff-line" aria-live="off">{line.text}</p>
+      onPointerUp={event=>event.stopPropagation()}
+      onPointerEnter={()=>setInteracting(true)}
+      onPointerLeave={()=>setInteracting(false)}
+      onFocusCapture={()=>setInteracting(true)}
+      onBlurCapture={event=>{if(!event.currentTarget.contains(event.relatedTarget))setInteracting(false);}}> 
+      <div className="pg-staff-dialogue-heading"><span aria-hidden="true">🌼</span> Nhân viên Vườn Ép</div>
+      <p key={line.id} className="pg-staff-dialogue-text" data-testid="staff-line" aria-live="off">{line.text}</p>
       <div className="pg-staff-dialogue-actions">
         <button type="button" onClick={()=>onOpenMenu(line.category)} aria-label={line.category==="fruit"?"Mở trái cây tươi":"Mở thực đơn"}>
           {line.category==="fruit"?"🍓 Xem trái cây":"🥤 Xem món"}
