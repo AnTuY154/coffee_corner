@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="108" viewBox="0 0 96 108" shape-rendering="crispEdges">
+<title>Nhân viên Vườn Ép — barista nửa người vẫy tay</title>
+<!-- Soft grounding outline and tucked-in shoulders -->
+<path d="M17 76H28V70H65V74H75V85H81V108H9V88H13V80H17Z" fill="#544039"/>
+<path d="M20 75H71V88H76V108H14V87H18Z" fill="#f7ead4"/>
+<path d="M22 78H67V96H72V108H19V91H22Z" fill="#86b793"/>
+<path d="M27 77H62V108H27Z" fill="#f8eed7"/>
+<path d="M32 79H61V108H32Z" fill="#e3a26c"/>
+<path d="M35 82H58V108H35Z" fill="#ffe8bc"/>
+<path d="M35 84H55V90H35Z" fill="#fff7df"/>
+<path d="M38 92H54V107H38Z" fill="#ecd3aa"/>
+<path d="M40 94H52V99H40Z" fill="#6a9e71"/><path d="M45 93H50V97H45Z" fill="#f6bc68"/>
+<path d="M20 76H31V92H19Z" fill="#fef7e5"/><path d="M22 79H28V91H22Z" fill="#dae4d0"/>
+<!-- Name badge and juice icon -->
+<rect x="54" y="84" width="14" height="9" fill="#75564b"/>
+<rect x="56" y="86" width="10" height="5" fill="#fff0bc"/>
+<rect x="60" y="86" width="2" height="5" fill="#e79a40"/>
+<path d="M43 95H49V102H43Z" fill="#4e9d65"/>
+<!-- Resting hand left -->
+<path d="M13 81H22V95H18V102H11V91H13Z" fill="#645045"/>
+<path d="M15 82H22V95H18V101H13V91H15Z" fill="#f5bf9b"/>
+<path d="M11 98H25V106H9V101Z" fill="#f5c6a7"/>
+<path d="M14 101H23V103H14Z" fill="#ffe7c4"/>
+<!-- Neck -->
+<path d="M38 63H54V79H37Z" fill="#aa735d"/>
+<path d="M40 65H52V78H39Z" fill="#f5c49d"/>
+<!-- Hair silhouette: two full curls visible beyond cheeks -->
+<path d="M25 22H66V31H71V65H67V74H61V78H26V72H20V63H22V29H25Z" fill="#493438"/>
+<path d="M24 30H30V73H22Z" fill="#36292f"/>
+<path d="M63 27H69V72H63Z" fill="#3d3035"/>
+<path d="M28 25H64V58H61V67H55V73H37V69H30V61H27Z" fill="#f2bf96"/>
+<path d="M32 33H61V62H57V69H37V64H32Z" fill="#ffdbb5"/>
+<path d="M27 47H33V58H28Z" fill="#d79b79"/><path d="M60 44H65V56H60Z" fill="#d9a17f"/>
+<!-- Side ponytail and gentle highlights -->
+<path d="M25 27H32V48H27Z" fill="#493238"/>
+<path d="M62 28H69V53H65Z" fill="#50383d"/>
+<path d="M65 50H73V58H70V69H64Z" fill="#4a3538"/>
+<path d="M67 57H71V65H67Z" fill="#765156"/>
+<!-- Hair bangs -->
+<path d="M30 23H63V34H60V38H54V35H44V39H34V36H29Z" fill="#432f34"/>
+<path d="M32 24H45V28H36Z" fill="#715056"/>
+<path d="M47 24H61V29H54Z" fill="#745057"/>
+<path d="M36 31H43V38H37Z" fill="#50373b"/>
+<!-- Eyes, highlights and eyebrows -->
+<path d="M36 49H42V55H36Z" fill="#36393e"/>
+<path d="M52 49H58V55H52Z" fill="#36393e"/>
+<rect x="38" y="49" width="2" height="2" fill="#fff8ec"/>
+<rect x="54" y="49" width="2" height="2" fill="#fff8ec"/>
+<rect x="35" y="46" width="7" height="2" fill="#744f4a"/>
+<rect x="51" y="46" width="7" height="2" fill="#744f4a"/>
+<!-- Nose and happy smile -->
+<rect x="46" y="55" width="2" height="2" fill="#e9a786"/>
+<path d="M43 61H53V63H51V65H46V63H44Z" fill="#b26366"/>
+<path d="M45 61H51V62H45Z" fill="#fff4df"/>
+<!-- Blush, tiny sparkles -->
+<path d="M32 58H39V62H32Z" fill="#ec99a0" opacity=".8"/>
+<path d="M55 58H61V62H55Z" fill="#ea9aa1" opacity=".8"/>
+<rect x="34" y="58" width="2" height="2" fill="#ffccd2"/>
+<rect x="56" y="58" width="2" height="2" fill="#ffccd2"/>
+<!-- Mint barista cap with an orange accent -->
+<path d="M28 14H32V10H54V12H64V17H70V30H22V23H25V17Z" fill="#344c3b"/>
+<path d="M30 16H35V13H56V16H64V26H27V19H30Z" fill="#5a9870"/>
+<path d="M34 15H53V18H35Z" fill="#9fcca0"/>
+<path d="M21 26H72V33H20Z" fill="#426f51"/>
+<path d="M24 28H67V30H24Z" fill="#8cba7d"/>
+<rect x="49" y="16" width="8" height="8" fill="#edb65a"/>
+<rect x="52" y="18" width="3" height="3" fill="#fff3bf"/>
+<path d="M68 78H76V70H81V58H84V46H89V56H87V67H82V76H76V85H69Z" fill="#554039"/>
+<path d="M69 78H77V70H82V59H85V47H88V56H85V66H81V74H75V83H69Z" fill="#f4bc97"/>
+<path d="M80 50H84V42H86V50H90V44H92V54H89V58H84Z" fill="#ffd7b0"/><!-- wave highlights / warm sunlight -->
+<rect x="90" y="30" width="3" height="5" fill="#f9d476"/>
+<rect x="75" y="35" width="3" height="3" fill="#fff2b3"/>
+<rect x="82" y="26" width="2" height="4" fill="#f4c463"/>
+</svg>
