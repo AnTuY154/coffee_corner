@@ -30,7 +30,7 @@ export async function loadReferenceAssets():Promise<ReferenceAssets|null>{
   try{
     const base=await Assets.load<Texture>({alias:"ve-ref-scene",src:path+"scene.webp"});
     if(!base||base.width<100||base.height<100)return null;
-    base.source.scaleMode="linear";
+    base.source.scaleMode="nearest";
     const parts=new Map<string,Texture>();
     const loaded=await Promise.allSettled(REFERENCE_LAYERS.map(async layer=>{
       const tex=await Assets.load<Texture>({alias:"ve-ref-"+layer.name,src:path+layer.file});
@@ -38,7 +38,7 @@ export async function loadReferenceAssets():Promise<ReferenceAssets|null>{
     }));
     for(const result of loaded){
       if(result.status!=="fulfilled")continue;
-      result.value.tex.source.scaleMode="linear";
+      result.value.tex.source.scaleMode="nearest";
       parts.set(result.value.name,result.value.tex);
     }
     let staffFrames:Texture[]|undefined;
@@ -108,8 +108,8 @@ export function buildReferenceScene(assets:ReferenceAssets){
   employee.position.set(249,184);employee.zIndex=210;employee.label="staff:stationary";world.addChild(employee);
   if(employee instanceof Sprite){
     employee.anchor.set(0.5,1);
-    employee.width=74;
-    employee.height=87;
+    employee.width=84;
+    employee.height=94;
   }else{
     drawStaff(employee,true,false,1);
     employee.scale.set(1.65);
@@ -133,7 +133,7 @@ export function buildReferenceScene(assets:ReferenceAssets){
       sprite.zIndex=320+Math.round(pose.y);
     }
     const step=reducedMotion?0:Math.floor(tick*6);
-    const waveFrame=reducedMotion?0:Math.floor(tick*2.1)%3;
+    const waveFrame=reducedMotion?0:Math.floor(tick*2.8)%3;
     if(employee instanceof Sprite&&assets.staffFrames){
       const next=assets.staffFrames[waveFrame%assets.staffFrames.length];
       if(next&&employee.texture!==next)employee.texture=next;
