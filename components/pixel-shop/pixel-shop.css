@@ -585,6 +585,15 @@
   .pg-dpad{bottom:12px}
   .pg-help{display:none}
 }
+/* Avoid expensive full-screen backdrop re-blurs over a moving WebGL scene.
+   Translucent surfaces remain visible, but only the static garden surround blurs. */
+@media(min-width:801px){
+  .pg-brand,.pg-heading-actions,.pg-status,.pg-game-controls button,.pg-help,.pg-chat-launcher{
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+  }
+  .pg-stage[data-art-mode="reference"]::before{filter:blur(8px) saturate(.9) brightness(.87)}
+}
 @media(prefers-reduced-motion:reduce){
   .pg-staff-dialogue-text{animation:none}
   .pg-root *{transition:none!important}
