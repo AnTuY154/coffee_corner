@@ -188,8 +188,8 @@ export function PixelGarden() {
         // Render at scene-friendly resolution, then CSS-scale the same world.
         const isSmall=mount.clientWidth<=800;
         const renderResolution=Math.max(0.34,Math.min(1,
-          (isSmall?360:565)/Math.max(1,mount.clientWidth),
-          (isSmall?470:380)/Math.max(1,mount.clientHeight)));
+          (isSmall?350:475)/Math.max(1,mount.clientWidth),
+          (isSmall?450:320)/Math.max(1,mount.clientHeight)));
         await application.init({resizeTo:mount,backgroundColor:0xbde7da,backgroundAlpha:0,antialias:false,preference:"webgl",resolution:renderResolution,autoDensity:true});
         if(disposed){application.destroy(true,{children:true});return;}
         mount.appendChild(application.canvas);
