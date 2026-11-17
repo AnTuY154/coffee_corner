@@ -504,6 +504,9 @@
   background:rgba(255,241,205,.84);
   backdrop-filter:blur(6px);
 }
+/* Sitting must never put the floating chat launcher on top of Stand up.
+   The mobile dock uses the stricter vertical offsets below. */
+.pg-customer-chat.is-seated{bottom:112px}
 .pg-notice{background:rgba(255,248,222,.92);backdrop-filter:blur(8px)}
 .pg-root :is(button,a):focus-visible{outline:3px solid #e98c54;outline-offset:3px}
 @media(max-width:800px){
